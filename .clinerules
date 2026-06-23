@@ -1,0 +1,168 @@
+# CLINE RULES — ArenaBook
+
+You are developing ArenaBook, a web-based PWA sports court booking system.
+
+## Main Goal
+
+Build a clean, maintainable, production-oriented MVP for booking sports courts such as futsal, minisoccer, badminton, padel, tennis, and basketball.
+
+The app must:
+- Run locally.
+- Deploy to Vercel.
+- Be mobile responsive.
+- Support PWA basics.
+- Use Google Spreadsheet as initial demo database.
+- Be architected for easy migration to PostgreSQL/Supabase.
+- Include public booking flow and admin CMS.
+
+## Tech Stack
+
+Use:
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- shadcn/ui style components
+- Server-side validation
+- Database adapter pattern
+
+Do not:
+- Hardcode database access in UI components.
+- Put business logic directly inside page components.
+- Create huge files.
+- Skip TypeScript types.
+- Ignore mobile responsiveness.
+- Ignore error states and loading states.
+
+## Architecture Rules
+
+Follow this pattern:
+
+UI Page / Component
+↓
+Service Layer
+↓
+Database Adapter
+↓
+Google Sheets or PostgreSQL
+
+Important:
+- UI must not directly call Google Sheets.
+- Booking logic must live in `src/lib/services`.
+- Data access must live in `src/lib/adapters`.
+- Domain types must live in `src/lib/types`.
+- Validation schemas must live in `src/lib/validators`.
+
+## Required Modules
+
+Build incrementally:
+1. App shell and layout.
+2. Public homepage.
+3. Court listing.
+4. Court detail.
+5. Booking flow.
+6. Booking success.
+7. Admin dashboard.
+8. Admin booking management.
+9. Court management.
+10. Pricing management.
+11. Settings.
+12. Google Sheets adapter.
+13. PWA setup.
+14. Notification foundation.
+15. PostgreSQL adapter stub.
+
+## Coding Style
+
+- Use clear names.
+- Use small functions.
+- Use TypeScript interfaces/types.
+- Use async/await.
+- Handle empty data.
+- Handle failed requests.
+- Validate user input server-side.
+- Keep UI components simple.
+- Avoid premature overengineering.
+
+## Booking Rules
+
+A booking must have:
+- id
+- bookingCode
+- customerName
+- customerPhone
+- customerEmail optional
+- sportId
+- venueId
+- courtId
+- bookingDate
+- startTime
+- endTime
+- durationMinutes
+- totalPrice
+- paymentStatus
+- bookingStatus
+- createdAt
+- updatedAt
+
+Booking status:
+- pending
+- waiting_payment
+- paid
+- confirmed
+- rejected
+- cancelled
+- completed
+- no_show
+
+Payment status:
+- unpaid
+- waiting_confirmation
+- dp_paid
+- paid
+- refunded
+
+Prevent double booking:
+- Check courtId + bookingDate + startTime + endTime.
+- Active blocking statuses: pending, waiting_payment, paid, confirmed.
+- Validate again on the server before saving.
+
+## Development Workflow
+
+For every task:
+1. Read existing files first.
+2. Make the smallest useful change.
+3. Explain what changed.
+4. Run or suggest relevant checks.
+5. Do not rewrite unrelated files.
+6. Keep MVP working at every step.
+
+## UI Direction
+
+- Mobile first.
+- Clean sports booking style.
+- Simple cards.
+- Large clear booking buttons.
+- Admin table must be readable.
+- Use status badges.
+- Use empty states.
+
+## Environment Variables
+
+Use:
+- `DATABASE_PROVIDER`
+- `GOOGLE_SHEETS_SPREADSHEET_ID`
+- `GOOGLE_SHEETS_CLIENT_EMAIL`
+- `GOOGLE_SHEETS_PRIVATE_KEY`
+- `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_APP_NAME`
+
+## Testing Direction
+
+Test:
+- Available slots display.
+- Booking creation.
+- Double booking prevention.
+- Admin confirmation.
+- Admin rejection.
+- Mobile responsive pages.
+- Vercel deployment.
