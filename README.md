@@ -1,2 +1,12 @@
-# lapangin-msr
-Lapangin — Web-based PWA sports court booking system with admin CMS, Google Sheets demo database, and PostgreSQL migration-ready architecture.
+# Lapangin MSR
+
+Lapangin MSR adalah aplikasi booking lapangan olahraga berbasis web PWA untuk futsal, minisoccer, badminton, padel, tenis, basket, dan olahraga lainnya.
+
+Project ini mendukung:
+- PWA dan mobile responsive
+- Admin CMS
+- Booking lapangan
+- Manajemen jadwal dan harga
+- Database demo Google Spreadsheet
+- Arsitektur siap migrasi ke PostgreSQL
+- Deployment ke Vercel
