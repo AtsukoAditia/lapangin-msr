@@ -133,18 +133,32 @@ Definition of Done:
 - **Active blocking statuses:** `pending`, `waiting_payment`, `paid`, `confirmed`.
 - **Double-booking check:** `courtId + bookingDate + startTime + endTime` overlap.
 
-## Stage 6 — Payment Manual
+## Stage 6 — Payment Manual ✅
 
-- [ ] Tambahkan metode pembayaran manual.
-- [ ] Persiapkan juga untuk metode pembayaran otomatis untuk https://ipaymu.com/
-- [ ] Upload/link bukti pembayaran.
-- [ ] Status `waiting_payment`, `paid`, `confirmed`.
-- [ ] Admin mark as paid.
-- [ ] Template instruksi pembayaran.
+- [x] Tambahkan metode pembayaran manual (BCA, BNI, GoPay, OVO, Dana, QRIS).
+- [x] Persiapkan juga untuk metode pembayaran otomatis untuk https://ipaymu.com/ (PaymentMethod.gateway stub).
+- [x] Upload bukti pembayaran (image/file) via `/api/payments/proof`.
+- [x] Status `waiting_payment`, `paid`, `confirmed`.
+- [x] Admin confirm/reject payment via `/api/admin/payments/[id]`.
+- [x] Template instruksi pembayaran (bank details, steps, amount).
 
 Definition of Done:
 
-- Booking bisa melewati alur pembayaran manual.
+- Booking bisa melewati alur pembayaran manual. ✅
+
+### Arsitektur Payment Manual:
+
+- **Domain types** (`src/lib/types/domain.ts`) — `PaymentMethod`, `PaymentInstruction`, `paymentProofUrl` & `paymentNotes` pada Booking.
+- **PaymentService** (`src/lib/services/payment-service.ts`) — `getPaymentMethods()`, `getPaymentInstruction()`, `uploadProof()`, `confirmPayment()`, `rejectPayment()`.
+- **DatabaseAdapter** (`src/lib/adapters/database-adapter.ts`) — `getPaymentMethods()`, `getPaymentMethodBySlug()`.
+- **MockAdapter** — 6 payment methods dengan instruksi lengkap.
+- **GoogleSheetsAdapter** — Read payment_methods sheet + update booking proof/status.
+- **API Routes:**
+  - `GET /api/payments/methods` — Ambil semua metode pembayaran.
+  - `POST /api/payments/proof` — Upload bukti pembayaran (FormData with image/file).
+  - `POST /api/admin/payments/[id]` — Admin confirm/reject payment.
+  - `GET /api/bookings/[id]` — Ambil detail booking (untuk success page refresh).
+- **Booking success page** (`src/app/(public)/booking/success/page.tsx`) — 3-step payment flow: pilih metode → instruksi → upload bukti → tunggu konfirmasi.
 
 ## Stage 7 — Notification
 
