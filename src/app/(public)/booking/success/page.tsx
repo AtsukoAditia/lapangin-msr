@@ -14,7 +14,6 @@ function SuccessContent() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [proofUrl, setProofUrl] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [selectedMethod, setSelectedMethod] = useState("");
   const [step, setStep] = useState<"instructions" | "upload" | "done">(
@@ -70,7 +69,6 @@ function SuccessContent() {
         throw new Error(data.error ?? "Gagal mengirim bukti transfer");
       }
 
-      setSubmitted(true);
       setStep("done");
       await loadBooking();
     } catch (e) {
@@ -87,11 +85,31 @@ function SuccessContent() {
       string,
       { label: string; color: string; icon: string }
     > = {
-      unpaid: { label: "Belum Bayar", color: "text-amber-700 bg-amber-50 border-amber-200", icon: "⏳" },
-      waiting_confirmation: { label: "Menunggu Konfirmasi", color: "text-blue-700 bg-blue-50 border-blue-200", icon: "🔍" },
-      dp_paid: { label: "DP Terbayar", color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: "💰" },
-      paid: { label: "Lunas", color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: "✅" },
-      refunded: { label: "Refund", color: "text-slate-700 bg-slate-50 border-slate-200", icon: "↩️" },
+      unpaid: {
+        label: "Belum Bayar",
+        color: "text-amber-700 bg-amber-50 border-amber-200",
+        icon: "⏳",
+      },
+      waiting_confirmation: {
+        label: "Menunggu Konfirmasi",
+        color: "text-blue-700 bg-blue-50 border-blue-200",
+        icon: "🔍",
+      },
+      dp_paid: {
+        label: "DP Terbayar",
+        color: "text-emerald-700 bg-emerald-50 border-emerald-200",
+        icon: "💰",
+      },
+      paid: {
+        label: "Lunas",
+        color: "text-emerald-700 bg-emerald-50 border-emerald-200",
+        icon: "✅",
+      },
+      refunded: {
+        label: "Refund",
+        color: "text-slate-700 bg-slate-50 border-slate-200",
+        icon: "↩️",
+      },
     };
 
     const cfg = statusConfig[booking.paymentStatus];
@@ -131,9 +149,7 @@ function SuccessContent() {
             <p>
               Jam: {booking.startTime} — {booking.endTime}
             </p>
-            <p>
-              Durasi: {booking.durationMinutes} menit
-            </p>
+            <p>Durasi: {booking.durationMinutes} menit</p>
             <p className="text-lg font-bold text-emerald-700">
               Total: Rp {booking.totalPrice.toLocaleString("id-ID")}
             </p>
@@ -142,7 +158,6 @@ function SuccessContent() {
         </div>
       )}
 
-      {/* Step 1: Payment Instructions */}
       {step === "instructions" && (
         <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm">
           <h3 className="mb-3 font-semibold text-slate-900">
@@ -217,7 +232,6 @@ function SuccessContent() {
         </div>
       )}
 
-      {/* Step 2: Upload Proof */}
       {step === "upload" && (
         <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm">
           <h3 className="mb-3 font-semibold text-slate-900">
@@ -250,9 +264,7 @@ function SuccessContent() {
                 placeholder="https://drive.google.com/file/d/..."
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
-              {error && (
-                <p className="mt-1 text-xs text-red-500">{error}</p>
-              )}
+              {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
             </div>
           </div>
 
@@ -274,7 +286,6 @@ function SuccessContent() {
         </div>
       )}
 
-      {/* Step 3: Done */}
       {step === "done" && (
         <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center shadow-sm">
           <div className="mb-3 text-4xl">🎉</div>
@@ -285,9 +296,7 @@ function SuccessContent() {
             Admin akan memverifikasi pembayaran kamu. Booking akan dikonfirmasi
             setelah pembayaran diverifikasi.
           </p>
-          {booking && (
-            <div className="mt-3">{paymentStatusDisplay()}</div>
-          )}
+          {booking && <div className="mt-3">{paymentStatusDisplay()}</div>}
         </div>
       )}
 
