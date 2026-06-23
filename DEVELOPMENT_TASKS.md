@@ -160,18 +160,44 @@ Definition of Done:
   - `GET /api/bookings/[id]` — Ambil detail booking (untuk success page refresh).
 - **Booking success page** (`src/app/(public)/booking/success/page.tsx`) — 3-step payment flow: pilih metode → instruksi → upload bukti → tunggu konfirmasi.
 
-## Stage 7 — Notification
+## Stage 7 — Notification ✅
 
-- [ ] Email notification.
-- [ ] WhatsApp template redirect.
-- [ ] Web push basic.
-- [ ] Reminder sebelum main.
-- [ ] Notification log.
+- [x] Email notification (template-based SMTP stub).
+- [x] WhatsApp template redirect (wa.me deep link).
+- [x] Web push basic (Service Worker push event registration).
+- [x] Notification log (disimpan di spreadsheet / adapter).
+- [x] Admin notification log page.
+- [x] Integrasi notifikasi ke booking flow (create, confirm, reject, cancel).
+- [x] Admin alert saat booking baru masuk.
+
+> **Note:** Reminder sebelum main ditunda ke versi berikutnya (butuh cron job).
 
 Definition of Done:
 
-- User menerima minimal satu kanal notifikasi.
-- Admin bisa melihat log notifikasi.
+- User menerima minimal satu kanal notifikasi (WhatsApp redirect). ✅
+- Admin bisa melihat log notifikasi. ✅
+
+### Arsitektur Notification:
+
+- **Domain types** (`src/lib/types/domain.ts`) — `NotificationLog`, `NotificationChannel`, `NotificationType`, `NotificationStatus`.
+- **DatabaseAdapter** (`src/lib/adapters/database-adapter.ts`) — `getNotificationLogs()`, `createNotificationLog()`, `updateNotificationStatus()`, `getNotificationLogCount()`.
+- **NotificationService** (`src/lib/services/notification-service.ts`) — `sendNotification()`, `sendBookingCreated()`, `sendBookingConfirmation()`, `sendBookingRejection()`, `sendBookingCancellation()`, `sendAdminNewBookingAlert()`.
+- **Notification templates** (`src/lib/notification-templates.ts`) — `getEmailTemplate()`, `getWhatsAppMessage()`, `getPushPayload()`.
+- **Adapter implementations:**
+  - `MockAdapter` — In-memory log storage.
+  - `GoogleSheetsAdapter` — `notification_logs` sheet CRUD.
+  - `PostgresAdapter` — `notification_logs` table CRUD.
+- **API Routes:**
+  - `GET /api/admin/notifications` — List notification logs (with pagination, filters).
+- **Admin UI:**
+  - `Admin Notifications Page` (`src/app/admin/notifications/page.tsx`) — List, filters, status badges, stats.
+  - `AdminLayout` — Added "Notifikasi" nav link.
+- **Booking flow integration** (`src/lib/services/booking-service.ts`):
+  - `createBooking()` → sendBookingCreated + sendAdminNewBookingAlert.
+  - `confirmBooking()` → sendBookingConfirmation.
+  - `rejectBooking()` → sendBookingRejection.
+  - `cancelBooking()` → sendBookingCancellation.
+  - Semua notification non-blocking (try/catch, tidak mengganggu booking flow).
 
 ## Stage 8 — PWA
 
