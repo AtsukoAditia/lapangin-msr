@@ -1,45 +1,48 @@
 # Development Tasks — From Start to Running Well
 
-## Stage 0 — Persiapan Project
+## Stage 0 — Persiapan Project ✅
 
-- [ ] Buat project Next.js + TypeScript.
-- [ ] Setup Tailwind CSS.
-- [ ] Setup alias import `@/*`.
-- [ ] Setup struktur folder.
-- [ ] Tambahkan `.env.example`.
-- [ ] Tambahkan `.clinerules`.
-- [ ] Tambahkan `.clineignore`.
-- [ ] Jalankan `npm run dev`.
-
-Definition of Done:
-- App bisa dibuka di localhost.
-- Tidak ada error TypeScript dasar.
-- Struktur folder sudah rapi.
-
-## Stage 1 — Static UI Public
-
-- [ ] Homepage.
-- [ ] List olahraga.
-- [ ] List venue/lapangan.
-- [ ] Detail lapangan.
-- [ ] Booking date picker mock.
-- [ ] Slot jam mock.
-- [ ] Booking form mock.
-- [ ] Booking success page.
+- [x] Buat project Next.js + TypeScript.
+- [x] Setup Tailwind CSS.
+- [x] Setup alias import `@/*`.
+- [x] Setup struktur folder.
+- [x] Tambahkan `.env.example`.
+- [x] Tambahkan `.clinerules`.
+- [x] Tambahkan `.clineignore`.
+- [x] Jalankan `npm run dev`.
 
 Definition of Done:
-- User bisa simulasi booking tanpa database.
-- Tampilan mobile responsive.
+
+- App bisa dibuka di localhost. ✅
+- Tidak ada error TypeScript dasar. ✅
+- Struktur folder sudah rapi. ✅
+
+## Stage 1 — Static UI Public ✅
+
+- [x] Homepage.
+- [x] List olahraga (sport category page).
+- [x] List venue/lapangan (per sport).
+- [x] Detail lapangan (court detail with slot selector).
+- [x] Booking date picker (SlotSelector component).
+- [x] Slot jam (SlotSelector time grid).
+- [x] Booking form (customer name, phone, email).
+- [x] Booking success page.
+
+Definition of Done:
+
+- User bisa simulasi booking tanpa database. ✅
+- Tampilan mobile responsive. ✅
 
 ## Stage 2 — Domain Types dan Mock Service
 
-- [ ] Buat type `Sport`, `Venue`, `Court`, `Booking`, `PricingRule`.
-- [ ] Buat mock data.
+- [x] Buat type `Sport`, `Venue`, `Court`, `Booking`, `PricingRule`.
+- [x] Buat mock data.
 - [ ] Buat `BookingService`.
 - [ ] Buat `AvailabilityService`.
 - [ ] Buat `PricingService`.
 
 Definition of Done:
+
 - UI tidak langsung membaca array mentah.
 - Semua data lewat service.
 
@@ -56,6 +59,7 @@ Definition of Done:
 - [ ] Implement get available slots.
 
 Definition of Done:
+
 - Booking dari web tersimpan ke Spreadsheet.
 - Admin bisa melihat data booking dari Spreadsheet.
 
@@ -72,6 +76,7 @@ Definition of Done:
 - [ ] Settings page.
 
 Definition of Done:
+
 - Admin bisa mengatur booking dan data utama.
 - Owner bisa menjalankan operasional dasar.
 
@@ -84,6 +89,7 @@ Definition of Done:
 - [ ] Tambahkan audit log.
 
 Definition of Done:
+
 - Slot yang sudah pending/confirmed tidak bisa dibooking ulang.
 - Semua mutasi booking tercatat.
 
@@ -96,6 +102,7 @@ Definition of Done:
 - [ ] Template instruksi pembayaran.
 
 Definition of Done:
+
 - Booking bisa melewati alur pembayaran manual.
 
 ## Stage 7 — Notification
@@ -107,6 +114,7 @@ Definition of Done:
 - [ ] Notification log.
 
 Definition of Done:
+
 - User menerima minimal satu kanal notifikasi.
 - Admin bisa melihat log notifikasi.
 
@@ -120,6 +128,7 @@ Definition of Done:
 - [ ] Test Lighthouse PWA.
 
 Definition of Done:
+
 - Aplikasi bisa di-install.
 - Tampilan mobile terasa seperti app.
 
@@ -133,6 +142,7 @@ Definition of Done:
 - [ ] Cek API routes di production.
 
 Definition of Done:
+
 - Demo URL Vercel bisa dipakai.
 - Booking dari demo masuk ke Spreadsheet.
 
@@ -146,6 +156,7 @@ Definition of Done:
 - [ ] Test adapter swap.
 
 Definition of Done:
+
 - ENV bisa memilih adapter:
   - `DATABASE_PROVIDER=google_sheets`
   - `DATABASE_PROVIDER=postgres`
@@ -164,4 +175,5 @@ Definition of Done:
 - [ ] Security check.
 
 Definition of Done:
+
 - Aplikasi layak dipakai owner usaha kecil.
