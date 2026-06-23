@@ -7,6 +7,8 @@ import type {
   Venue,
   AuditLogEntry,
   PaymentMethod,
+  NotificationLog,
+  NotificationPayload,
 } from "@/lib/types/domain";
 
 export interface CreateBookingInput {
@@ -111,4 +113,9 @@ export interface DatabaseAdapter {
   submitPaymentProof(bookingId: string, proofUrl: string): Promise<Booking>;
   confirmPayment(bookingId: string, actorId?: string): Promise<Booking>;
   rejectPayment(bookingId: string, actorId?: string): Promise<Booking>;
+
+  // Notifications
+  getNotificationLogs(bookingId?: string): Promise<NotificationLog[]>;
+  createNotificationLog(payload: NotificationPayload, status: NotificationLog["status"], errorMessage?: string): Promise<NotificationLog>;
+  markNotificationRead(id: string): Promise<NotificationLog>;
 }
