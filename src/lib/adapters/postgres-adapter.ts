@@ -13,6 +13,7 @@ import type {
   PricingRule,
   Sport,
   Venue,
+  AuditLogEntry,
 } from "@/lib/types/domain";
 
 export class PostgresAdapter implements DatabaseAdapter {
@@ -125,5 +126,16 @@ export class PostgresAdapter implements DatabaseAdapter {
     throw new Error(
       "PostgresAdapter deleteBlockedSlot not implemented yet.",
     );
+  }
+
+  // ── Audit Log ──
+  async getAuditLogs(_targetId?: string): Promise<AuditLogEntry[]> {
+    throw new Error("PostgresAdapter getAuditLogs not implemented yet.");
+  }
+
+  async createAuditLog(
+    _entry: Omit<AuditLogEntry, "id" | "timestamp">,
+  ): Promise<AuditLogEntry> {
+    throw new Error("PostgresAdapter createAuditLog not implemented yet.");
   }
 }
