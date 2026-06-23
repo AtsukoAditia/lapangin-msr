@@ -287,6 +287,42 @@
 
 **Pre-cached:** `/offline.html`, `/icons/icon-192.png`, `/icons/icon-512.png`
 
+## UI/UX Optimization (Sports Theme)
+
+### Customer-Facing Pages
+
+- [x] Homepage uses gradient hero section with sporty green/emerald theme.
+- [x] Sport cards have hover effects and smooth transitions.
+- [x] Navbar has blur backdrop and gradient logo on scroll.
+- [x] Booking flow has step indicator with active/completed states.
+- [x] Slot selector has color-coded availability (green=available, red=booked, gray=past).
+- [x] Booking form has floating labels and animated focus states.
+- [x] Success page has animated checkmark and confetti-style celebration.
+- [x] Profile page has animated stats cards with gradient borders.
+- [x] Loyalty tier badges use gradient colors (Bronze→Platinum).
+- [x] All pages are mobile-first responsive (360px to 1440px+).
+- [x] Cards, buttons, and inputs have consistent rounded corners and shadows.
+
+### Admin Pages
+
+- [x] Admin login page has dark gradient sporty theme.
+- [x] Admin dashboard has stat cards with gradient backgrounds.
+- [x] Admin sidebar has active state with gradient highlight.
+- [x] Admin tables are responsive with horizontal scroll on mobile.
+- [x] Admin mobile has bottom navigation bar.
+- [x] Status badges use consistent color coding (amber=pending, green=confirmed, red=rejected).
+- [x] Admin layout has sticky header with blur backdrop.
+- [x] Empty states display friendly messages with icons.
+- [x] Loading states use skeleton animations.
+
+### Responsive Breakpoints
+
+| Breakpoint | Layout                            |
+| ---------- | --------------------------------- |
+| < 640px    | Mobile: single column, bottom nav |
+| 640–1024px | Tablet: 2-column grids            |
+| > 1024px   | Desktop: sidebar + content        |
+
 ## Deployment
 
 - [ ] Build berhasil.
