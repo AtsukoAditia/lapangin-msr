@@ -30,65 +30,65 @@ const blockedSlotsStore: BlockedSlot[] = [];
 const auditLogStore: AuditLogEntry[] = [];
 
 const paymentMethodsStore: PaymentMethod[] = [
-    {
-      id: "pm-1",
-      name: "BCA Transfer",
-      label: "BCA Transfer",
-      type: "bank_transfer",
-      accountName: "PT Lapangin Indonesia",
-      accountNumber: "1234567890",
-      provider: "BCA",
-      details: "BCA 1234567890 a/n PT Lapangin Indonesia",
-      instructions: "Transfer ke rekening BCA di atas, lalu upload bukti transfer.",
-      isActive: true,
-    },
-    {
-      id: "pm-2",
-      name: "Mandiri Transfer",
-      label: "Mandiri Transfer",
-      type: "bank_transfer",
-      accountName: "PT Lapangin Indonesia",
-      accountNumber: "0987654321",
-      provider: "Mandiri",
-      details: "Mandiri 0987654321 a/n PT Lapangin Indonesia",
-      instructions: "Transfer ke rekening Mandiri di atas, lalu upload bukti transfer.",
-      isActive: true,
-    },
-    {
-      id: "pm-3",
-      name: "GoPay",
-      label: "GoPay",
-      type: "e_wallet",
-      accountName: "Lapangin Official",
-      accountNumber: "081234567890",
-      provider: "GoPay",
-      details: "GoPay: 081234567890 a/n Lapangin Official",
-      instructions: "Kirim ke GoPay number di atas, lalu upload bukti transfer.",
-      isActive: true,
-    },
-    {
-      id: "pm-4",
-      name: "OVO",
-      label: "OVO",
-      type: "e_wallet",
-      accountName: "Lapangin Official",
-      accountNumber: "081234567890",
-      provider: "OVO",
-      details: "OVO: 081234567890 a/n Lapangin Official",
-      instructions: "Kirim ke OVO number di atas, lalu upload bukti transfer.",
-      isActive: true,
-    },
-    {
-      id: "pm-5",
-      name: "QRIS",
-      label: "QRIS",
-      type: "qris",
-      accountName: "Lapangin",
-      provider: "QRIS",
-      details: "Scan QRIS yang tersedia di lokasi",
-      instructions: "Scan QRIS yang tersedia di lokasi, lalu upload bukti transfer.",
-      isActive: true,
-    },
+  {
+    id: "pm-1",
+    name: "BCA Transfer",
+    label: "BCA Transfer",
+    type: "bank_transfer",
+    accountName: "PT Lapangin Indonesia",
+    accountNumber: "1234567890",
+    provider: "BCA",
+    details: "BCA 1234567890 a/n PT Lapangin Indonesia",
+    instructions: "Transfer ke rekening BCA di atas, lalu upload bukti transfer.",
+    isActive: true,
+  },
+  {
+    id: "pm-2",
+    name: "Mandiri Transfer",
+    label: "Mandiri Transfer",
+    type: "bank_transfer",
+    accountName: "PT Lapangin Indonesia",
+    accountNumber: "0987654321",
+    provider: "Mandiri",
+    details: "Mandiri 0987654321 a/n PT Lapangin Indonesia",
+    instructions: "Transfer ke rekening Mandiri di atas, lalu upload bukti transfer.",
+    isActive: true,
+  },
+  {
+    id: "pm-3",
+    name: "GoPay",
+    label: "GoPay",
+    type: "e_wallet",
+    accountName: "Lapangin Official",
+    accountNumber: "081234567890",
+    provider: "GoPay",
+    details: "GoPay: 081234567890 a/n Lapangin Official",
+    instructions: "Kirim ke GoPay number di atas, lalu upload bukti transfer.",
+    isActive: true,
+  },
+  {
+    id: "pm-4",
+    name: "OVO",
+    label: "OVO",
+    type: "e_wallet",
+    accountName: "Lapangin Official",
+    accountNumber: "081234567890",
+    provider: "OVO",
+    details: "OVO: 081234567890 a/n Lapangin Official",
+    instructions: "Kirim ke OVO number di atas, lalu upload bukti transfer.",
+    isActive: true,
+  },
+  {
+    id: "pm-5",
+    name: "QRIS",
+    label: "QRIS",
+    type: "qris",
+    accountName: "Lapangin",
+    provider: "QRIS",
+    details: "Scan QRIS yang tersedia di lokasi",
+    instructions: "Scan QRIS yang tersedia di lokasi, lalu upload bukti transfer.",
+    isActive: true,
+  },
 ];
 
 function generateBookingCode(): string {
@@ -308,7 +308,7 @@ export class MockAdapter implements DatabaseAdapter {
     return { ...bookingsStore[index] };
   }
 
-  async confirmPayment(bookingId: string, actorId?: string): Promise<Booking> {
+  async confirmPayment(bookingId: string, _actorId?: string): Promise<Booking> {
     const index = bookingsStore.findIndex((b) => b.id === bookingId);
     if (index === -1) {
       throw new Error(`Booking not found: ${bookingId}`);
@@ -322,7 +322,7 @@ export class MockAdapter implements DatabaseAdapter {
     return { ...bookingsStore[index] };
   }
 
-  async rejectPayment(bookingId: string, actorId?: string): Promise<Booking> {
+  async rejectPayment(bookingId: string, _actorId?: string): Promise<Booking> {
     const index = bookingsStore.findIndex((b) => b.id === bookingId);
     if (index === -1) {
       throw new Error(`Booking not found: ${bookingId}`);
