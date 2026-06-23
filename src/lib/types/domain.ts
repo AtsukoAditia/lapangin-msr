@@ -94,7 +94,30 @@ export type AuditLogAction =
   | "booking_status_changed"
   | "booking_conflict_blocked"
   | "blocked_slot_created"
-  | "blocked_slot_deleted";
+  | "blocked_slot_deleted"
+  | "payment_proof_submitted"
+  | "payment_confirmed"
+  | "payment_rejected";
+
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  label: string;
+  type: "bank_transfer" | "e_wallet" | "qris" | "cash";
+  accountName: string;
+  accountNumber?: string;
+  provider: string;
+  details: string;
+  instructions: string;
+  isActive: boolean;
+}
+
+export interface PaymentInstruction {
+  method: PaymentMethod;
+  amount: number;
+  bookingCode: string;
+  notes?: string;
+}
 
 export interface AuditLogEntry {
   id: string;
