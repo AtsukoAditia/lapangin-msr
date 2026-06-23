@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getDatabaseAdapter } from "@/lib/adapters";
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -13,7 +13,7 @@ export async function GET(
     if (!booking) {
       return NextResponse.json(
         { error: "Booking tidak ditemukan." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
