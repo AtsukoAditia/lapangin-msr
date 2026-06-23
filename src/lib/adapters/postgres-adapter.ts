@@ -14,6 +14,7 @@ import type {
   Sport,
   Venue,
   AuditLogEntry,
+  PaymentMethod,
 } from "@/lib/types/domain";
 
 export class PostgresAdapter implements DatabaseAdapter {
@@ -137,5 +138,27 @@ export class PostgresAdapter implements DatabaseAdapter {
     _entry: Omit<AuditLogEntry, "id" | "timestamp">,
   ): Promise<AuditLogEntry> {
     throw new Error("PostgresAdapter createAuditLog not implemented yet.");
+  }
+
+  // ── Payment Methods ──
+  async getPaymentMethods(): Promise<PaymentMethod[]> {
+    throw new Error("PostgresAdapter getPaymentMethods not implemented yet.");
+  }
+
+  async getActivePaymentMethods(): Promise<PaymentMethod[]> {
+    throw new Error("PostgresAdapter getActivePaymentMethods not implemented yet.");
+  }
+
+  // ── Payment Proof ──
+  async submitPaymentProof(_bookingId: string, _proofUrl: string): Promise<Booking> {
+    throw new Error("PostgresAdapter submitPaymentProof not implemented yet.");
+  }
+
+  async confirmPayment(_bookingId: string, _actorId?: string): Promise<Booking> {
+    throw new Error("PostgresAdapter confirmPayment not implemented yet.");
+  }
+
+  async rejectPayment(_bookingId: string, _actorId?: string): Promise<Booking> {
+    throw new Error("PostgresAdapter rejectPayment not implemented yet.");
   }
 }

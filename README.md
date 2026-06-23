@@ -57,7 +57,9 @@ Admin dashboard, booking list, confirm/reject, courts management, pricing manage
 
 Server-side re-check sebelum insert, HTTP 409 on conflict, UI conflict handling, audit log, comprehensive validation.
 
-### ⬜ Stage 6 — Payment Manual
+### ✅ Stage 6 — Payment Manual
+
+Payment methods (BCA, BNI, GoPay, OVO, Dana, QRIS), payment instructions, bukti upload, admin confirm/reject.
 
 ### ⬜ Stage 7 — Notification
 
@@ -95,6 +97,7 @@ src/
 │   ├── api/                 # API routes
 │   │   ├── admin/           # Admin API
 │   │   ├── bookings/        # Public booking API
+│   │   ├── payments/        # Payment API (methods, proof upload)
 │   │   └── availability/    # Slot availability API
 │   └── (public)/            # Public booking flow
 │       └── booking/
@@ -107,7 +110,7 @@ src/
 │   └── ui/                  # Shared UI
 ├── lib/
 │   ├── adapters/            # Database adapters
-│   ├── services/            # Business logic
+│   ├── services/            # Business logic (booking, availability, pricing, payment)
 │   ├── types/               # Domain types
 │   └── validators/          # Validation schemas
 └── config/                  # App config

@@ -17,6 +17,7 @@ import type {
   Venue,
   AuditLogEntry,
   AuditLogAction,
+  PaymentMethod,
 } from "@/lib/types/domain";
 
 function getJwtClient(): JWT {
@@ -484,5 +485,91 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
     });
 
     return logEntry;
+  }
+
+  // ── Payment Methods ──
+  async getPaymentMethods(): Promise<PaymentMethod[]> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["payment_methods"];
+    if (!sheet) return [];
+
+    const rows = await sheet.getRows();
+    return rows.map((row) => {
+      const obj = row.toObject();
+      return {
+        id: String(obj.id ?? ""),
+        name: String(obj.name ?? ""),
+        label: String(obj.label ?? obj.name ?? ""),
+        type: String(obj.type ?? "bank_transfer") as PaymentMethod["type"],
+        accountName: String(obj.account_name ?? ""),
+        accountNumber: obj.account_number ? String(obj.account_number) : undefined,
+        provider: String(obj.provider ?? ""),
+        details: String(obj.details ?? ""),
+        instructions: String(obj.instructions ?? ""),
+        isActive: String(obj.is_active).toLowerCase() === "true",
+      };
+    });
+  }
+
+  async getActivePaymentMethods(): Promise<PaymentMethod[]> {
+    const methods = await this.getPaymentMethods();
+    return methods.filter((m) => m.isActive);
+  }
+
+  // ── Payment Proof ──
+  async submitPaymentProof(bookingId: string, proofUrl: string): Promise<Booking> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["bookings"];
+    if (!sheet) throw new Error("Bookings sheet not found");
+
+    const rows = await sheet.getRows();
+    const targetRow = rows.find((r) => r.get("id") === bookingId);
+    if (!targetRow) throw new Error(`Booking with id ${bookingId} not found`);
+
+    const now = new Date().toISOString();
+    targetRow.set("payment_proof_url", proofUrl);
+    targetRow.set("payment_status", "waiting_confirmation");
+    targetRow.set("booking_status", "waiting_payment");
+    targetRow.set("updated_at", now);
+    await targetRow.save();
+
+    return rowToBooking(targetRow.toObject());
+  }
+
+  async confirmPayment(bookingId: string, actorId?: string): Promise<Booking> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["bookings"];
+    if (!sheet) throw new Error("Bookings sheet not found");
+
+    const rows = await sheet.getRows();
+    const targetRow = rows.find((r) => r.get("id") === bookingId);
+    if (!targetRow) throw new Error(`Booking with id ${bookingId} not found`);
+
+    const now = new Date().toISOString();
+    targetRow.set("payment_status", "paid");
+    targetRow.set("booking_status", "confirmed");
+    targetRow.set("updated_at", now);
+    await targetRow.save();
+
+    return rowToBooking(targetRow.toObject());
+  }
+
+  async rejectPayment(bookingId: string, actorId?: string): Promise<Booking> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["bookings"];
+    if (!sheet) throw new Error("Bookings sheet not found");
+
+    const rows = await sheet.getRows();
+    const targetRow = rows.find((r) => r.get("id") === bookingId);
+    if (!targetRow) throw new Error(`Booking with id ${bookingId} not found`);
+
+    const now = new Date().toISOString();
+    targetRow.set("payment_status", "unpaid");
+    targetRow.set("booking_status", "pending");
+    targetRow.set("payment_proof_url", "");
+    targetRow.set("updated_at", now);
+    await targetRow.save();
+
+    return rowToBooking(targetRow.toObject());
   }
 }

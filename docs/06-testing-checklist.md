@@ -68,10 +68,42 @@
 
 **Overlap check:** Same `courtId` + `bookingDate` + overlapping `startTime`/`endTime`
 
+## Payment Manual (Stage 6)
+
+- [x] Success page menampilkan pilihan metode pembayaran setelah booking.
+- [x] 6 metode pembayaran tersedia (BCA, BNI, GoPay, OVO, Dana, QRIS).
+- [x] Instruksi pembayaran tampil lengkap (rekening/nomor, langkah, nominal).
+- [x] User bisa upload bukti pembayaran (image/file).
+- [x] Status booking berubah ke `waiting_payment` setelah upload bukti.
+- [x] Bukti pembayaran tersimpan (paymentProofUrl ter-update).
+- [x] User melihat "Menunggu Konfirmasi" setelah upload bukti.
+- [x] Admin melihat link bukti pembayaran di halaman kelola booking.
+- [x] Admin bisa klik "Konfirmasi Bayar" → booking jadi `confirmed`, payment jadi `paid`.
+- [x] Admin bisa klik "Tolak Bayar" → booking kembali `waiting_payment`, bukti dihapus.
+- [x] PaymentMethod.gateway field tersedia untuk integrasi ipaymu masa depan.
+- [x] Build berhasil tanpa error (31 routes ter-generate).
+
+### Payment Manual Architecture
+
+| Layer       | File                                        | Responsibility                        |
+| ----------- | ------------------------------------------- | ------------------------------------- |
+| Types       | `src/lib/types/domain.ts`                   | `PaymentMethod`, `PaymentInstruction` |
+| Service     | `src/lib/services/payment-service.ts`       | Payment flow logic                    |
+| Adapter     | `src/lib/adapters/mock-adapter.ts`          | 6 mock payment methods                |
+| Adapter     | `src/lib/adapters/google-sheets-adapter.ts` | Read payment_methods sheet            |
+| API (user)  | `src/app/api/payments/methods/route.ts`     | GET payment methods                   |
+| API (user)  | `src/app/api/payments/proof/route.ts`       | POST upload proof                     |
+| API (user)  | `src/app/api/bookings/[id]/route.ts`        | GET booking detail                    |
+| API (admin) | `src/app/api/admin/payments/[id]/route.ts`  | POST confirm/reject payment           |
+| UI (user)   | `src/app/(public)/booking/success/page.tsx` | 3-step payment flow                   |
+| UI (admin)  | `src/app/admin/bookings/page.tsx`           | Confirm/reject buttons + proof link   |
+
+**Payment flow:** `pending` → `waiting_payment` (upload proof) → `confirmed` + `paid` (admin confirms)
+
 ## Build & Compilation
 
 - [x] `npm run build` berhasil tanpa error TypeScript.
-- [x] Semua 29 pages/routes ter-generate.
+- [x] Semua 31 pages/routes ter-generate (termasuk payment routes).
 - [x] Admin pages ter-generate sebagai static pages.
 - [x] Admin API routes ter-generate sebagai dynamic server functions.
 
