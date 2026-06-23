@@ -6,6 +6,7 @@ import type {
   Sport,
   Venue,
   AuditLogEntry,
+  PaymentMethod,
 } from "@/lib/types/domain";
 
 export interface CreateBookingInput {
@@ -101,4 +102,13 @@ export interface DatabaseAdapter {
   createAuditLog(
     entry: Omit<AuditLogEntry, "id" | "timestamp">,
   ): Promise<AuditLogEntry>;
+
+  // Payment Methods
+  getPaymentMethods(): Promise<PaymentMethod[]>;
+  getActivePaymentMethods(): Promise<PaymentMethod[]>;
+
+  // Payment Proof
+  submitPaymentProof(bookingId: string, proofUrl: string): Promise<Booking>;
+  confirmPayment(bookingId: string, actorId?: string): Promise<Booking>;
+  rejectPayment(bookingId: string, actorId?: string): Promise<Booking>;
 }
