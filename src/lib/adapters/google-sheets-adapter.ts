@@ -8,7 +8,16 @@ import type {
   UpdatePricingRuleInput,
   CreateBlockedSlotInput,
 } from "./database-adapter";
-import type { Booking, BlockedSlot, Court, PricingRule, Sport, Venue } from "@/lib/types/domain";
+import type {
+  Booking,
+  BlockedSlot,
+  Court,
+  PricingRule,
+  Sport,
+  Venue,
+  AuditLogEntry,
+  AuditLogAction,
+} from "@/lib/types/domain";
 
 function getJwtClient(): JWT {
   const email = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
@@ -110,6 +119,21 @@ function rowToPricingRule(row: Record<string, unknown>): PricingRule {
     pricePerHour: Number(row.price_per_hour ?? 0),
     priority: Number(row.priority ?? 0),
     isActive: String(row.is_active).toLowerCase() === "true",
+  };
+}
+
+function rowToAuditLog(row: Record<string, unknown>): AuditLogEntry {
+  return {
+    id: String(row.id ?? ""),
+    timestamp: String(row.timestamp ?? ""),
+    action: String(row.action ?? "") as AuditLogAction,
+    targetType: String(row.target_type ?? "booking") as AuditLogEntry["targetType"],
+    targetId: String(row.target_id ?? ""),
+    actorType: String(row.actor_type ?? "system") as AuditLogEntry["actorType"],
+    actorId: row.actor_id ? String(row.actor_id) : undefined,
+    details: String(row.details ?? ""),
+    previousValue: row.previous_value ? String(row.previous_value) : undefined,
+    newValue: row.new_value ? String(row.new_value) : undefined,
   };
 }
 
@@ -416,5 +440,49 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
     if (!targetRow) throw new Error(`Blocked slot with id ${id} not found`);
 
     await targetRow.delete();
+  }
+
+  // ── Audit Log ──
+  async getAuditLogs(targetId?: string): Promise<AuditLogEntry[]> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["audit_log"];
+    if (!sheet) return [];
+
+    const rows = await sheet.getRows();
+    let entries = rows.map((row) => rowToAuditLog(row.toObject()));
+    if (targetId) {
+      entries = entries.filter((e) => e.targetId === targetId);
+    }
+    return entries;
+  }
+
+  async createAuditLog(
+    entry: Omit<AuditLogEntry, "id" | "timestamp">,
+  ): Promise<AuditLogEntry> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["audit_log"];
+    if (!sheet) throw new Error("Audit log sheet not found");
+
+    const now = new Date().toISOString();
+    const logEntry: AuditLogEntry = {
+      id: `al-${crypto.randomUUID().slice(0, 8)}`,
+      timestamp: now,
+      ...entry,
+    };
+
+    await sheet.addRow({
+      id: logEntry.id,
+      timestamp: logEntry.timestamp,
+      action: logEntry.action,
+      target_type: logEntry.targetType,
+      target_id: logEntry.targetId,
+      actor_type: logEntry.actorType,
+      actor_id: logEntry.actorId ?? "",
+      details: logEntry.details,
+      previous_value: logEntry.previousValue ?? "",
+      new_value: logEntry.newValue ?? "",
+    });
+
+    return logEntry;
   }
 }

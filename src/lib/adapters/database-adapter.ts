@@ -5,6 +5,7 @@ import type {
   PricingRule,
   Sport,
   Venue,
+  AuditLogEntry,
 } from "@/lib/types/domain";
 
 export interface CreateBookingInput {
@@ -94,4 +95,10 @@ export interface DatabaseAdapter {
   getAllBlockedSlots(): Promise<BlockedSlot[]>;
   createBlockedSlot(input: CreateBlockedSlotInput): Promise<BlockedSlot>;
   deleteBlockedSlot(id: string): Promise<void>;
+
+  // Audit Log
+  getAuditLogs(targetId?: string): Promise<AuditLogEntry[]>;
+  createAuditLog(
+    entry: Omit<AuditLogEntry, "id" | "timestamp">,
+  ): Promise<AuditLogEntry>;
 }
