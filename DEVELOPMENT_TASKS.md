@@ -136,7 +136,7 @@ Definition of Done:
 ## Stage 6 — Payment Manual
 
 - [ ] Tambahkan metode pembayaran manual.
-- [ ] Persiapkan juga untuk metode pembayaran otomatis seperti
+- [ ] Persiapkan juga untuk metode pembayaran otomatis untuk https://ipaymu.com/
 - [ ] Upload/link bukti pembayaran.
 - [ ] Status `waiting_payment`, `paid`, `confirmed`.
 - [ ] Admin mark as paid.
