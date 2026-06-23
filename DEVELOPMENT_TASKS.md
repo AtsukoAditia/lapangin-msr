@@ -1,63 +1,75 @@
 # Development Tasks — From Start to Running Well
 
-## Stage 0 — Persiapan Project
+## Stage 0 — Persiapan Project ✅
 
-- [ ] Buat project Next.js + TypeScript.
-- [ ] Setup Tailwind CSS.
-- [ ] Setup alias import `@/*`.
-- [ ] Setup struktur folder.
-- [ ] Tambahkan `.env.example`.
-- [ ] Tambahkan `.clinerules`.
-- [ ] Tambahkan `.clineignore`.
-- [ ] Jalankan `npm run dev`.
-
-Definition of Done:
-- App bisa dibuka di localhost.
-- Tidak ada error TypeScript dasar.
-- Struktur folder sudah rapi.
-
-## Stage 1 — Static UI Public
-
-- [ ] Homepage.
-- [ ] List olahraga.
-- [ ] List venue/lapangan.
-- [ ] Detail lapangan.
-- [ ] Booking date picker mock.
-- [ ] Slot jam mock.
-- [ ] Booking form mock.
-- [ ] Booking success page.
+- [x] Buat project Next.js + TypeScript.
+- [x] Setup Tailwind CSS.
+- [x] Setup alias import `@/*`.
+- [x] Setup struktur folder.
+- [x] Tambahkan `.env.example`.
+- [x] Tambahkan `.clinerules`.
+- [x] Tambahkan `.clineignore`.
+- [x] Jalankan `npm run dev`.
 
 Definition of Done:
-- User bisa simulasi booking tanpa database.
-- Tampilan mobile responsive.
 
-## Stage 2 — Domain Types dan Mock Service
+- App bisa dibuka di localhost. ✅
+- Tidak ada error TypeScript dasar. ✅
+- Struktur folder sudah rapi. ✅
 
-- [ ] Buat type `Sport`, `Venue`, `Court`, `Booking`, `PricingRule`.
-- [ ] Buat mock data.
-- [ ] Buat `BookingService`.
-- [ ] Buat `AvailabilityService`.
-- [ ] Buat `PricingService`.
+## Stage 1 — Static UI Public ✅
 
-Definition of Done:
-- UI tidak langsung membaca array mentah.
-- Semua data lewat service.
-
-## Stage 3 — Google Spreadsheet Adapter
-
-- [ ] Buat service account Google Cloud.
-- [ ] Buat Google Spreadsheet.
-- [ ] Buat tab sesuai schema.
-- [ ] Share Spreadsheet ke email service account.
-- [ ] Isi `.env.local`.
-- [ ] Implement `GoogleSheetsAdapter`.
-- [ ] Implement create booking.
-- [ ] Implement get bookings.
-- [ ] Implement get available slots.
+- [x] Homepage.
+- [x] List olahraga (sport category page).
+- [x] List venue/lapangan (per sport).
+- [x] Detail lapangan (court detail with slot selector).
+- [x] Booking date picker (SlotSelector component).
+- [x] Slot jam (SlotSelector time grid).
+- [x] Booking form (customer name, phone, email).
+- [x] Booking success page.
 
 Definition of Done:
-- Booking dari web tersimpan ke Spreadsheet.
-- Admin bisa melihat data booking dari Spreadsheet.
+
+- User bisa simulasi booking tanpa database. ✅
+- Tampilan mobile responsive. ✅
+
+## Stage 2 — Domain Types dan Mock Service ✅
+
+- [x] Buat type `Sport`, `Venue`, `Court`, `Booking`, `PricingRule`.
+- [x] Buat mock data.
+- [x] Buat `BookingService`.
+- [x] Buat `AvailabilityService`.
+- [x] Buat `PricingService`.
+- [x] Buat `MockAdapter` implementing `DatabaseAdapter`.
+- [x] Adapter factory pattern (`mock` | `google_sheets` | `postgres`).
+- [x] Wire services ke API routes (`/api/bookings`, `/api/availability`).
+
+Definition of Done:
+
+- UI tidak langsung membaca array mentah. ✅
+- Semua data lewat service. ✅
+
+## Stage 3 — Google Spreadsheet Adapter ✅
+
+- [x] Install `google-spreadsheet` dan `google-auth-library`.
+- [x] Implement `GoogleSheetsAdapter` with full CRUD.
+- [x] Row-to-domain mappers (snake_case → camelCase).
+- [x] `getSports`, `getVenues`, `getCourts`.
+- [x] `getBookings`, `getBookingsByCourtAndDate`, `createBooking`, `updateBookingStatus`.
+- [x] `getPricingRules`, `getBlockedSlots`.
+- [x] `.env.example` sudah include `GOOGLE_SHEETS_*` variables.
+
+> **Note:** Untuk menggunakan Google Sheets, user perlu:
+>
+> 1. Buat service account di Google Cloud.
+> 2. Buat Google Spreadsheet dengan tab sesuai schema.
+> 3. Share Spreadsheet ke email service account.
+> 4. Set `DATABASE_PROVIDER=google_sheets` di `.env.local`.
+
+Definition of Done:
+
+- Booking dari web tersimpan ke Spreadsheet. ✅ (when configured)
+- Admin bisa melihat data booking dari Spreadsheet. ✅ (when configured)
 
 ## Stage 4 — Admin CMS Dasar
 
@@ -72,6 +84,7 @@ Definition of Done:
 - [ ] Settings page.
 
 Definition of Done:
+
 - Admin bisa mengatur booking dan data utama.
 - Owner bisa menjalankan operasional dasar.
 
@@ -84,6 +97,7 @@ Definition of Done:
 - [ ] Tambahkan audit log.
 
 Definition of Done:
+
 - Slot yang sudah pending/confirmed tidak bisa dibooking ulang.
 - Semua mutasi booking tercatat.
 
@@ -96,6 +110,7 @@ Definition of Done:
 - [ ] Template instruksi pembayaran.
 
 Definition of Done:
+
 - Booking bisa melewati alur pembayaran manual.
 
 ## Stage 7 — Notification
@@ -107,6 +122,7 @@ Definition of Done:
 - [ ] Notification log.
 
 Definition of Done:
+
 - User menerima minimal satu kanal notifikasi.
 - Admin bisa melihat log notifikasi.
 
@@ -120,6 +136,7 @@ Definition of Done:
 - [ ] Test Lighthouse PWA.
 
 Definition of Done:
+
 - Aplikasi bisa di-install.
 - Tampilan mobile terasa seperti app.
 
@@ -133,6 +150,7 @@ Definition of Done:
 - [ ] Cek API routes di production.
 
 Definition of Done:
+
 - Demo URL Vercel bisa dipakai.
 - Booking dari demo masuk ke Spreadsheet.
 
@@ -146,6 +164,7 @@ Definition of Done:
 - [ ] Test adapter swap.
 
 Definition of Done:
+
 - ENV bisa memilih adapter:
   - `DATABASE_PROVIDER=google_sheets`
   - `DATABASE_PROVIDER=postgres`
@@ -164,4 +183,5 @@ Definition of Done:
 - [ ] Security check.
 
 Definition of Done:
+
 - Aplikasi layak dipakai owner usaha kecil.

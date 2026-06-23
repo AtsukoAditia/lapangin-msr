@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/ui/Navbar";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Lapangin",
-  description: "Booking lapangan olahraga berbasis web PWA.",
+  title: "Lapangin — Booking Lapangan Olahraga",
+  description:
+    "Booking lapangan olahraga lebih cepat, rapi, dan mobile friendly. Futsal, badminton, padel, tenis, basket, dan minisoccer.",
   manifest: "/manifest.json",
 };
 
@@ -14,7 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body>{children}</body>
+      <body className={`${inter.className} antialiased`}>
+        <Navbar />
+        {children}
+      </body>
     </html>
   );
 }
