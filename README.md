@@ -53,7 +53,9 @@ GoogleSheetsAdapter, row-to-domain mappers, full CRUD.
 
 Admin dashboard, booking list, confirm/reject, courts management, pricing management, settings.
 
-### ⬜ Stage 5 — Anti Double Booking
+### ✅ Stage 5 — Anti Double Booking
+
+Server-side re-check sebelum insert, HTTP 409 on conflict, UI conflict handling, audit log, comprehensive validation.
 
 ### ⬜ Stage 6 — Payment Manual
 

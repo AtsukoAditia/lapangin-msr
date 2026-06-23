@@ -104,22 +104,39 @@ Definition of Done:
   - `GET/POST/PATCH/DELETE /api/admin/pricing` — CRUD pricing rules.
 - **Adapter methods:** `getBookingStats`, `updateCourt`, `getPricingRules`, `updatePricingRule`, `deletePricingRule`.
 
-## Stage 5 — Anti Double Booking
+## Stage 5 — Anti Double Booking ✅
 
-- [ ] Validasi slot sebelum submit.
-- [ ] Validasi ulang di server.
-- [ ] Cek bentrok berdasarkan court, date, start, end, status aktif.
-- [ ] Tambahkan status booking.
-- [ ] Tambahkan audit log.
+- [x] Validasi slot sebelum submit (SlotSelector menampilkan slot terpesan).
+- [x] Validasi ulang di server (`validateBookingInput` + `BookingService.createBooking`).
+- [x] Cek bentrok berdasarkan court, date, start, end, status aktif.
+- [x] Error 409 (CONFLICT) dikembalikan ke UI jika slot sudah dipesan.
+- [x] Booking form menampilkan pesan konflik + tombol "Pilih Jam Lain".
+- [x] Tambahkan `AuditLogEntry` type & adapter methods.
+- [x] Semua mutasi booking tercatat (`logAudit` dipanggil di service layer).
+- [x] Comprehensive server-side validation (`validateBookingInput`).
 
 Definition of Done:
 
-- Slot yang sudah pending/confirmed tidak bisa dibooking ulang.
-- Semua mutasi booking tercatat.
+- Slot yang sudah pending/confirmed/waiting_payment/paid tidak bisa dibooking ulang. ✅
+- Semua mutasi booking tercatat di audit log. ✅
+- Server mengembalikan 409 untuk double-booking. ✅
+- UI menampilkan error konflik dengan aksi kembali ke slot selector. ✅
+
+### Arsitektur Anti Double Booking:
+
+- **Validator** (`src/lib/validators/booking-validator.ts`) — Zod schema + `validateBookingInput()` helper.
+- **BookingService** (`src/lib/services/booking-service.ts`) — Re-check ketersediaan sebelum insert + `logAudit()`.
+- **API Route** (`src/app/api/bookings/route.ts`) — Server-side validation, HTTP 409 on conflict.
+- **UI** (`src/app/(public)/booking/form/page.tsx`) — Conflict error banner + "Pilih Jam Lain" button.
+- **Domain types** (`src/lib/types/domain.ts`) — `AuditLogEntry` type.
+- **DatabaseAdapter** — `logAudit()` + `getAuditLogs()` methods.
+- **Active blocking statuses:** `pending`, `waiting_payment`, `paid`, `confirmed`.
+- **Double-booking check:** `courtId + bookingDate + startTime + endTime` overlap.
 
 ## Stage 6 — Payment Manual
 
 - [ ] Tambahkan metode pembayaran manual.
+- [ ] Persiapkan juga untuk metode pembayaran otomatis seperti
 - [ ] Upload/link bukti pembayaran.
 - [ ] Status `waiting_payment`, `paid`, `confirmed`.
 - [ ] Admin mark as paid.

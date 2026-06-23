@@ -37,14 +37,36 @@
 - [x] PATCH /api/admin/pricing — update pricing rule.
 - [x] DELETE /api/admin/pricing — delete pricing rule.
 
-## Booking Logic
+## Booking Logic (Anti Double Booking — Stage 5)
 
-- [ ] Tidak bisa booking slot yang sama (Stage 5).
+- [x] Tidak bisa booking slot yang sudah pending/waiting_payment/paid/confirmed.
+- [x] Server mengembalikan HTTP 409 (CONFLICT) saat double-booking terdeteksi.
+- [x] Re-check ketersediaan dilakukan server-side sebelum insert booking.
+- [x] Booking form menampilkan pesan error konflik yang jelas.
+- [x] Tombol "Pilih Jam Lain" muncul pada error konflik dan navigasi kembali ke slot selector.
+- [x] Slot terpesan muncul merah di SlotSelector (pre-check availability via API).
+- [x] Comprehensive server-side validation (nama, HP, durasi, format waktu, masa lalu).
+- [x] Audit log tercatat setiap booking created, confirmed, rejected, cancelled.
 - [x] Tidak bisa booking di luar jam buka.
 - [x] Tidak bisa booking lapangan nonaktif.
 - [x] Harga sesuai aturan.
 - [x] Status booking berubah benar.
 - [x] Payment status berubah benar.
+
+### Anti Double Booking Architecture
+
+| Layer     | File                                      | Responsibility                        |
+| --------- | ----------------------------------------- | ------------------------------------- |
+| Validator | `src/lib/validators/booking-validator.ts` | Zod schema + `validateBookingInput()` |
+| Service   | `src/lib/services/booking-service.ts`     | Re-check + create + audit log         |
+| API       | `src/app/api/bookings/route.ts`           | HTTP 409 on conflict                  |
+| UI        | `src/app/(public)/booking/form/page.tsx`  | Conflict error + "Pilih Jam Lain"     |
+| Types     | `src/lib/types/domain.ts`                 | `AuditLogEntry` type                  |
+| Adapter   | All adapter files                         | `logAudit()` + `getAuditLogs()`       |
+
+**Active blocking statuses:** `pending`, `waiting_payment`, `paid`, `confirmed`
+
+**Overlap check:** Same `courtId` + `bookingDate` + overlapping `startTime`/`endTime`
 
 ## Build & Compilation
 
