@@ -1,6 +1,13 @@
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
-import type { DatabaseAdapter, CreateBookingInput } from "./database-adapter";
+import type {
+  DatabaseAdapter,
+  CreateBookingInput,
+  UpdateCourtInput,
+  CreatePricingRuleInput,
+  UpdatePricingRuleInput,
+  CreateBlockedSlotInput,
+} from "./database-adapter";
 import type { Booking, BlockedSlot, Court, PricingRule, Sport, Venue } from "@/lib/types/domain";
 
 function getJwtClient(): JWT {
@@ -230,6 +237,56 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
     return rowToBooking(targetRow.toObject());
   }
 
+  async getAllCourts(): Promise<Court[]> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["courts"];
+    if (!sheet) return [];
+
+    const rows = await sheet.getRows();
+    return rows.map((row) => rowToCourt(row.toObject()));
+  }
+
+  async getCourtById(id: string): Promise<Court | null> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["courts"];
+    if (!sheet) return null;
+
+    const rows = await sheet.getRows();
+    const row = rows.find((r) => r.get("id") === id);
+    return row ? rowToCourt(row.toObject()) : null;
+  }
+
+  async updateCourt(id: string, input: UpdateCourtInput): Promise<Court> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["courts"];
+    if (!sheet) throw new Error("Courts sheet not found");
+
+    const rows = await sheet.getRows();
+    const targetRow = rows.find((r) => r.get("id") === id);
+    if (!targetRow) throw new Error(`Court with id ${id} not found`);
+
+    if (input.name !== undefined) targetRow.set("name", input.name);
+    if (input.slug !== undefined) targetRow.set("slug", input.slug);
+    if (input.surfaceType !== undefined) targetRow.set("surface_type", input.surfaceType);
+    if (input.indoorType !== undefined) targetRow.set("indoor_type", input.indoorType);
+    if (input.capacity !== undefined) targetRow.set("capacity", input.capacity);
+    if (input.basePrice !== undefined) targetRow.set("base_price", input.basePrice);
+    if (input.isActive !== undefined) targetRow.set("is_active", String(input.isActive));
+
+    await targetRow.save();
+    return rowToCourt(targetRow.toObject());
+  }
+
+  async getBookingById(id: string): Promise<Booking | null> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["bookings"];
+    if (!sheet) return null;
+
+    const rows = await sheet.getRows();
+    const row = rows.find((r) => r.get("id") === id);
+    return row ? rowToBooking(row.toObject()) : null;
+  }
+
   async getPricingRules(courtId: string): Promise<PricingRule[]> {
     const doc = await getSpreadsheet();
     const sheet = doc.sheetsByTitle["pricing_rules"];
@@ -241,6 +298,72 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
       .filter((rule) => rule.courtId === courtId && rule.isActive);
   }
 
+  async getAllPricingRules(): Promise<PricingRule[]> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["pricing_rules"];
+    if (!sheet) return [];
+
+    const rows = await sheet.getRows();
+    return rows.map((row) => rowToPricingRule(row.toObject()));
+  }
+
+  async createPricingRule(input: CreatePricingRuleInput): Promise<PricingRule> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["pricing_rules"];
+    if (!sheet) throw new Error("Pricing rules sheet not found");
+
+    const rule: PricingRule = {
+      id: `pr-${crypto.randomUUID().slice(0, 8)}`,
+      ...input,
+      isActive: input.isActive ?? true,
+    };
+
+    await sheet.addRow({
+      id: rule.id,
+      court_id: rule.courtId,
+      day_type: rule.dayType,
+      start_time: rule.startTime,
+      end_time: rule.endTime,
+      price_per_hour: rule.pricePerHour,
+      priority: rule.priority,
+      is_active: String(rule.isActive),
+    });
+
+    return rule;
+  }
+
+  async updatePricingRule(id: string, input: UpdatePricingRuleInput): Promise<PricingRule> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["pricing_rules"];
+    if (!sheet) throw new Error("Pricing rules sheet not found");
+
+    const rows = await sheet.getRows();
+    const targetRow = rows.find((r) => r.get("id") === id);
+    if (!targetRow) throw new Error(`Pricing rule with id ${id} not found`);
+
+    if (input.dayType !== undefined) targetRow.set("day_type", input.dayType);
+    if (input.startTime !== undefined) targetRow.set("start_time", input.startTime);
+    if (input.endTime !== undefined) targetRow.set("end_time", input.endTime);
+    if (input.pricePerHour !== undefined) targetRow.set("price_per_hour", input.pricePerHour);
+    if (input.priority !== undefined) targetRow.set("priority", input.priority);
+    if (input.isActive !== undefined) targetRow.set("is_active", String(input.isActive));
+
+    await targetRow.save();
+    return rowToPricingRule(targetRow.toObject());
+  }
+
+  async deletePricingRule(id: string): Promise<void> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["pricing_rules"];
+    if (!sheet) throw new Error("Pricing rules sheet not found");
+
+    const rows = await sheet.getRows();
+    const targetRow = rows.find((r) => r.get("id") === id);
+    if (!targetRow) throw new Error(`Pricing rule with id ${id} not found`);
+
+    await targetRow.delete();
+  }
+
   async getBlockedSlots(courtId: string, date: string): Promise<BlockedSlot[]> {
     const doc = await getSpreadsheet();
     const sheet = doc.sheetsByTitle["blocked_slots"];
@@ -250,5 +373,48 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
     return rows
       .map((row) => rowToBlockedSlot(row.toObject()))
       .filter((slot) => slot.courtId === courtId && slot.date === date);
+  }
+
+  async getAllBlockedSlots(): Promise<BlockedSlot[]> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["blocked_slots"];
+    if (!sheet) return [];
+
+    const rows = await sheet.getRows();
+    return rows.map((row) => rowToBlockedSlot(row.toObject()));
+  }
+
+  async createBlockedSlot(input: CreateBlockedSlotInput): Promise<BlockedSlot> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["blocked_slots"];
+    if (!sheet) throw new Error("Blocked slots sheet not found");
+
+    const slot: BlockedSlot = {
+      id: `bs-${crypto.randomUUID().slice(0, 8)}`,
+      ...input,
+    };
+
+    await sheet.addRow({
+      id: slot.id,
+      court_id: slot.courtId,
+      date: slot.date,
+      start_time: slot.startTime,
+      end_time: slot.endTime,
+      reason: slot.reason ?? "",
+    });
+
+    return slot;
+  }
+
+  async deleteBlockedSlot(id: string): Promise<void> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["blocked_slots"];
+    if (!sheet) throw new Error("Blocked slots sheet not found");
+
+    const rows = await sheet.getRows();
+    const targetRow = rows.find((r) => r.get("id") === id);
+    if (!targetRow) throw new Error(`Blocked slot with id ${id} not found`);
+
+    await targetRow.delete();
   }
 }

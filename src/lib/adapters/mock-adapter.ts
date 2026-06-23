@@ -1,5 +1,19 @@
-import type { DatabaseAdapter, CreateBookingInput } from "./database-adapter";
-import type { Booking, BlockedSlot, Court, PricingRule, Sport, Venue } from "@/lib/types/domain";
+import type {
+  DatabaseAdapter,
+  CreateBookingInput,
+  UpdateCourtInput,
+  CreatePricingRuleInput,
+  UpdatePricingRuleInput,
+  CreateBlockedSlotInput,
+} from "./database-adapter";
+import type {
+  Booking,
+  BlockedSlot,
+  Court,
+  PricingRule,
+  Sport,
+  Venue,
+} from "@/lib/types/domain";
 import {
   mockSports,
   mockVenues,
@@ -7,8 +21,10 @@ import {
   mockPricingRules,
 } from "@/lib/mock-data";
 
-// In-memory booking store (persists during server lifetime)
+// In-memory stores (persists during server lifetime)
 const bookingsStore: Booking[] = [];
+const pricingRulesStore: PricingRule[] = [...mockPricingRules];
+const blockedSlotsStore: BlockedSlot[] = [];
 
 function generateBookingCode(): string {
   const now = new Date();
@@ -20,24 +36,56 @@ function generateBookingCode(): string {
   return `BK-${datePart}-${rand}`;
 }
 
+function generateId(prefix: string): string {
+  return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
 export class MockAdapter implements DatabaseAdapter {
+  // ── Sports ──
   async getSports(): Promise<Sport[]> {
     return mockSports.filter((s) => s.isActive);
   }
 
+  // ── Venues ──
   async getVenues(): Promise<Venue[]> {
     return mockVenues.filter((v) => v.isActive);
   }
 
+  // ── Courts ──
   async getCourts(): Promise<Court[]> {
     return mockCourts.filter((c) => c.isActive);
   }
 
+  async getAllCourts(): Promise<Court[]> {
+    return [...mockCourts];
+  }
+
+  async getCourtById(id: string): Promise<Court | null> {
+    return mockCourts.find((c) => c.id === id) ?? null;
+  }
+
+  async updateCourt(id: string, input: UpdateCourtInput): Promise<Court> {
+    const index = mockCourts.findIndex((c) => c.id === id);
+    if (index === -1) {
+      throw new Error(`Court not found: ${id}`);
+    }
+    mockCourts[index] = { ...mockCourts[index], ...input };
+    return { ...mockCourts[index] };
+  }
+
+  // ── Bookings ──
   async getBookings(): Promise<Booking[]> {
     return [...bookingsStore];
   }
 
-  async getBookingsByCourtAndDate(courtId: string, date: string): Promise<Booking[]> {
+  async getBookingById(id: string): Promise<Booking | null> {
+    return bookingsStore.find((b) => b.id === id) ?? null;
+  }
+
+  async getBookingsByCourtAndDate(
+    courtId: string,
+    date: string,
+  ): Promise<Booking[]> {
     return bookingsStore.filter(
       (b) => b.courtId === courtId && b.bookingDate === date,
     );
@@ -70,7 +118,10 @@ export class MockAdapter implements DatabaseAdapter {
     return { ...booking };
   }
 
-  async updateBookingStatus(id: string, status: Booking["bookingStatus"]): Promise<Booking> {
+  async updateBookingStatus(
+    id: string,
+    status: Booking["bookingStatus"],
+  ): Promise<Booking> {
     const index = bookingsStore.findIndex((b) => b.id === id);
     if (index === -1) {
       throw new Error(`Booking not found: ${id}`);
@@ -85,12 +136,81 @@ export class MockAdapter implements DatabaseAdapter {
     return { ...bookingsStore[index] };
   }
 
+  // ── Pricing Rules ──
   async getPricingRules(courtId: string): Promise<PricingRule[]> {
-    return mockPricingRules.filter((p) => p.courtId === courtId && p.isActive);
+    return pricingRulesStore.filter(
+      (p) => p.courtId === courtId && p.isActive,
+    );
   }
 
-  async getBlockedSlots(_courtId: string, _date: string): Promise<BlockedSlot[]> {
-    // Mock: no blocked slots
-    return [];
+  async getAllPricingRules(): Promise<PricingRule[]> {
+    return [...pricingRulesStore];
+  }
+
+  async createPricingRule(input: CreatePricingRuleInput): Promise<PricingRule> {
+    const rule: PricingRule = {
+      id: generateId("pr"),
+      courtId: input.courtId,
+      dayType: input.dayType,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      pricePerHour: input.pricePerHour,
+      priority: input.priority,
+      isActive: input.isActive ?? true,
+    };
+    pricingRulesStore.push(rule);
+    return { ...rule };
+  }
+
+  async updatePricingRule(
+    id: string,
+    input: UpdatePricingRuleInput,
+  ): Promise<PricingRule> {
+    const index = pricingRulesStore.findIndex((p) => p.id === id);
+    if (index === -1) {
+      throw new Error(`Pricing rule not found: ${id}`);
+    }
+    pricingRulesStore[index] = { ...pricingRulesStore[index], ...input };
+    return { ...pricingRulesStore[index] };
+  }
+
+  async deletePricingRule(id: string): Promise<void> {
+    const index = pricingRulesStore.findIndex((p) => p.id === id);
+    if (index === -1) {
+      throw new Error(`Pricing rule not found: ${id}`);
+    }
+    pricingRulesStore.splice(index, 1);
+  }
+
+  // ── Blocked Slots ──
+  async getBlockedSlots(courtId: string, date: string): Promise<BlockedSlot[]> {
+    return blockedSlotsStore.filter(
+      (s) => s.courtId === courtId && s.date === date,
+    );
+  }
+
+  async getAllBlockedSlots(): Promise<BlockedSlot[]> {
+    return [...blockedSlotsStore];
+  }
+
+  async createBlockedSlot(input: CreateBlockedSlotInput): Promise<BlockedSlot> {
+    const slot: BlockedSlot = {
+      id: generateId("bs"),
+      courtId: input.courtId,
+      date: input.date,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      reason: input.reason,
+    };
+    blockedSlotsStore.push(slot);
+    return { ...slot };
+  }
+
+  async deleteBlockedSlot(id: string): Promise<void> {
+    const index = blockedSlotsStore.findIndex((s) => s.id === id);
+    if (index === -1) {
+      throw new Error(`Blocked slot not found: ${id}`);
+    }
+    blockedSlotsStore.splice(index, 1);
   }
 }

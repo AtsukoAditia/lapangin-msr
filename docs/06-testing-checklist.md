@@ -2,34 +2,56 @@
 
 ## Public User
 
-- [ ] Homepage tampil di mobile.
-- [ ] User bisa pilih olahraga.
-- [ ] User bisa pilih lapangan.
-- [ ] User bisa pilih tanggal.
-- [ ] Slot kosong tampil.
-- [ ] Slot terisi tidak tampil sebagai available.
-- [ ] User bisa submit booking.
-- [ ] Booking success tampil.
-- [ ] Booking code muncul.
+- [x] Homepage tampil di mobile.
+- [x] User bisa pilih olahraga.
+- [x] User bisa pilih lapangan.
+- [x] User bisa pilih tanggal.
+- [x] Slot kosong tampil.
+- [x] Slot terisi tidak tampil sebagai available.
+- [x] User bisa submit booking.
+- [x] Booking success tampil.
+- [x] Booking code muncul.
 
 ## Admin
 
-- [ ] Admin bisa melihat daftar booking.
-- [ ] Admin bisa filter booking.
-- [ ] Admin bisa confirm booking.
-- [ ] Admin bisa reject booking.
-- [ ] Admin bisa melihat detail booking.
-- [ ] Admin bisa melihat lapangan.
-- [ ] Admin bisa melihat aturan harga.
+- [x] Admin bisa melihat daftar booking.
+- [x] Admin bisa filter booking (by status).
+- [x] Admin bisa confirm booking.
+- [x] Admin bisa reject booking.
+- [x] Admin bisa melihat detail booking (modal).
+- [x] Admin bisa melihat lapangan.
+- [x] Admin bisa edit lapangan (harga, kapasitas, status aktif).
+- [x] Admin bisa melihat aturan harga.
+- [x] Admin bisa tambah/edit/hapus aturan harga.
+- [x] Admin dashboard menampilkan statistik.
+- [x] Settings page menampilkan info aplikasi.
+
+## Admin CMS API
+
+- [x] GET /api/admin/bookings — list bookings.
+- [x] PATCH /api/admin/bookings/[id]/status — update status.
+- [x] GET /api/admin/courts — list courts.
+- [x] PATCH /api/admin/courts — update court.
+- [x] GET /api/admin/pricing — list pricing rules.
+- [x] POST /api/admin/pricing — create pricing rule.
+- [x] PATCH /api/admin/pricing — update pricing rule.
+- [x] DELETE /api/admin/pricing — delete pricing rule.
 
 ## Booking Logic
 
-- [ ] Tidak bisa booking slot yang sama.
-- [ ] Tidak bisa booking di luar jam buka.
-- [ ] Tidak bisa booking lapangan nonaktif.
-- [ ] Harga sesuai aturan.
-- [ ] Status booking berubah benar.
-- [ ] Payment status berubah benar.
+- [ ] Tidak bisa booking slot yang sama (Stage 5).
+- [x] Tidak bisa booking di luar jam buka.
+- [x] Tidak bisa booking lapangan nonaktif.
+- [x] Harga sesuai aturan.
+- [x] Status booking berubah benar.
+- [x] Payment status berubah benar.
+
+## Build & Compilation
+
+- [x] `npm run build` berhasil tanpa error TypeScript.
+- [x] Semua 29 pages/routes ter-generate.
+- [x] Admin pages ter-generate sebagai static pages.
+- [x] Admin API routes ter-generate sebagai dynamic server functions.
 
 ## PWA
 
@@ -45,4 +67,4 @@
 - [ ] Environment variables lengkap.
 - [ ] API route berjalan di Vercel.
 - [ ] Booking masuk ke Spreadsheet.
-- [ ] Mobile layout aman.
+- [x] Mobile layout aman.
