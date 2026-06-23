@@ -4,6 +4,15 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
 import { getCourtById, formatPrice } from "@/lib/mock-data";
 
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function getDurationMinutes(startTime: string, endTime: string): number {
+  return timeToMinutes(endTime) - timeToMinutes(startTime);
+}
+
 function BookingFormContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -12,9 +21,6 @@ function BookingFormContent() {
   const date = searchParams.get("date") ?? "";
   const startTime = searchParams.get("startTime") ?? "";
   const endTime = searchParams.get("endTime") ?? "";
-  const sportSlug = searchParams.get("sport") ?? "";
-  const venueSlug = searchParams.get("venue") ?? "";
-  const courtSlug = searchParams.get("court") ?? "";
 
   const court = getCourtById(courtId);
 
@@ -25,18 +31,30 @@ function BookingFormContent() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const totalPrice = court ? court.basePrice : 0;
+  const durationMinutes =
+    startTime && endTime ? getDurationMinutes(startTime, endTime) : 60;
+  const totalPrice = court
+    ? Math.round((durationMinutes / 60) * court.basePrice)
+    : 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
+    if (!court) {
+      setError("Data lapangan tidak valid.");
+      return;
+    }
     if (!name.trim()) {
       setError("Nama wajib diisi.");
       return;
     }
     if (!phone.trim()) {
       setError("Nomor HP wajib diisi.");
+      return;
+    }
+    if (durationMinutes <= 0) {
+      setError("Durasi booking tidak valid.");
       return;
     }
 
@@ -50,9 +68,12 @@ function BookingFormContent() {
           customerPhone: phone.trim(),
           customerEmail: email.trim() || undefined,
           courtId,
+          venueId: court.venueId,
+          sportId: court.sportId,
           bookingDate: date,
           startTime,
           endTime,
+          durationMinutes,
           notes: notes.trim() || undefined,
         }),
       });
