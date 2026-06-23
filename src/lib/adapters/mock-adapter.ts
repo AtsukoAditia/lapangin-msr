@@ -13,6 +13,7 @@ import type {
   PricingRule,
   Sport,
   Venue,
+  AuditLogEntry,
 } from "@/lib/types/domain";
 import {
   mockSports,
@@ -25,6 +26,7 @@ import {
 const bookingsStore: Booking[] = [];
 const pricingRulesStore: PricingRule[] = [...mockPricingRules];
 const blockedSlotsStore: BlockedSlot[] = [];
+const auditLogStore: AuditLogEntry[] = [];
 
 function generateBookingCode(): string {
   const now = new Date();
@@ -69,7 +71,11 @@ export class MockAdapter implements DatabaseAdapter {
     if (index === -1) {
       throw new Error(`Court not found: ${id}`);
     }
-    mockCourts[index] = { ...mockCourts[index], ...input };
+    const updated = { ...mockCourts[index], ...input };
+    mockCourts[index] = {
+      ...updated,
+      indoorType: updated.indoorType as Court["indoorType"],
+    };
     return { ...mockCourts[index] };
   }
 
@@ -212,5 +218,25 @@ export class MockAdapter implements DatabaseAdapter {
       throw new Error(`Blocked slot not found: ${id}`);
     }
     blockedSlotsStore.splice(index, 1);
+  }
+
+  // ── Audit Log ──
+  async getAuditLogs(targetId?: string): Promise<AuditLogEntry[]> {
+    if (targetId) {
+      return auditLogStore.filter((entry) => entry.targetId === targetId);
+    }
+    return [...auditLogStore];
+  }
+
+  async createAuditLog(
+    entry: Omit<AuditLogEntry, "id" | "timestamp">,
+  ): Promise<AuditLogEntry> {
+    const logEntry: AuditLogEntry = {
+      id: generateId("audit"),
+      timestamp: new Date().toISOString(),
+      ...entry,
+    };
+    auditLogStore.push(logEntry);
+    return { ...logEntry };
   }
 }
