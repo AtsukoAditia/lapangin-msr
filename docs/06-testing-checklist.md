@@ -140,19 +140,49 @@
 ## Build & Compilation
 
 - [x] `npm run build` berhasil tanpa error TypeScript.
-- [x] Semua 33 pages/routes ter-generate (termasuk notification routes).
+- [x] Semua 34 pages/routes ter-generate (termasuk notification routes + offline page).
 - [x] Admin pages ter-generate sebagai static pages.
 - [x] Admin API routes ter-generate sebagai dynamic server functions.
 - [x] `/admin/notifications` page ter-generate.
 - [x] `/api/admin/notifications` API route ter-generate.
+- [x] `/offline` page ter-generate sebagai static page.
 
-## PWA
+## PWA (Stage 8)
 
-- [ ] Manifest terbaca.
-- [ ] Icon tampil.
-- [ ] App bisa di-install.
-- [ ] Offline fallback bekerja.
-- [ ] Lighthouse PWA minimal lolos basic check.
+- [x] Manifest terbaca (`/manifest.json` — display: standalone, start_url, icons, shortcuts).
+- [x] Icon tampil (`public/icons/icon-192.png`, `icon-512.png`).
+- [x] PWA meta tags di layout (apple-web-app, theme-color, apple-touch-icon, viewport).
+- [x] Service Worker register otomatis (`ServiceWorkerRegistration.tsx`).
+- [x] Service Worker caching berfungsi (cache-first images, stale-while-revalidate static, network-first HTML).
+- [x] Install prompt muncul di browser yang support (`InstallPrompt.tsx`).
+- [x] Offline fallback page tampil (`/offline` — React component + `public/offline.html`).
+- [x] Push notification listener aktif di service worker.
+- [x] Build berhasil tanpa error (34 routes ter-generate).
+
+### PWA Architecture
+
+| Layer     | File                                               | Responsibility                                 |
+| --------- | -------------------------------------------------- | ---------------------------------------------- |
+| Manifest  | `public/manifest.json`                             | PWA metadata, icons, display, shortcuts        |
+| SW        | `public/sw.js`                                     | Caching strategies, push listener, offline     |
+| SW (HTML) | `public/offline.html`                              | Static offline fallback                        |
+| Component | `src/components/pwa/ServiceWorkerRegistration.tsx` | Auto-register service worker                   |
+| Component | `src/components/pwa/InstallPrompt.tsx`             | beforeinstallprompt detection + install banner |
+| Page      | `src/app/offline/page.tsx`                         | React offline fallback page                    |
+| Layout    | `src/app/layout.tsx`                               | PWA meta tags, apple-web-app, viewport         |
+| Icons     | `public/icons/icon-192.png`, `icon-512.png`        | PWA icons for install & splash                 |
+
+### Service Worker Caching Strategy
+
+| Request Type                 | Strategy                         | Cache Name         |
+| ---------------------------- | -------------------------------- | ------------------ |
+| Static assets (JS/CSS/fonts) | stale-while-revalidate           | lapangin-static-v1 |
+| Images                       | cache-first                      | lapangin-images-v1 |
+| API calls                    | network-first                    | lapangin-api-v1    |
+| HTML navigation              | network-first + offline fallback | lapangin-pages-v1  |
+| Push notifications           | push event listener              | N/A (event-based)  |
+
+**Pre-cached:** `/offline.html`, `/icons/icon-192.png`, `/icons/icon-512.png`
 
 ## Deployment
 

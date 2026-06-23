@@ -65,7 +65,9 @@ Payment methods (BCA, BNI, GoPay, OVO, Dana, QRIS), payment instructions, bukti 
 
 NotificationService (email, WhatsApp, push), notification templates, notification log di adapter, admin notification log page, integrasi ke booking flow (create, confirm, reject, cancel), admin alert saat booking baru.
 
-### ⬜ Stage 8 — PWA
+### ✅ Stage 8 — PWA
+
+Manifest, service worker (caching strategies, push support), offline fallback page, install prompt, PWA meta tags, apple-web-app capable.
 
 ### ⬜ Stage 9 — Deployment Vercel
 
@@ -102,22 +104,30 @@ src/
 │   │   ├── bookings/        # Public booking API
 │   │   ├── payments/        # Payment API (methods, proof upload)
 │   │   └── availability/    # Slot availability API
-│   └── (public)/            # Public booking flow
-│       └── booking/
-│           ├── [sport]/     # Court listing + detail
-│           ├── form/        # Booking form
-│           └── success/     # Booking success
+│   ├── (public)/            # Public booking flow
+│   │   └── booking/
+│   │       ├── [sport]/     # Court listing + detail
+│   │       ├── form/        # Booking form
+│   │       └── success/     # Booking success
+│   └── offline/             # PWA offline fallback page
 ├── components/
 │   ├── admin/               # Admin layout
 │   ├── booking/             # Booking components
+│   ├── pwa/                 # PWA components (SW registration, install prompt)
 │   └── ui/                  # Shared UI
 ├── lib/
-│   ├── adapters/            # Database adapters
+│   ├── adapters/            # Database adapters (mock, google-sheets, postgres)
 │   ├── services/            # Business logic (booking, availability, pricing, payment, notification)
 │   ├── notification-templates.ts  # Email, WhatsApp, Push message templates
 │   ├── types/               # Domain types
-│   └── validators/          # Validation schemas
-└── config/                  # App config
+│   ├── validators/          # Validation schemas
+│   └── utils/               # Utility functions
+├── config/                  # App config
+public/
+├── icons/                   # PWA icons (icon-192.png, icon-512.png)
+├── manifest.json            # PWA manifest
+├── sw.js                    # Service worker (caching, push, offline)
+└── offline.html             # Static offline fallback
 ```
 
 ## Environment Variables
