@@ -1,6 +1,6 @@
-# Lapangin Starter Kit
+# Lapangin
 
-Starter kit awal untuk aplikasi booking lapangan olahraga berbasis web PWA.
+Web-based PWA sports court booking system.
 
 Target:
 
@@ -11,19 +11,17 @@ Target:
 - Arsitektur disiapkan agar mudah migrasi ke PostgreSQL/Supabase.
 - Cocok untuk futsal, minisoccer, badminton, padel, tenis, basket, dan olahraga lain.
 
-## Stack Rekomendasi
+## Stack
 
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
-- shadcn/ui
 - Google Sheets API untuk database demo
 - PostgreSQL/Supabase untuk database production
 - Vercel untuk deployment
 - PWA manifest + service worker
-- Web Push / Email / WhatsApp fallback untuk notifikasi
 
-## Perintah Awal
+## Quick Start
 
 ```bash
 npm install
@@ -31,22 +29,99 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Buka:
+Buka `http://localhost:3000`.
 
-```txt
-http://localhost:3000
+## Progress
+
+### ✅ Stage 0 — Persiapan Project
+
+Next.js + TypeScript + Tailwind CSS + folder structure.
+
+### ✅ Stage 1 — Static UI Public
+
+Homepage, sport list, venue list, court detail, booking form, booking success.
+
+### ✅ Stage 2 — Domain Types dan Mock Service
+
+Types, mock data, BookingService, AvailabilityService, PricingService, MockAdapter, adapter factory.
+
+### ✅ Stage 3 — Google Spreadsheet Adapter
+
+GoogleSheetsAdapter, row-to-domain mappers, full CRUD.
+
+### ✅ Stage 4 — Admin CMS Dasar
+
+Admin dashboard, booking list, confirm/reject, courts management, pricing management, settings.
+
+### ⬜ Stage 5 — Anti Double Booking
+
+### ⬜ Stage 6 — Payment Manual
+
+### ⬜ Stage 7 — Notification
+
+### ⬜ Stage 8 — PWA
+
+### ⬜ Stage 9 — Deployment Vercel
+
+### ⬜ Stage 10 — PostgreSQL Migration
+
+### ⬜ Stage 11 — Production Readiness
+
+## Architecture
+
+```
+UI Page / Component
+↓
+Service Layer
+↓
+Database Adapter
+↓
+Google Sheets or PostgreSQL
 ```
 
-## Mode Development
+## Project Structure
 
-Gunakan mode bertahap:
+```
+src/
+├── app/                     # Next.js App Router
+│   ├── admin/               # Admin CMS pages
+│   │   ├── page.tsx         # Dashboard
+│   │   ├── bookings/        # Booking management
+│   │   ├── courts/          # Court management
+│   │   ├── pricing/         # Pricing management
+│   │   └── settings/        # Settings
+│   ├── api/                 # API routes
+│   │   ├── admin/           # Admin API
+│   │   ├── bookings/        # Public booking API
+│   │   └── availability/    # Slot availability API
+│   └── (public)/            # Public booking flow
+│       └── booking/
+│           ├── [sport]/     # Court listing + detail
+│           ├── form/        # Booking form
+│           └── success/     # Booking success
+├── components/
+│   ├── admin/               # Admin layout
+│   ├── booking/             # Booking components
+│   └── ui/                  # Shared UI
+├── lib/
+│   ├── adapters/            # Database adapters
+│   ├── services/            # Business logic
+│   ├── types/               # Domain types
+│   └── validators/          # Validation schemas
+└── config/                  # App config
+```
 
-1. Static UI dulu.
-2. Mock data.
-3. Google Spreadsheet adapter.
-4. Admin CMS.
-5. Booking flow.
-6. Notification.
-7. PWA.
-8. Deployment Vercel.
-9. Migrasi PostgreSQL.
+## Environment Variables
+
+```bash
+DATABASE_PROVIDER=mock            # mock | google_sheets | postgres
+GOOGLE_SHEETS_SPREADSHEET_ID=
+GOOGLE_SHEETS_CLIENT_EMAIL=
+GOOGLE_SHEETS_PRIVATE_KEY=
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_NAME=Lapangin
+```
+
+## License
+
+MIT

@@ -71,22 +71,38 @@ Definition of Done:
 - Booking dari web tersimpan ke Spreadsheet. ✅ (when configured)
 - Admin bisa melihat data booking dari Spreadsheet. ✅ (when configured)
 
-## Stage 4 — Admin CMS Dasar
+## Stage 4 — Admin CMS Dasar ✅
 
-- [ ] Dashboard admin.
-- [ ] Booking list.
-- [ ] Booking detail.
-- [ ] Confirm booking.
-- [ ] Reject booking.
-- [ ] Courts management.
-- [ ] Pricing management.
-- [ ] Blocked slots management.
-- [ ] Settings page.
+- [x] Dashboard admin (statistik overview).
+- [x] Booking list (filter status, pagination).
+- [x] Booking detail (view all info).
+- [x] Confirm booking (admin action).
+- [x] Reject booking (admin action).
+- [x] Courts management (list, edit name/price/active).
+- [x] Pricing management (CRUD aturan harga).
+- [x] Settings page (app info, jam operasional, database info).
+
+> **Note:** Blocked slots management ditunda ke Stage 5 bersama fitur anti double-booking.
 
 Definition of Done:
 
-- Admin bisa mengatur booking dan data utama.
-- Owner bisa menjalankan operasional dasar.
+- Admin bisa mengatur booking dan data utama. ✅
+- Owner bisa menjalankan operasional dasar. ✅
+
+### Arsitektur Admin CMS:
+
+- **Admin Layout** (`src/components/admin/AdminLayout.tsx`) — Sidebar responsive + topbar.
+- **Admin Dashboard** (`src/app/admin/page.tsx`) — Stats cards, booking terbaru.
+- **Admin Bookings** (`src/app/admin/bookings/page.tsx`) — List, detail modal, confirm/reject.
+- **Admin Courts** (`src/app/admin/courts/page.tsx`) — List, inline edit.
+- **Admin Pricing** (`src/app/admin/pricing/page.tsx`) — CRUD aturan harga.
+- **Admin Settings** (`src/app/admin/settings/page.tsx`) — Pengaturan umum.
+- **API Routes:**
+  - `GET/POST /api/admin/bookings` — List & create booking.
+  - `PATCH /api/admin/bookings/[id]/status` — Update status (confirm/reject).
+  - `GET/PATCH /api/admin/courts` — List & update court.
+  - `GET/POST/PATCH/DELETE /api/admin/pricing` — CRUD pricing rules.
+- **Adapter methods:** `getBookingStats`, `updateCourt`, `getPricingRules`, `updatePricingRule`, `deletePricingRule`.
 
 ## Stage 5 — Anti Double Booking
 
