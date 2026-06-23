@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabaseAdapter } from "@/lib/adapters";
 import { BookingService } from "@/lib/services/booking-service";
+import { validateBookingInput } from "@/lib/validators/booking-validator";
 
 export async function GET() {
   try {
@@ -38,18 +39,24 @@ export async function POST(request: NextRequest) {
       notes,
     } = body;
 
-    // Server-side validation
-    if (!customerName?.trim()) {
-      return NextResponse.json({ error: "Nama wajib diisi." }, { status: 400 });
-    }
-    if (!customerPhone?.trim()) {
-      return NextResponse.json({ error: "Nomor HP wajib diisi." }, { status: 400 });
-    }
-    if (!courtId) {
-      return NextResponse.json({ error: "Court ID wajib diisi." }, { status: 400 });
-    }
-    if (!bookingDate || !startTime || !endTime) {
-      return NextResponse.json({ error: "Tanggal dan jam wajib diisi." }, { status: 400 });
+    // ── Server-side validation using schema ──
+    const validation = validateBookingInput({
+      customerName: customerName?.trim() ?? "",
+      customerPhone: customerPhone?.trim() ?? "",
+      customerEmail: customerEmail?.trim(),
+      courtId: courtId ?? "",
+      venueId: venueId ?? "",
+      sportId: sportId ?? "",
+      bookingDate: bookingDate ?? "",
+      startTime: startTime ?? "",
+      endTime: endTime ?? "",
+      durationMinutes: durationMinutes ?? 60,
+      notes: notes?.trim(),
+    });
+
+    if (!validation.success) {
+      const firstError = validation.errors?.[0] ?? "Input tidak valid.";
+      return NextResponse.json({ error: firstError, errors: validation.errors }, { status: 400 });
     }
 
     const adapter = getDatabaseAdapter();
@@ -73,7 +80,13 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Gagal memproses request.";
-    const status = message.includes("tidak tersedia") ? 409 : 500;
+    // Return 409 for any conflict-related errors (double-booking prevention)
+    const isConflict =
+      message.includes("CONFLICT") ||
+      message.includes("tidak tersedia") ||
+      message.includes("dipesan") ||
+      message.includes("diblokir");
+    const status = isConflict ? 409 : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }
