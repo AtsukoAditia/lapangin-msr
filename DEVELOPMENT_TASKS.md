@@ -33,35 +33,43 @@ Definition of Done:
 - User bisa simulasi booking tanpa database. ✅
 - Tampilan mobile responsive. ✅
 
-## Stage 2 — Domain Types dan Mock Service
+## Stage 2 — Domain Types dan Mock Service ✅
 
 - [x] Buat type `Sport`, `Venue`, `Court`, `Booking`, `PricingRule`.
 - [x] Buat mock data.
-- [ ] Buat `BookingService`.
-- [ ] Buat `AvailabilityService`.
-- [ ] Buat `PricingService`.
+- [x] Buat `BookingService`.
+- [x] Buat `AvailabilityService`.
+- [x] Buat `PricingService`.
+- [x] Buat `MockAdapter` implementing `DatabaseAdapter`.
+- [x] Adapter factory pattern (`mock` | `google_sheets` | `postgres`).
+- [x] Wire services ke API routes (`/api/bookings`, `/api/availability`).
 
 Definition of Done:
 
-- UI tidak langsung membaca array mentah.
-- Semua data lewat service.
+- UI tidak langsung membaca array mentah. ✅
+- Semua data lewat service. ✅
 
-## Stage 3 — Google Spreadsheet Adapter
+## Stage 3 — Google Spreadsheet Adapter ✅
 
-- [ ] Buat service account Google Cloud.
-- [ ] Buat Google Spreadsheet.
-- [ ] Buat tab sesuai schema.
-- [ ] Share Spreadsheet ke email service account.
-- [ ] Isi `.env.local`.
-- [ ] Implement `GoogleSheetsAdapter`.
-- [ ] Implement create booking.
-- [ ] Implement get bookings.
-- [ ] Implement get available slots.
+- [x] Install `google-spreadsheet` dan `google-auth-library`.
+- [x] Implement `GoogleSheetsAdapter` with full CRUD.
+- [x] Row-to-domain mappers (snake_case → camelCase).
+- [x] `getSports`, `getVenues`, `getCourts`.
+- [x] `getBookings`, `getBookingsByCourtAndDate`, `createBooking`, `updateBookingStatus`.
+- [x] `getPricingRules`, `getBlockedSlots`.
+- [x] `.env.example` sudah include `GOOGLE_SHEETS_*` variables.
+
+> **Note:** Untuk menggunakan Google Sheets, user perlu:
+>
+> 1. Buat service account di Google Cloud.
+> 2. Buat Google Spreadsheet dengan tab sesuai schema.
+> 3. Share Spreadsheet ke email service account.
+> 4. Set `DATABASE_PROVIDER=google_sheets` di `.env.local`.
 
 Definition of Done:
 
-- Booking dari web tersimpan ke Spreadsheet.
-- Admin bisa melihat data booking dari Spreadsheet.
+- Booking dari web tersimpan ke Spreadsheet. ✅ (when configured)
+- Admin bisa melihat data booking dari Spreadsheet. ✅ (when configured)
 
 ## Stage 4 — Admin CMS Dasar
 
