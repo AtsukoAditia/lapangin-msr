@@ -1,54 +1,45 @@
 import Link from "next/link";
+import { mockSports } from "@/lib/mock-data";
+import { sportEmoji, sportColor } from "@/lib/sport-icons";
+import { appConfig } from "@/config/app";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6">
-      <section className="mx-auto max-w-5xl">
-        <div className="rounded-3xl bg-slate-900 p-6 text-white md:p-10">
-          <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">
-            Lapangin
-          </p>
-          <h1 className="mt-3 text-3xl font-bold md:text-5xl">
-            Booking lapangan olahraga lebih cepat, rapi, dan mobile friendly.
-          </h1>
-          <p className="mt-4 max-w-2xl text-slate-300">
-            Pilih olahraga, cek slot kosong, booking jadwal, dan kelola semuanya
-            dari dashboard admin.
-          </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/booking"
-              className="rounded-xl bg-emerald-400 px-5 py-3 text-center font-semibold text-slate-950"
-            >
-              Mulai Booking
-            </Link>
-            <Link
-              href="/admin"
-              className="rounded-xl border border-white/20 px-5 py-3 text-center font-semibold"
-            >
-              Buka Admin
-            </Link>
-          </div>
-        </div>
+    <main className="mx-auto max-w-5xl px-4 py-8">
+      {/* Hero */}
+      <section className="mb-10 text-center">
+        <h1 className="mb-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+          Booking Lapangan Olahraga
+        </h1>
+        <p className="mx-auto max-w-xl text-base text-slate-600 sm:text-lg">
+          Pilih olahraga favoritmu, cek jadwal kosong, dan booking langsung
+          dari HP. Mudah dan cepat di <strong>{appConfig.name}</strong>.
+        </p>
+      </section>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {[
-            "Futsal",
-            "Minisoccer",
-            "Badminton",
-            "Padel",
-            "Tenis",
-            "Basket",
-          ].map((sport) => (
-            <div
-              key={sport}
-              className="rounded-2xl border bg-white p-5 shadow-sm"
+      {/* Sports Grid */}
+      <section>
+        <h2 className="mb-5 text-lg font-semibold text-slate-900">
+          Pilih Olahraga
+        </h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {mockSports.map((sport) => (
+            <Link
+              key={sport.id}
+              href={`/booking/${sport.slug}`}
+              className="group rounded-xl border border-slate-200 bg-white p-5 text-center shadow-sm transition hover:border-slate-400 hover:shadow-md"
             >
-              <h2 className="text-lg font-semibold">{sport}</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                Cek jadwal kosong dan booking lapangan {sport.toLowerCase()}.
+              <div
+                className={`mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl text-3xl ${
+                  sportColor[sport.slug] ?? "bg-slate-100 text-slate-600"
+                } transition group-hover:scale-110`}
+              >
+                {sportEmoji[sport.slug] ?? "🏅"}
+              </div>
+              <p className="text-sm font-semibold text-slate-800">
+                {sport.name}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
