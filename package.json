@@ -11,11 +11,14 @@
   },
   "dependencies": {
     "@hookform/resolvers": "latest",
+    "bcryptjs": "^3.0.3",
     "clsx": "latest",
     "date-fns": "latest",
+    "framer-motion": "^12.41.0",
     "google-auth-library": "^10.7.0",
     "google-spreadsheet": "^5.3.0",
     "googleapis": "latest",
+    "jose": "^6.2.3",
     "lucide-react": "latest",
     "next": "latest",
     "react": "latest",
@@ -23,6 +26,7 @@
     "zod": "latest"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
