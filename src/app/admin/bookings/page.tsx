@@ -66,10 +66,59 @@ export default function AdminBookingsPage() {
         return;
       }
 
-      await fetchBookings();
+      setBookings(await fetchBookings());
     } catch (err) {
       console.error("Failed to update:", err);
       alert("Gagal update status");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function confirmPayment(id: string) {
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/admin/payments/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "confirm" }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error ?? "Gagal konfirmasi pembayaran");
+        return;
+      }
+
+      setBookings(await fetchBookings());
+    } catch (err) {
+      console.error("Failed to confirm payment:", err);
+      alert("Gagal konfirmasi pembayaran");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function rejectPayment(id: string) {
+    if (!confirm("Tolak bukti pembayaran ini? Booking akan kembali ke status menunggu.")) return;
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/admin/payments/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reject" }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error ?? "Gagal tolak pembayaran");
+        return;
+      }
+
+      setBookings(await fetchBookings());
+    } catch (err) {
+      console.error("Failed to reject payment:", err);
+      alert("Gagal tolak pembayaran");
     } finally {
       setUpdatingId(null);
     }
@@ -149,8 +198,42 @@ export default function AdminBookingsPage() {
                     </p>
                   </div>
 
+                  {/* Payment proof indicator */}
+                  {booking.paymentProofUrl && (
+                    <div className="mb-2 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                      📎 Bukti pembayaran sudah diupload
+                      <a
+                        href={booking.paymentProofUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-2 underline hover:text-blue-900"
+                      >
+                        Lihat Bukti →
+                      </a>
+                    </div>
+                  )}
+
                   {/* Action buttons */}
                   <div className="flex flex-wrap gap-2">
+                    {booking.bookingStatus === "waiting_payment" &&
+                      booking.paymentProofUrl && (
+                        <>
+                          <button
+                            disabled={updatingId === booking.id}
+                            onClick={() => confirmPayment(booking.id)}
+                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            ✅ Konfirmasi Bayar
+                          </button>
+                          <button
+                            disabled={updatingId === booking.id}
+                            onClick={() => rejectPayment(booking.id)}
+                            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                          >
+                            ❌ Tolak Bayar
+                          </button>
+                        </>
+                    )}
                     {booking.bookingStatus === "pending" && (
                       <>
                         <button
