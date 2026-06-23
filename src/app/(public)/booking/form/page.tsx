@@ -30,6 +30,7 @@ function BookingFormContent() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isConflict, setIsConflict] = useState(false);
 
   const durationMinutes =
     startTime && endTime ? getDurationMinutes(startTime, endTime) : 60;
@@ -40,6 +41,7 @@ function BookingFormContent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setIsConflict(false);
 
     if (!court) {
       setError("Data lapangan tidak valid.");
@@ -80,6 +82,9 @@ function BookingFormContent() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        if (res.status === 409) {
+          setIsConflict(true);
+        }
         throw new Error(data.error ?? "Gagal membuat booking.");
       }
 
@@ -136,7 +141,18 @@ function BookingFormContent() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
+            <p>{error}</p>
+            {isConflict && (
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(`/booking/${court.sportId}/${court.venueId}/${court.id}`)
+                }
+                className="mt-2 inline-block rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
+              >
+                Pilih Jam Lain
+              </button>
+            )}
           </div>
         )}
 
