@@ -61,7 +61,9 @@ Server-side re-check sebelum insert, HTTP 409 on conflict, UI conflict handling,
 
 Payment methods (BCA, BNI, GoPay, OVO, Dana, QRIS), payment instructions, bukti upload, admin confirm/reject.
 
-### ⬜ Stage 7 — Notification
+### ✅ Stage 7 — Notification
+
+NotificationService (email, WhatsApp, push), notification templates, notification log di adapter, admin notification log page, integrasi ke booking flow (create, confirm, reject, cancel), admin alert saat booking baru.
 
 ### ⬜ Stage 8 — PWA
 
@@ -92,10 +94,11 @@ src/
 │   │   ├── page.tsx         # Dashboard
 │   │   ├── bookings/        # Booking management
 │   │   ├── courts/          # Court management
+│   │   ├── notifications/   # Notification log viewer
 │   │   ├── pricing/         # Pricing management
 │   │   └── settings/        # Settings
 │   ├── api/                 # API routes
-│   │   ├── admin/           # Admin API
+│   │   ├── admin/           # Admin API (bookings, courts, pricing, payments, notifications)
 │   │   ├── bookings/        # Public booking API
 │   │   ├── payments/        # Payment API (methods, proof upload)
 │   │   └── availability/    # Slot availability API
@@ -110,7 +113,8 @@ src/
 │   └── ui/                  # Shared UI
 ├── lib/
 │   ├── adapters/            # Database adapters
-│   ├── services/            # Business logic (booking, availability, pricing, payment)
+│   ├── services/            # Business logic (booking, availability, pricing, payment, notification)
+│   ├── notification-templates.ts  # Email, WhatsApp, Push message templates
 │   ├── types/               # Domain types
 │   └── validators/          # Validation schemas
 └── config/                  # App config
