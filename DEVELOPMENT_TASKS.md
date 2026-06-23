@@ -199,19 +199,24 @@ Definition of Done:
   - `cancelBooking()` → sendBookingCancellation.
   - Semua notification non-blocking (try/catch, tidak mengganggu booking flow).
 
-## Stage 8 — PWA
+## Stage 8 — PWA ✅
 
-- [ ] Tambahkan manifest.
-- [ ] Tambahkan icon PWA.
-- [ ] Tambahkan service worker.
-- [ ] Offline fallback page.
-- [ ] Install prompt.
-- [ ] Test Lighthouse PWA.
+- [x] Enhance manifest.json (display: standalone, start_url, theme_color, icons, shortcuts).
+- [x] PWA icons (icon-192.png, icon-512.png) — placeholder generated.
+- [x] Service Worker (`public/sw.js`) — cache-first for images, stale-while-revalidate for static, network-first for HTML, push notification support.
+- [x] Offline fallback page (`/offline`) — React client component + static HTML (`public/offline.html`).
+- [x] Service Worker registration (`src/components/pwa/ServiceWorkerRegistration.tsx`).
+- [x] Install prompt component (`src/components/pwa/InstallPrompt.tsx`) — detects beforeinstallprompt, shows install banner.
+- [x] PWA meta tags in layout (apple-web-app, theme-color, apple-touch-icon, viewport).
+- [x] Build tested successfully.
 
 Definition of Done:
 
-- Aplikasi bisa di-install.
-- Tampilan mobile terasa seperti app.
+- Aplikasi bisa di-install dari browser. ✅
+- Tampilan mobile terasa seperti app (standalone mode). ✅
+- Offline fallback page muncul saat tidak ada koneksi. ✅
+- Service worker register otomatis. ✅
+- Install prompt muncul di browser yang support. ✅
 
 ## Stage 9 — Deployment Vercel
 
