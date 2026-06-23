@@ -1,8 +1,8 @@
-# Project Brief — ArenaBook
+# Project Brief — Lapangin
 
 ## Deskripsi Singkat
 
-ArenaBook adalah aplikasi booking lapangan olahraga berbasis web PWA yang memungkinkan customer melihat jadwal lapangan, memilih slot kosong, membuat booking, dan menerima notifikasi. Admin/owner dapat mengelola lapangan, harga, jadwal, booking, pembayaran, dan laporan operasional.
+Lapangin adalah aplikasi booking lapangan olahraga berbasis web PWA yang memungkinkan customer melihat jadwal lapangan, memilih slot kosong, membuat booking, dan menerima notifikasi. Admin/owner dapat mengelola lapangan, harga, jadwal, booking, pembayaran, dan laporan operasional.
 
 ## Tujuan Produk
 
@@ -15,17 +15,20 @@ ArenaBook adalah aplikasi booking lapangan olahraga berbasis web PWA yang memung
 ## Target Pengguna
 
 ### Customer
+
 - Mencari lapangan.
 - Melihat slot tersedia.
 - Booking jadwal.
 - Menerima bukti booking dan notifikasi.
 
 ### Admin/Operator
+
 - Mengelola booking masuk.
 - Confirm/reject/reschedule booking.
 - Input booking manual dari WhatsApp/offline.
 
 ### Owner
+
 - Mengatur lapangan, harga, jam operasional.
 - Melihat laporan omzet dan okupansi.
 - Mengatur user admin/operator.

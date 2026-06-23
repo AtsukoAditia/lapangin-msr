@@ -1,4 +1,4 @@
-const CACHE_NAME = "arenabook-cache-v1";
+const CACHE_NAME = "Lapangin-cache-v1";
 const OFFLINE_URL = "/";
 
 self.addEventListener("install", (event) => {
@@ -13,6 +13,10 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request).then((response) => response || caches.match(OFFLINE_URL))),
+    fetch(event.request).catch(() =>
+      caches
+        .match(event.request)
+        .then((response) => response || caches.match(OFFLINE_URL)),
+    ),
   );
 });

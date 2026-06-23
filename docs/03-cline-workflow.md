@@ -26,7 +26,7 @@ Baca semua file dokumentasi project ini:
 Tugas pertama:
 Setup project Next.js App Router + TypeScript + Tailwind dengan struktur folder yang sudah disediakan.
 Pastikan `npm run dev` berjalan.
-Buat homepage sederhana untuk ArenaBook dengan tampilan mobile responsive.
+Buat homepage sederhana untuk Lapangin dengan tampilan mobile responsive.
 Jangan buat database dulu.
 Jangan buat fitur admin dulu.
 ```

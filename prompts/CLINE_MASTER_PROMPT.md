@@ -3,7 +3,7 @@
 Gunakan prompt ini saat pertama kali membuka project dengan CLINE.
 
 ```txt
-Kamu adalah AI coding agent untuk project ArenaBook.
+Kamu adalah AI coding agent untuk project Lapangin.
 
 Baca terlebih dahulu:
 - PROJECT_BRIEF.md

@@ -2,7 +2,7 @@
 
 ## Nama Project
 
-ArenaBook
+Lapangin
 
 ## Jenis Aplikasi
 
@@ -22,11 +22,13 @@ Aplikasi booking lapangan olahraga berbasis web PWA dengan admin CMS.
 ## Core Value
 
 Customer:
+
 - Cepat lihat jadwal kosong.
 - Cepat booking.
 - Dapat bukti booking.
 
 Admin/Owner:
+
 - Kelola jadwal.
 - Hindari bentrok booking.
 - Pantau pendapatan.

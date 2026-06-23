@@ -1,6 +1,6 @@
 {
-  "name": "ArenaBook",
-  "short_name": "ArenaBook",
+  "name": "Lapangin",
+  "short_name": "Lapangin",
   "description": "Booking lapangan olahraga berbasis web PWA.",
   "start_url": "/",
   "display": "standalone",

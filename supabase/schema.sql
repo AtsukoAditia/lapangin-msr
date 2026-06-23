@@ -1,4 +1,4 @@
--- ArenaBook PostgreSQL initial schema draft
+-- Lapangin PostgreSQL initial schema draft
 
 create table sports (
   id text primary key,

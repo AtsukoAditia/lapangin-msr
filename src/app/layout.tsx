@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ArenaBook",
+  title: "Lapangin",
   description: "Booking lapangan olahraga berbasis web PWA.",
   manifest: "/manifest.json",
 };

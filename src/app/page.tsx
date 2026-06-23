@@ -6,13 +6,14 @@ export default function HomePage() {
       <section className="mx-auto max-w-5xl">
         <div className="rounded-3xl bg-slate-900 p-6 text-white md:p-10">
           <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">
-            ArenaBook
+            Lapangin
           </p>
           <h1 className="mt-3 text-3xl font-bold md:text-5xl">
             Booking lapangan olahraga lebih cepat, rapi, dan mobile friendly.
           </h1>
           <p className="mt-4 max-w-2xl text-slate-300">
-            Pilih olahraga, cek slot kosong, booking jadwal, dan kelola semuanya dari dashboard admin.
+            Pilih olahraga, cek slot kosong, booking jadwal, dan kelola semuanya
+            dari dashboard admin.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
@@ -31,8 +32,18 @@ export default function HomePage() {
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {["Futsal", "Minisoccer", "Badminton", "Padel", "Tenis", "Basket"].map((sport) => (
-            <div key={sport} className="rounded-2xl border bg-white p-5 shadow-sm">
+          {[
+            "Futsal",
+            "Minisoccer",
+            "Badminton",
+            "Padel",
+            "Tenis",
+            "Basket",
+          ].map((sport) => (
+            <div
+              key={sport}
+              className="rounded-2xl border bg-white p-5 shadow-sm"
+            >
               <h2 className="text-lg font-semibold">{sport}</h2>
               <p className="mt-2 text-sm text-slate-500">
                 Cek jadwal kosong dan booking lapangan {sport.toLowerCase()}.

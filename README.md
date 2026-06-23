@@ -1,4 +1,4 @@
-# ArenaBook Starter Kit
+# Lapangin Starter Kit
 
 Starter kit awal untuk aplikasi booking lapangan olahraga berbasis web PWA.
 
