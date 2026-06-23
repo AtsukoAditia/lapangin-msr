@@ -9,6 +9,13 @@ import type {
   PaymentMethod,
   NotificationLog,
   NotificationPayload,
+  AdminUser,
+  Customer,
+  CustomerPublic,
+  LoyaltyTransactionType,
+  LoyaltyTransaction,
+  Reward,
+  RewardRedemption,
 } from "@/lib/types/domain";
 
 export interface CreateBookingInput {
@@ -118,4 +125,23 @@ export interface DatabaseAdapter {
   getNotificationLogs(bookingId?: string): Promise<NotificationLog[]>;
   createNotificationLog(payload: NotificationPayload, status: NotificationLog["status"], errorMessage?: string): Promise<NotificationLog>;
   markNotificationRead(id: string): Promise<NotificationLog>;
+
+  // Auth - Admin
+  authenticateAdmin(email: string, password: string): Promise<AdminUser | null>;
+  getAdminById(id: string): Promise<AdminUser | null>;
+
+  // Auth - Customer
+  registerCustomer(data: { name: string; email: string; phone: string; passwordHash: string }): Promise<CustomerPublic>;
+  authenticateCustomer(email: string, password: string): Promise<CustomerPublic | null>;
+  getCustomerById(id: string): Promise<CustomerPublic | null>;
+  getCustomerByEmail(email: string): Promise<Customer | null>;
+
+  // Loyalty
+  getLoyaltyTransactions(customerId: string): Promise<LoyaltyTransaction[]>;
+  addLoyaltyPoints(customerId: string, points: number, bookingId: string | undefined, description: string, type: LoyaltyTransactionType): Promise<LoyaltyTransaction>;
+  redeemLoyaltyPoints(customerId: string, rewardId: string, bookingId?: string): Promise<RewardRedemption>;
+  getRewards(): Promise<Reward[]>;
+  getActiveRewards(): Promise<Reward[]>;
+  getCustomerRedemptions(customerId: string): Promise<RewardRedemption[]>;
+  updateCustomerSpent(customerId: string, amount: number): Promise<void>;
 }

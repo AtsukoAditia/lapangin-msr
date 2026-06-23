@@ -20,6 +20,12 @@ import type {
   PaymentMethod,
   NotificationLog,
   NotificationPayload,
+  AdminUser,
+  CustomerPublic,
+  LoyaltyTransaction,
+  LoyaltyTransactionType,
+  Reward,
+  RewardRedemption,
 } from "@/lib/types/domain";
 
 function getJwtClient(): JWT {
@@ -682,4 +688,55 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
       readAt: now,
     };
   }
+
+  // Auth methods - Google Sheets doesn't support auth, stubs
+  async authenticateAdmin(_email: string, _password: string): Promise<AdminUser | null> {
+    return null;
+  }
+
+  async getAdminById(_id: string): Promise<AdminUser | null> {
+    return null;
+  }
+
+  async registerCustomer(_data: { name: string; email: string; phone: string; passwordHash: string }): Promise<CustomerPublic> {
+    throw new Error("Customer registration not supported with Google Sheets adapter");
+  }
+
+  async authenticateCustomer(_email: string, _password: string): Promise<CustomerPublic | null> {
+    return null;
+  }
+
+  async getCustomerById(_id: string): Promise<CustomerPublic | null> {
+    return null;
+  }
+
+  async getCustomerByEmail(_email: string): Promise<import("@/lib/types/domain").Customer | null> {
+    return null;
+  }
+
+  async getLoyaltyTransactions(_customerId: string): Promise<LoyaltyTransaction[]> {
+    return [];
+  }
+
+  async addLoyaltyPoints(_customerId: string, _points: number, _bookingId: string | undefined, _description: string, _type: LoyaltyTransactionType): Promise<LoyaltyTransaction> {
+    throw new Error("Loyalty not supported with Google Sheets adapter");
+  }
+
+  async redeemLoyaltyPoints(_customerId: string, _rewardId: string, _bookingId?: string): Promise<RewardRedemption> {
+    throw new Error("Loyalty not supported with Google Sheets adapter");
+  }
+
+  async getRewards(): Promise<Reward[]> {
+    return [];
+  }
+
+  async getActiveRewards(): Promise<Reward[]> {
+    return [];
+  }
+
+  async getCustomerRedemptions(_customerId: string): Promise<RewardRedemption[]> {
+    return [];
+  }
+
+  async updateCustomerSpent(_customerId: string, _amount: number): Promise<void> {}
 }
