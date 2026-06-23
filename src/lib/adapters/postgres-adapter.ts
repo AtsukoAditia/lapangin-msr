@@ -15,6 +15,8 @@ import type {
   Venue,
   AuditLogEntry,
   PaymentMethod,
+  NotificationLog,
+  NotificationPayload,
 } from "@/lib/types/domain";
 
 export class PostgresAdapter implements DatabaseAdapter {
@@ -160,5 +162,22 @@ export class PostgresAdapter implements DatabaseAdapter {
 
   async rejectPayment(_bookingId: string, _actorId?: string): Promise<Booking> {
     throw new Error("PostgresAdapter rejectPayment not implemented yet.");
+  }
+
+  // ── Notifications ──
+  async getNotificationLogs(_bookingId?: string): Promise<NotificationLog[]> {
+    throw new Error("PostgresAdapter getNotificationLogs not implemented yet.");
+  }
+
+  async createNotificationLog(
+    _payload: NotificationPayload,
+    _status: NotificationLog["status"],
+    _errorMessage?: string,
+  ): Promise<NotificationLog> {
+    throw new Error("PostgresAdapter createNotificationLog not implemented yet.");
+  }
+
+  async markNotificationRead(_id: string): Promise<NotificationLog> {
+    throw new Error("PostgresAdapter markNotificationRead not implemented yet.");
   }
 }
