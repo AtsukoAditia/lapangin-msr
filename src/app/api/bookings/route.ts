@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { verifyToken, CUSTOMER_TOKEN_NAME } from "@/lib/auth/jwt";
 import { getDatabaseAdapter } from "@/lib/adapters";
 import { BookingService } from "@/lib/services/booking-service";
 import { validateBookingInput } from "@/lib/validators/booking-validator";
