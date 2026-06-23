@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Slot = {
-  time: string;
-  label: string;
-  available: boolean;
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
 };
 
 type Props = {
@@ -29,28 +29,20 @@ function minutesToTime(m: number): string {
   return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
 }
 
-function generateSlots(openTime: string, closeTime: string): Slot[] {
+function generateFallbackSlots(openTime: string, closeTime: string): Slot[] {
   const start = timeToMinutes(openTime);
   const end = timeToMinutes(closeTime);
   const slots: Slot[] = [];
+
   for (let m = start; m + 60 <= end; m += 60) {
-    const from = minutesToTime(m);
-    const to = minutesToTime(m + 60);
     slots.push({
-      time: `${from}-${to}`,
-      label: `${from} – ${to}`,
-      available: true,
+      startTime: minutesToTime(m),
+      endTime: minutesToTime(m + 60),
+      isAvailable: true,
     });
   }
-  return slots;
-}
 
-function getToday(): string {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  return slots;
 }
 
 function getNext7Days(): { date: string; label: string; dayName: string }[] {
@@ -82,18 +74,66 @@ export default function SlotSelector({
   const router = useRouter();
   const dates = getNext7Days();
   const [selectedDate, setSelectedDate] = useState(dates[0].date);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+  const [slots, setSlots] = useState<Slot[]>(() =>
+    generateFallbackSlots(openTime, closeTime)
+  );
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotError, setSlotError] = useState<string | null>(null);
 
-  const slots = generateSlots(openTime, closeTime);
+  useEffect(() => {
+    let active = true;
+
+    async function loadSlots() {
+      setLoadingSlots(true);
+      setSlotError(null);
+
+      try {
+        const params = new URLSearchParams({
+          courtId,
+          date: selectedDate,
+          openTime,
+          closeTime,
+          slotDurationMinutes: "60",
+        });
+
+        const res = await fetch(`/api/availability?${params.toString()}`);
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error(data.error ?? "Gagal memuat slot tersedia.");
+        }
+
+        if (!active) return;
+
+        const nextSlots = Array.isArray(data.data) ? data.data : [];
+        setSlots(nextSlots);
+      } catch (error) {
+        if (!active) return;
+        setSlots([]);
+        setSlotError(
+          error instanceof Error ? error.message : "Gagal memuat slot tersedia."
+        );
+      } finally {
+        if (active) setLoadingSlots(false);
+      }
+    }
+
+    loadSlots();
+
+    return () => {
+      active = false;
+    };
+  }, [courtId, selectedDate, openTime, closeTime]);
 
   function handleContinue() {
     if (!selectedDate || !selectedSlot) return;
-    const [startTime, endTime] = selectedSlot.split("-");
+
     const params = new URLSearchParams({
       courtId,
       date: selectedDate,
-      startTime,
-      endTime,
+      startTime: selectedSlot.startTime,
+      endTime: selectedSlot.endTime,
       sport: sportSlug,
       venue: venueSlug,
       court: courtSlug,
@@ -124,38 +164,58 @@ export default function SlotSelector({
         ))}
       </div>
 
+      {slotError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {slotError}
+        </div>
+      )}
+
       {/* Time slots grid */}
       <div className="mb-5 grid grid-cols-3 gap-2 sm:grid-cols-4">
-        {slots.map((slot) => (
-          <button
-            key={slot.time}
-            disabled={!slot.available}
-            onClick={() => setSelectedSlot(slot.time)}
-            className={`rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-              !slot.available
-                ? "cursor-not-allowed bg-slate-100 text-slate-400 line-through"
-                : selectedSlot === slot.time
-                  ? "bg-emerald-600 text-white shadow"
-                  : "border border-slate-200 bg-white text-slate-700 hover:border-emerald-400"
-            }`}
-          >
-            {slot.label}
-          </button>
-        ))}
+        {slots.map((slot) => {
+          const slotKey = `${slot.startTime}-${slot.endTime}`;
+          const selectedKey = selectedSlot
+            ? `${selectedSlot.startTime}-${selectedSlot.endTime}`
+            : null;
+          const label = `${slot.startTime} – ${slot.endTime}`;
+
+          return (
+            <button
+              key={slotKey}
+              disabled={loadingSlots || !slot.isAvailable}
+              onClick={() => setSelectedSlot(slot)}
+              className={`rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                loadingSlots || !slot.isAvailable
+                  ? "cursor-not-allowed bg-slate-100 text-slate-400 line-through"
+                  : selectedKey === slotKey
+                    ? "bg-emerald-600 text-white shadow"
+                    : "border border-slate-200 bg-white text-slate-700 hover:border-emerald-400"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
+
+      {loadingSlots && (
+        <p className="mb-4 text-center text-sm text-slate-500">
+          Memuat slot tersedia...
+        </p>
+      )}
 
       {/* Continue button */}
       <button
         onClick={handleContinue}
-        disabled={!selectedSlot}
+        disabled={!selectedSlot || loadingSlots}
         className={`w-full rounded-xl py-3 text-sm font-semibold transition ${
-          selectedSlot
+          selectedSlot && !loadingSlots
             ? "bg-emerald-600 text-white shadow hover:bg-emerald-700"
             : "cursor-not-allowed bg-slate-200 text-slate-400"
         }`}
       >
         {selectedSlot
-          ? `Lanjut Booking — ${selectedSlot.replace("-", " – ")}`
+          ? `Lanjut Booking — ${selectedSlot.startTime} – ${selectedSlot.endTime}`
           : "Pilih jam terlebih dahulu"}
       </button>
     </div>
