@@ -131,3 +131,53 @@ export interface AuditLogEntry {
   previousValue?: string;
   newValue?: string;
 }
+
+// ── Notification ──
+
+export type NotificationChannel = "email" | "whatsapp" | "sms" | "web_push" | "in_app";
+export type NotificationType =
+  | "booking_created"
+  | "booking_confirmed"
+  | "booking_rejected"
+  | "booking_cancelled"
+  | "payment_received"
+  | "payment_confirmed"
+  | "payment_rejected"
+  | "reminder_before_booking"
+  | "admin_new_booking"
+  | "admin_payment_proof";
+
+export type NotificationStatus = "pending" | "sent" | "failed" | "read";
+
+export interface NotificationLog {
+  id: string;
+  type: NotificationType;
+  channel: NotificationChannel;
+  recipient: string;
+  subject?: string;
+  message: string;
+  status: NotificationStatus;
+  bookingId?: string;
+  bookingCode?: string;
+  errorMessage?: string;
+  sentAt?: string;
+  createdAt: string;
+  readAt?: string;
+}
+
+export interface NotificationPayload {
+  type: NotificationType;
+  channel: NotificationChannel;
+  recipient: string;
+  subject?: string;
+  message: string;
+  bookingId?: string;
+  bookingCode?: string;
+}
+
+export interface NotificationTemplate {
+  type: NotificationType;
+  channel: NotificationChannel;
+  subjectTemplate: string;
+  messageTemplate: string;
+}

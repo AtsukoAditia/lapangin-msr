@@ -100,12 +100,51 @@
 
 **Payment flow:** `pending` → `waiting_payment` (upload proof) → `confirmed` + `paid` (admin confirms)
 
+## Notification (Stage 7)
+
+- [x] Notifikasi terkirim saat booking dibuat (customer + admin alert).
+- [x] Notifikasi terkirim saat booking dikonfirmasi admin.
+- [x] Notifikasi terkirim saat booking ditolak admin.
+- [x] Notifikasi terkirim saat booking dibatalkan.
+- [x] WhatsApp redirect link berfungsi (wa.me link).
+- [x] Email template ter-generate dengan data booking lengkap.
+- [x] Push notification payload ter-format benar.
+- [x] Notification log tersimpan di adapter (mock/google sheets/postgres).
+- [x] Admin bisa melihat log notifikasi di `/admin/notifications`.
+- [x] Admin bisa filter notifikasi berdasarkan channel dan status.
+- [x] Statistik notifikasi tampil (total, sent, failed).
+- [x] Notification non-blocking — booking flow tidak terganggu jika notifikasi gagal.
+- [x] `GET /api/admin/notifications` berfungsi dengan pagination dan filters.
+
+### Notification Architecture
+
+| Layer       | File                                        | Responsibility                           |
+| ----------- | ------------------------------------------- | ---------------------------------------- |
+| Types       | `src/lib/types/domain.ts`                   | `NotificationLog`, channel, type, status |
+| Service     | `src/lib/services/notification-service.ts`  | Send to all channels                     |
+| Templates   | `src/lib/notification-templates.ts`         | Email, WhatsApp, Push message templates  |
+| Adapter     | `src/lib/adapters/database-adapter.ts`      | Notification CRUD interface              |
+| Adapter     | `src/lib/adapters/mock-adapter.ts`          | In-memory notification storage           |
+| Adapter     | `src/lib/adapters/google-sheets-adapter.ts` | notification_logs sheet                  |
+| Adapter     | `src/lib/adapters/postgres-adapter.ts`      | notification_logs table                  |
+| API (admin) | `src/app/api/admin/notifications/route.ts`  | GET list notifications                   |
+| UI (admin)  | `src/app/admin/notifications/page.tsx`      | Notification log list + filters          |
+| Integration | `src/lib/services/booking-service.ts`       | Trigger notifications on booking events  |
+
+**Notification types:** `booking_created`, `booking_confirmed`, `booking_rejected`, `booking_cancelled`, `payment_confirmed`, `payment_rejected`, `admin_alert`, `reminder`
+
+**Channels:** `email` (SMTP stub), `whatsapp` (wa.me redirect), `push` (Service Worker), `in_app` (future)
+
+**Status flow:** `pending` → `sent` | `failed` | `skipped`
+
 ## Build & Compilation
 
 - [x] `npm run build` berhasil tanpa error TypeScript.
-- [x] Semua 31 pages/routes ter-generate (termasuk payment routes).
+- [x] Semua 33 pages/routes ter-generate (termasuk notification routes).
 - [x] Admin pages ter-generate sebagai static pages.
 - [x] Admin API routes ter-generate sebagai dynamic server functions.
+- [x] `/admin/notifications` page ter-generate.
+- [x] `/api/admin/notifications` API route ter-generate.
 
 ## PWA
 

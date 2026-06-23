@@ -18,6 +18,8 @@ import type {
   AuditLogEntry,
   AuditLogAction,
   PaymentMethod,
+  NotificationLog,
+  NotificationPayload,
 } from "@/lib/types/domain";
 
 function getJwtClient(): JWT {
@@ -571,5 +573,113 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
     await targetRow.save();
 
     return rowToBooking(targetRow.toObject());
+  }
+
+  // ── Notifications ──
+  async getNotificationLogs(bookingId?: string): Promise<NotificationLog[]> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["notification_logs"];
+    if (!sheet) return [];
+
+    const rows = await sheet.getRows();
+    let logs = rows.map((row) => {
+      const obj = row.toObject();
+      return {
+        id: String(obj.id ?? ""),
+        type: String(obj.type ?? "") as NotificationLog["type"],
+        channel: String(obj.channel ?? "email") as NotificationLog["channel"],
+        recipient: String(obj.recipient ?? ""),
+        subject: obj.subject ? String(obj.subject) : undefined,
+        message: String(obj.message ?? ""),
+        status: String(obj.status ?? "pending") as NotificationLog["status"],
+        bookingId: obj.booking_id ? String(obj.booking_id) : undefined,
+        bookingCode: obj.booking_code ? String(obj.booking_code) : undefined,
+        errorMessage: obj.error_message ? String(obj.error_message) : undefined,
+        sentAt: obj.sent_at ? String(obj.sent_at) : undefined,
+        createdAt: String(obj.created_at ?? ""),
+        readAt: obj.read_at ? String(obj.read_at) : undefined,
+      } satisfies NotificationLog;
+    });
+
+    if (bookingId) {
+      logs = logs.filter((l) => l.bookingId === bookingId);
+    }
+    return logs;
+  }
+
+  async createNotificationLog(
+    payload: NotificationPayload,
+    status: NotificationLog["status"],
+    errorMessage?: string,
+  ): Promise<NotificationLog> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["notification_logs"];
+    if (!sheet) throw new Error("Notification logs sheet not found");
+
+    const now = new Date().toISOString();
+    const log: NotificationLog = {
+      id: `notif-${crypto.randomUUID().slice(0, 8)}`,
+      type: payload.type,
+      channel: payload.channel,
+      recipient: payload.recipient,
+      subject: payload.subject,
+      message: payload.message,
+      status,
+      bookingId: payload.bookingId,
+      bookingCode: payload.bookingCode,
+      errorMessage,
+      sentAt: status === "sent" ? now : undefined,
+      createdAt: now,
+    };
+
+    await sheet.addRow({
+      id: log.id,
+      type: log.type,
+      channel: log.channel,
+      recipient: log.recipient,
+      subject: log.subject ?? "",
+      message: log.message,
+      status: log.status,
+      booking_id: log.bookingId ?? "",
+      booking_code: log.bookingCode ?? "",
+      error_message: log.errorMessage ?? "",
+      sent_at: log.sentAt ?? "",
+      created_at: log.createdAt,
+      read_at: log.readAt ?? "",
+    });
+
+    return log;
+  }
+
+  async markNotificationRead(id: string): Promise<NotificationLog> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["notification_logs"];
+    if (!sheet) throw new Error("Notification logs sheet not found");
+
+    const rows = await sheet.getRows();
+    const targetRow = rows.find((r) => r.get("id") === id);
+    if (!targetRow) throw new Error(`Notification with id ${id} not found`);
+
+    const now = new Date().toISOString();
+    targetRow.set("status", "read");
+    targetRow.set("read_at", now);
+    await targetRow.save();
+
+    const obj = targetRow.toObject();
+    return {
+      id: String(obj.id ?? ""),
+      type: String(obj.type ?? "") as NotificationLog["type"],
+      channel: String(obj.channel ?? "email") as NotificationLog["channel"],
+      recipient: String(obj.recipient ?? ""),
+      subject: obj.subject ? String(obj.subject) : undefined,
+      message: String(obj.message ?? ""),
+      status: "read",
+      bookingId: obj.booking_id ? String(obj.booking_id) : undefined,
+      bookingCode: obj.booking_code ? String(obj.booking_code) : undefined,
+      errorMessage: obj.error_message ? String(obj.error_message) : undefined,
+      sentAt: obj.sent_at ? String(obj.sent_at) : undefined,
+      createdAt: String(obj.created_at ?? ""),
+      readAt: now,
+    };
   }
 }

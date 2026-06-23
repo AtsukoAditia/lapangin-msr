@@ -2,6 +2,13 @@ import type { CreateBookingInput, DatabaseAdapter } from "@/lib/adapters/databas
 import type { Booking, AuditLogAction } from "@/lib/types/domain";
 import { calculatePrice } from "./pricing-service";
 import { hasBlockedSlotConflict, hasBookingConflict } from "./availability-service";
+import {
+  sendBookingCreated,
+  sendBookingConfirmation,
+  sendBookingRejection,
+  sendBookingCancellation,
+  sendAdminNewBookingAlert,
+} from "./notification-service";
 
 export class BookingService {
   constructor(private readonly adapter: DatabaseAdapter) {}
@@ -89,6 +96,14 @@ export class BookingService {
       `Booking ${booking.bookingCode} created: ${input.bookingDate} ${input.startTime}-${input.endTime}`
     );
 
+    // ── 6. Send notifications (non-blocking) ──
+    try {
+      await sendBookingCreated(booking);
+      await sendAdminNewBookingAlert(booking);
+    } catch {
+      console.error("[BookingService] Notification failed for booking creation");
+    }
+
     return booking;
   }
 
@@ -99,6 +114,7 @@ export class BookingService {
       `Booking ${booking.bookingCode} confirmed`,
       booking.bookingStatus, "confirmed"
     );
+    try { await sendBookingConfirmation(result); } catch { /* non-blocking */ }
     return result;
   }
 
@@ -109,6 +125,7 @@ export class BookingService {
       `Booking ${booking.bookingCode} rejected`,
       booking.bookingStatus, "rejected"
     );
+    try { await sendBookingRejection(result); } catch { /* non-blocking */ }
     return result;
   }
 
@@ -119,6 +136,7 @@ export class BookingService {
       `Booking ${booking.bookingCode} cancelled`,
       booking.bookingStatus, "cancelled"
     );
+    try { await sendBookingCancellation(result); } catch { /* non-blocking */ }
     return result;
   }
 

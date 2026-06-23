@@ -15,6 +15,8 @@ import type {
   Venue,
   AuditLogEntry,
   PaymentMethod,
+  NotificationLog,
+  NotificationPayload,
 } from "@/lib/types/domain";
 import {
   mockSports,
@@ -28,6 +30,7 @@ const bookingsStore: Booking[] = [];
 const pricingRulesStore: PricingRule[] = [...mockPricingRules];
 const blockedSlotsStore: BlockedSlot[] = [];
 const auditLogStore: AuditLogEntry[] = [];
+const notificationLogStore: NotificationLog[] = [];
 
 const paymentMethodsStore: PaymentMethod[] = [
   {
@@ -335,6 +338,50 @@ export class MockAdapter implements DatabaseAdapter {
       updatedAt: new Date().toISOString(),
     };
     return { ...bookingsStore[index] };
+  }
+
+  // ── Notifications ──
+  async getNotificationLogs(bookingId?: string): Promise<NotificationLog[]> {
+    if (bookingId) {
+      return notificationLogStore.filter((n) => n.bookingId === bookingId);
+    }
+    return [...notificationLogStore];
+  }
+
+  async createNotificationLog(
+    payload: NotificationPayload,
+    status: NotificationLog["status"],
+    errorMessage?: string,
+  ): Promise<NotificationLog> {
+    const log: NotificationLog = {
+      id: generateId("notif"),
+      type: payload.type,
+      channel: payload.channel,
+      recipient: payload.recipient,
+      subject: payload.subject,
+      message: payload.message,
+      status,
+      bookingId: payload.bookingId,
+      bookingCode: payload.bookingCode,
+      errorMessage,
+      sentAt: status === "sent" ? new Date().toISOString() : undefined,
+      createdAt: new Date().toISOString(),
+    };
+    notificationLogStore.push(log);
+    return { ...log };
+  }
+
+  async markNotificationRead(id: string): Promise<NotificationLog> {
+    const index = notificationLogStore.findIndex((n) => n.id === id);
+    if (index === -1) {
+      throw new Error(`Notification not found: ${id}`);
+    }
+    notificationLogStore[index] = {
+      ...notificationLogStore[index],
+      status: "read",
+      readAt: new Date().toISOString(),
+    };
+    return { ...notificationLogStore[index] };
   }
 
   // ── Audit Log ──
