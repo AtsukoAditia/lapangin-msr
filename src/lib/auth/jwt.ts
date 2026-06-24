@@ -1,5 +1,9 @@
 import { SignJWT, jwtVerify } from "jose";
 import type { AuthSession } from "@/lib/types/domain";
+import {
+  hashPassword as bcryptHashPassword,
+  verifyPassword as bcryptVerifyPassword,
+} from "./password";
 
 const ADMIN_TOKEN_NAME = "admin_auth_token";
 const CUSTOMER_TOKEN_NAME = "customer_token";
@@ -49,11 +53,11 @@ export function getCustomerTokenName(): string {
 }
 
 export function hashPassword(password: string): string {
-  return password;
+  return bcryptHashPassword(password);
 }
 
 export function verifyPassword(password: string, hash: string): boolean {
-  return password === hash;
+  return bcryptVerifyPassword(password, hash);
 }
 
 export { ADMIN_TOKEN_NAME, CUSTOMER_TOKEN_NAME };
