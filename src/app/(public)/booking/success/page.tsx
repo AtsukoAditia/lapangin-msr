@@ -1,32 +1,144 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import BookingSteps from "@/components/booking/BookingSteps";
 import type { Booking, PaymentMethod } from "@/lib/types/domain";
 
 const POLL_INTERVAL_MS = 5000;
 
-type BookingStatus = Booking["bookingStatus"];
+type PublicBooking = Pick<
+  Booking,
+  | "id"
+  | "bookingCode"
+  | "customerName"
+  | "venueId"
+  | "courtId"
+  | "sportId"
+  | "bookingDate"
+  | "startTime"
+  | "endTime"
+  | "durationMinutes"
+  | "totalPrice"
+  | "bookingStatus"
+  | "paymentStatus"
+  | "expiresAt"
+  | "createdAt"
+  | "updatedAt"
+>;
 
-interface PublicBooking {
-  id: string;
-  bookingCode: string;
-  customerName: string;
-  venueId: string;
-  courtId: string;
-  sportId: string;
-  bookingDate: string;
-  startTime: string;
-  endTime: string;
-  durationMinutes: number;
-  totalPrice: number;
-  bookingStatus: BookingStatus;
-  paymentStatus: Booking["paymentStatus"];
-  expiresAt?: string;
-  createdAt: string;
-  updatedAt: string;
+const POLLABLE_STATUSES: Booking["bookingStatus"][] = [
+  "waiting_payment",
+  "waiting_verification",
+];
+
+function formatCountdown(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
+}
+
+function getHeader(booking: PublicBooking | null) {
+  if (!booking) {
+    return {
+      title: "Cek Status Booking",
+      subtitle: "Gunakan kode booking untuk melihat status terbaru.",
+    };
+  }
+
+  if (booking.bookingStatus === "confirmed") {
+    return {
+      title: "Booking Dikonfirmasi!",
+      subtitle: "Pembayaran sudah diverifikasi dan jadwal sudah valid.",
+    };
+  }
+
+  if (booking.bookingStatus === "waiting_payment") {
+    return {
+      title: "Booking Sementara Dibuat",
+      subtitle:
+        "Selesaikan pembayaran sebelum waktu habis. Jadwal belum final sampai admin mengonfirmasi.",
+    };
+  }
+
+  if (booking.bookingStatus === "waiting_verification") {
+    return {
+      title: "Menunggu Verifikasi",
+      subtitle: "Bukti pembayaran sudah diterima dan sedang diperiksa admin.",
+    };
+  }
+
+  return {
+    title: "Status Booking",
+    subtitle: "Lihat status terbaru booking kamu di halaman ini.",
+  };
+}
+
+function getStatusCard(
+  booking: PublicBooking,
+  countdown: number | null,
+): {
+  icon: string;
+  title: string;
+  body: string;
+  className: string;
+  countdownText?: string;
+} {
+  switch (booking.bookingStatus) {
+    case "waiting_payment":
+      return {
+        icon: "⏳",
+        title: "Menunggu Pembayaran",
+        body:
+          "Booking masih sementara. Slot ditahan sampai countdown selesai dan baru valid setelah admin mengonfirmasi pembayaran.",
+        className: "border-amber-200 bg-amber-50 text-amber-800",
+        countdownText: countdown === null ? "15:00" : formatCountdown(countdown),
+      };
+    case "waiting_verification":
+      return {
+        icon: "🔍",
+        title: "Menunggu Verifikasi Admin",
+        body:
+          "Bukti transfer sudah diterima. Admin sedang memverifikasi pembayaranmu.",
+        className: "border-blue-200 bg-blue-50 text-blue-800",
+      };
+    case "confirmed":
+      return {
+        icon: "✅",
+        title: "Booking Dikonfirmasi",
+        body: "Pembayaran sudah diverifikasi. Jadwal sudah valid.",
+        className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+      };
+    case "expired":
+      return {
+        icon: "⏰",
+        title: "Booking Kadaluarsa",
+        body: "Waktu pembayaran telah habis. Silakan buat booking baru.",
+        className: "border-red-200 bg-red-50 text-red-800",
+      };
+    case "rejected":
+      return {
+        icon: "❌",
+        title: "Booking Ditolak",
+        body: "Pembayaran tidak dapat diverifikasi. Silakan hubungi admin.",
+        className: "border-red-200 bg-red-50 text-red-800",
+      };
+    case "cancelled":
+      return {
+        icon: "🚫",
+        title: "Booking Dibatalkan",
+        body: "Booking ini sudah dibatalkan. Silakan buat booking baru.",
+        className: "border-slate-200 bg-slate-50 text-slate-800",
+      };
+    default:
+      return {
+        icon: "📌",
+        title: "Booking Terkirim",
+        body: "Status booking sedang diperbarui.",
+        className: "border-slate-200 bg-white text-slate-800",
+      };
+  }
 }
 
 function SuccessContent() {
@@ -35,117 +147,125 @@ function SuccessContent() {
 
   const [booking, setBooking] = useState<PublicBooking | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [proofUrl, setProofUrl] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
   const [selectedMethod, setSelectedMethod] = useState("");
-  const [step, setStep] = useState<"instructions" | "upload" | "done">(
-    "instructions",
-  );
+  const [proofUrl, setProofUrl] = useState("");
+  const [error, setError] = useState("");
+  const [submittingProof, setSubmittingProof] = useState(false);
+  const [proofSubmitted, setProofSubmitted] = useState(false);
+  const [loading, setLoading] = useState(Boolean(bookingCode));
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [loading, setLoading] = useState(() => !searchParams.has("code"));
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const expiryRefreshRef = useRef(false);
 
   const fetchBooking = useCallback(async () => {
     if (!bookingCode) return null;
+
     try {
-      const res = await fetch(`/api/bookings/${bookingCode}`);
+      const res = await fetch(`/api/bookings/${bookingCode}`, {
+        cache: "no-store",
+      });
+
       if (res.ok) {
         const data: PublicBooking = await res.json();
         setBooking(data);
         return data;
       }
-    } catch { /* ignore */ }
+
+      if (res.status === 404) {
+        setBooking(null);
+      }
+    } catch {
+      /* polling should not break the page */
+    }
+
     return null;
   }, [bookingCode]);
 
-  // Initial load
   useEffect(() => {
     if (!bookingCode) return;
 
     const controller = new AbortController();
 
-    async function loadData() {
+    async function loadInitialData() {
       try {
-        const bookingRes = await fetch(`/api/bookings/${bookingCode}`, {
-          signal: controller.signal,
-        });
+        const [bookingRes, paymentMethodsRes] = await Promise.all([
+          fetch(`/api/bookings/${bookingCode}`, {
+            signal: controller.signal,
+            cache: "no-store",
+          }),
+          fetch("/api/payments/methods", {
+            signal: controller.signal,
+            cache: "no-store",
+          }),
+        ]);
+
         if (bookingRes.ok) {
           setBooking(await bookingRes.json());
+        } else if (bookingRes.status === 404) {
+          setBooking(null);
         }
-        const methodsRes = await fetch("/api/payments/methods", {
-          signal: controller.signal,
-        });
-        if (methodsRes.ok) {
-          const data = await methodsRes.json();
+
+        if (paymentMethodsRes.ok) {
+          const data = await paymentMethodsRes.json();
           setPaymentMethods(data.methods ?? []);
         }
       } catch {
-        /* ignore */
+        /* network error state is handled by keeping booking null */
       } finally {
         setLoading(false);
       }
     }
-    loadData();
+
+    loadInitialData();
 
     return () => controller.abort();
-  }, [bookingCode, fetchBooking]);
+  }, [bookingCode]);
 
-  // Polling for status changes (only while waiting_payment or waiting_verification)
   useEffect(() => {
-    if (!booking) return;
+    if (!booking || !POLLABLE_STATUSES.includes(booking.bookingStatus)) return;
 
-    const pollable: BookingStatus[] = [
-      "waiting_payment",
-      "waiting_verification",
-    ];
-    if (!pollable.includes(booking.bookingStatus)) {
-      if (pollRef.current) clearInterval(pollRef.current);
-      return;
-    }
-
-    pollRef.current = setInterval(async () => {
-      const fresh = await fetchBooking();
-      if (fresh && !pollable.includes(fresh.bookingStatus)) {
-        if (pollRef.current) clearInterval(pollRef.current);
-      }
+    const intervalId = setInterval(() => {
+      void fetchBooking();
     }, POLL_INTERVAL_MS);
 
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, [booking?.bookingStatus, fetchBooking]);
+    return () => clearInterval(intervalId);
+  }, [booking, fetchBooking]);
 
-  // Countdown timer — ponytail: refactor to useCountdown hook if reused elsewhere
-  const countdownRef = useRef<number | null>(null);
   useEffect(() => {
     if (!booking?.expiresAt || booking.bookingStatus !== "waiting_payment") {
-      countdownRef.current = null;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset countdown on deps change
+      expiryRefreshRef.current = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- countdown is derived from booking status
       setCountdown(null);
       return;
     }
 
-    const update = () => {
-      const diff = Math.max(
+    expiryRefreshRef.current = false;
+
+    const tick = () => {
+      const remaining = Math.max(
         0,
         Math.floor(
           (new Date(booking.expiresAt!).getTime() - Date.now()) / 1000,
         ),
       );
-      countdownRef.current = diff;
-      setCountdown(diff);
-      if (diff <= 0 && pollRef.current) clearInterval(pollRef.current);
+
+      setCountdown(remaining);
+
+      if (remaining === 0 && !expiryRefreshRef.current) {
+        expiryRefreshRef.current = true;
+        void fetchBooking();
+      }
     };
 
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, [booking?.expiresAt, booking?.bookingStatus]);
+    tick();
+    const intervalId = setInterval(tick, 1000);
+    return () => clearInterval(intervalId);
+  }, [booking?.expiresAt, booking?.bookingStatus, fetchBooking]);
 
-  const handleSubmitProof = async () => {
-    if (!booking?.id || !proofUrl.trim()) {
-      setError("Masukkan link bukti transfer");
+  async function submitProof() {
+    if (!booking) return;
+
+    if (!proofUrl.trim()) {
+      setError("Masukkan link bukti transfer.");
       return;
     }
 
@@ -156,7 +276,7 @@ function SuccessContent() {
       return;
     }
 
-    setUploading(true);
+    setSubmittingProof(true);
     setError("");
 
     try {
@@ -170,224 +290,86 @@ function SuccessContent() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Gagal mengirim bukti transfer");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Gagal mengirim bukti transfer.");
       }
 
-      setStep("done");
+      setProofSubmitted(true);
       await fetchBooking();
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Gagal mengirim bukti transfer",
-      );
+      setError(e instanceof Error ? e.message : "Gagal mengirim bukti transfer.");
     } finally {
-      setUploading(false);
+      setSubmittingProof(false);
     }
-  };
-
-  const formatCountdown = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
-
-  // ── Status-specific banners ── (plain function, not component)
-
-  function renderStatusBanner() {
-    if (!booking) return null;
-
-    const status = booking.bookingStatus;
-
-    if (status === "expired") {
-      return (
-        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-5 text-center">
-          <p className="text-3xl">⏰</p>
-          <h3 className="mt-2 text-lg font-bold text-red-800">
-            Booking Kadaluarsa
-          </h3>
-          <p className="mt-1 text-sm text-red-600">
-            Waktu pembayaran telah habis. Silakan buat booking baru.
-          </p>
-          <Link
-            href="/booking"
-            className="mt-4 inline-block rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white"
-          >
-            🔄 Booking Ulang
-          </Link>
-        </div>
-      );
-    }
-
-    if (status === "rejected") {
-      return (
-        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-5 text-center">
-          <p className="text-3xl">❌</p>
-          <h3 className="mt-2 text-lg font-bold text-red-800">
-            Booking Ditolak
-          </h3>
-          <p className="mt-1 text-sm text-red-600">
-            Pembayaran tidak dapat diverifikasi. Silakan hubungi admin.
-          </p>
-          <Link
-            href="/booking"
-            className="mt-4 inline-block rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white"
-          >
-            🔄 Booking Ulang
-          </Link>
-        </div>
-      );
-    }
-
-    if (status === "confirmed") {
-      return (
-        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
-          <p className="text-3xl">✅</p>
-          <h3 className="mt-2 text-lg font-bold text-emerald-800">
-            Booking Dikonfirmasi!
-          </h3>
-          <p className="mt-1 text-sm text-emerald-600">
-            Pembayaran sudah diverifikasi. Lapangan sudah dipesan untukmu.
-          </p>
-        </div>
-      );
-    }
-
-    if (status === "waiting_verification") {
-      return (
-        <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center">
-          <p className="text-3xl">🔍</p>
-          <h3 className="mt-2 text-lg font-bold text-blue-800">
-            Menunggu Verifikasi
-          </h3>
-          <p className="mt-1 text-sm text-blue-600">
-            Bukti transfer sudah diterima. Admin sedang memverifikasi
-            pembayaranmu. Halaman ini otomatis update.
-          </p>
-        </div>
-      );
-    }
-
-    // waiting_payment with countdown
-    if (status === "waiting_payment" && countdown !== null) {
-      return (
-        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-center">
-          <p className="text-sm font-medium text-amber-700">
-            ⏳ Sisa waktu pembayaran
-          </p>
-          <p
-            className={`mt-1 text-3xl font-extrabold ${
-              countdown < 120 ? "text-red-600" : "text-amber-700"
-            }`}
-          >
-            {formatCountdown(countdown)}
-          </p>
-          {countdown < 120 && (
-            <p className="mt-1 text-xs text-red-500">
-              Segera selesaikan pembayaran!
-            </p>
-          )}
-        </div>
-      );
-    }
-
-    return null;
   }
-
-  const paymentStatusDisplay = () => {
-    if (!booking) return null;
-
-    const statusConfig: Record<
-      string,
-      { label: string; color: string; icon: string }
-    > = {
-      unpaid: {
-        label: "Belum Bayar",
-        color: "text-amber-700 bg-amber-50 border-amber-200",
-        icon: "⏳",
-      },
-      waiting_confirmation: {
-        label: "Menunggu Konfirmasi",
-        color: "text-blue-700 bg-blue-50 border-blue-200",
-        icon: "🔍",
-      },
-      dp_paid: {
-        label: "DP Terbayar",
-        color: "text-emerald-700 bg-emerald-50 border-emerald-200",
-        icon: "💰",
-      },
-      paid: {
-        label: "Lunas",
-        color: "text-emerald-700 bg-emerald-50 border-emerald-200",
-        icon: "✅",
-      },
-      rejected: {
-        label: "Ditolak",
-        color: "text-red-700 bg-red-50 border-red-200",
-        icon: "❌",
-      },
-      refunded: {
-        label: "Refund",
-        color: "text-slate-700 bg-slate-50 border-slate-200",
-        icon: "↩️",
-      },
-    };
-
-    const cfg = statusConfig[booking.paymentStatus];
-    if (!cfg) return null;
-
-    return (
-      <div
-        className={`rounded-xl border px-4 py-2.5 text-sm font-medium ${cfg.color}`}
-      >
-        {cfg.icon} Status Pembayaran: <strong>{cfg.label}</strong>
-      </div>
-    );
-  };
-
-  // ── Loading state ──
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="flex min-h-[50vh] items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
-            <p className="text-sm text-slate-500">Memuat booking...</p>
-          </div>
+      <div className="flex min-h-[50vh] items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
+          <p className="text-sm text-slate-500">Memuat booking...</p>
         </div>
       </div>
     );
   }
 
-  if (!bookingCode || !booking) {
+  if (!bookingCode) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="flex min-h-[50vh] items-center justify-center">
-          <div className="text-center">
-            <p className="text-3xl">🔍</p>
-            <h3 className="mt-2 text-lg font-bold text-slate-900">
-              Booking Tidak Ditemukan
-            </h3>
-            <Link
-              href="/booking"
-              className="mt-4 inline-block rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white"
-            >
-              Buat Booking Baru
-            </Link>
-          </div>
+      <div className="flex min-h-[50vh] items-center justify-center bg-slate-50 px-4 text-center">
+        <div>
+          <p className="text-3xl">🔎</p>
+          <h1 className="mt-2 text-lg font-bold text-slate-900">
+            Kode Booking Belum Ada
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Silakan mulai booking dari halaman pemesanan.
+          </p>
+          <Link
+            href="/booking"
+            className="mt-4 inline-block rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white"
+          >
+            Buat Booking Baru
+          </Link>
         </div>
       </div>
     );
   }
 
-  const isExpiredOrFinal =
-    booking.bookingStatus === "expired" ||
-    booking.bookingStatus === "rejected" ||
-    booking.bookingStatus === "confirmed";
+  if (!booking) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center bg-slate-50 px-4 text-center">
+        <div>
+          <p className="text-3xl">🔍</p>
+          <h1 className="mt-2 text-lg font-bold text-slate-900">
+            Booking Tidak Ditemukan
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Cek kembali kode booking kamu atau buat booking baru.
+          </p>
+          <Link
+            href="/booking"
+            className="mt-4 inline-block rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white"
+          >
+            Buat Booking Baru
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const header = getHeader(booking);
+  const statusCard = getStatusCard(booking, countdown);
+  const canSubmitProof = booking.bookingStatus === "waiting_payment";
+  const isFinalOrInactive = [
+    "confirmed",
+    "expired",
+    "rejected",
+    "cancelled",
+  ].includes(booking.bookingStatus);
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Step Indicator */}
       <BookingSteps
         currentStep={5}
         steps={[
@@ -395,270 +377,143 @@ function SuccessContent() {
           { number: 2, label: "Pilih Venue", href: "/booking" },
           { number: 3, label: "Pilih Jadwal", href: "/booking" },
           { number: 4, label: "Isi Data", href: "/booking" },
-          { number: 5, label: "Selesai" },
+          { number: 5, label: "Status" },
         ]}
-        title="Booking Terkirim!"
-        subtitle="Menunggu konfirmasi admin. Kamu bisa upload bukti pembayaran di bawah."
+        title={header.title}
+        subtitle={header.subtitle}
       />
 
-      <div className="mx-auto max-w-lg px-4 -mt-6 pb-10">
-        {/* Status Banner */}
-        {renderStatusBanner()}
+      <main className="mx-auto max-w-lg px-4 -mt-6 pb-10">
+        <section className={`mb-6 rounded-2xl border p-5 text-center ${statusCard.className}`}>
+          <p className="text-3xl">{statusCard.icon}</p>
+          <h2 className="mt-2 text-lg font-bold">{statusCard.title}</h2>
+          {statusCard.countdownText && (
+            <p className="mt-2 text-3xl font-extrabold">
+              {statusCard.countdownText}
+            </p>
+          )}
+          <p className="mt-2 text-sm">{statusCard.body}</p>
+        </section>
 
-        {/* Booking Code Card */}
-        <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-lg">
+        <section className="mb-6 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-lg">
           <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-5 text-center">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-600">
               Kode Booking
             </p>
             <p className="text-3xl font-extrabold tracking-widest text-emerald-700">
-              {bookingCode}
+              {booking.bookingCode}
             </p>
             <p className="mt-2 text-xs text-slate-500">
-              Simpan kode ini untuk referensi pembayaran
+              {booking.bookingStatus === "confirmed"
+                ? "Kode ini valid sebagai bukti booking."
+                : "Simpan kode ini untuk cek status pembayaran."}
             </p>
           </div>
 
-          {/* Booking Details */}
-          <div className="border-t border-slate-100 p-5">
-            <h3 className="mb-3 text-sm font-bold text-slate-900">
-              📋 Detail Booking
-            </h3>
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-sm">
-                  📅
-                </span>
-                <div className="flex-1">
-                  <p className="text-xs text-slate-500">Tanggal</p>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {booking.bookingDate}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-sm">
-                  ⏰
-                </span>
-                <div className="flex-1">
-                  <p className="text-xs text-slate-500">Jam</p>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {booking.startTime} — {booking.endTime}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-sm">
-                  ⏱️
-                </span>
-                <div className="flex-1">
-                  <p className="text-xs text-slate-500">Durasi</p>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {booking.durationMinutes} menit
-                  </p>
-                </div>
-              </div>
-              <div className="border-t border-slate-100 pt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-600">
-                    💰 Total Harga
-                  </span>
-                  <span className="text-xl font-extrabold text-emerald-600">
-                    Rp {booking.totalPrice.toLocaleString("id-ID")}
-                  </span>
-                </div>
-              </div>
-              <div className="pt-1">{paymentStatusDisplay()}</div>
+          <div className="space-y-3 border-t border-slate-100 p-5 text-sm">
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-500">Tanggal</span>
+              <strong className="text-right text-slate-900">{booking.bookingDate}</strong>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-500">Jam</span>
+              <strong className="text-right text-slate-900">
+                {booking.startTime} — {booking.endTime}
+              </strong>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-500">Durasi</span>
+              <strong className="text-right text-slate-900">
+                {booking.durationMinutes} menit
+              </strong>
+            </div>
+            <div className="flex justify-between gap-4 border-t border-slate-100 pt-3">
+              <span className="text-slate-500">Total</span>
+              <strong className="text-right text-emerald-600">
+                Rp {booking.totalPrice.toLocaleString("id-ID")}
+              </strong>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Payment Instructions — only for waiting_payment */}
-        {step === "instructions" &&
-          booking.bookingStatus === "waiting_payment" && (
-            <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3">
-                <h2 className="text-sm font-bold text-white">
-                  💳 Instruksi Pembayaran
-                </h2>
-              </div>
-              <div className="p-5">
-                {paymentMethods.length > 0 ? (
-                  <div className="space-y-3">
-                    {paymentMethods.map((method) => (
-                      <button
-                        key={method.id}
-                        onClick={() => setSelectedMethod(method.id)}
-                        className={`w-full rounded-xl border-2 p-4 text-left transition ${
-                          selectedMethod === method.id
-                            ? "border-emerald-500 bg-emerald-50"
-                            : "border-slate-200 hover:border-emerald-300"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-semibold text-slate-900">
-                              {method.label}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {method.type === "bank_transfer" &&
-                                "🏦 Transfer Bank"}
-                              {method.type === "e_wallet" && "📱 E-Wallet"}
-                              {method.type === "qris" && "📲 QRIS"}
-                              {method.type === "cash" && "💵 Tunai"}
-                            </p>
-                            {method.details && (
-                              <p className="mt-1 text-sm text-slate-600">
-                                {method.details}
-                              </p>
-                            )}
-                          </div>
-                          {selectedMethod === method.id && (
-                            <span className="text-lg text-emerald-600">
-                              ✓
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                    <p className="text-sm text-amber-700">
-                      💬 Silakan hubungi admin untuk instruksi pembayaran.
-                      Admin akan menghubungi via WhatsApp.
-                    </p>
-                  </div>
-                )}
-
-                <div className="mt-4 rounded-xl bg-slate-50 p-4">
-                  <p className="mb-2 text-xs font-bold text-slate-700">
-                    Langkah Pembayaran:
-                  </p>
-                  <div className="space-y-2">
-                    {[
-                      {
-                        num: 1,
-                        text: "Transfer sesuai nominal yang tertera",
-                      },
-                      { num: 2, text: "Simpan bukti transfer" },
-                      {
-                        num: 3,
-                        text: "Klik tombol di bawah untuk upload bukti transfer",
-                      },
-                    ].map((item) => (
-                      <div
-                        key={item.num}
-                        className="flex items-start gap-2.5"
-                      >
-                        <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
-                          {item.num}
-                        </span>
-                        <p className="text-sm text-slate-600">{item.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setStep("upload")}
-                  className="mt-4 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition hover:from-emerald-700 hover:to-teal-700"
-                >
-                  📤 Saya Sudah Transfer — Kirim Bukti
-                </button>
-              </div>
-            </div>
-          )}
-
-        {/* Upload Proof — only for waiting_payment */}
-        {step === "upload" &&
-          booking.bookingStatus === "waiting_payment" && (
-            <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-5 py-3">
-                <h2 className="text-sm font-bold text-white">
-                  📤 Upload Bukti Transfer
-                </h2>
-              </div>
-              <div className="p-5">
-                <div className="mb-4 rounded-xl bg-blue-50 p-3">
-                  <p className="text-xs text-blue-700">
-                    ℹ️ Upload bukti transfer ke Google Drive / Imgur / layanan
-                    cloud lainnya, lalu tempel link-nya di bawah ini.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <label
-                      htmlFor="proofUrl"
-                      className="mb-1.5 block text-sm font-semibold text-slate-700"
-                    >
-                      Link Bukti Transfer{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="proofUrl"
-                      type="url"
-                      value={proofUrl}
-                      onChange={(e) => {
-                        setProofUrl(e.target.value);
-                        setError("");
-                      }}
-                      placeholder="https://drive.google.com/file/d/..."
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-200"
-                    />
-                    {error && (
-                      <p className="mt-1.5 flex items-center gap-1 text-xs text-red-500">
-                        ⚠️ {error}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-4 flex gap-3">
-                  <button
-                    onClick={() => setStep("instructions")}
-                    className="flex-1 rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    ← Kembali
-                  </button>
-                  <button
-                    onClick={handleSubmitProof}
-                    disabled={uploading}
-                    className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50"
-                  >
-                    {uploading ? "Mengirim..." : "📤 Kirim Bukti"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-        {/* Done step (after proof submitted) */}
-        {step === "done" && (
-          <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm">
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-center">
+        {canSubmitProof && (
+          <section className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3">
               <h2 className="text-sm font-bold text-white">
-                ✅ Bukti Terkirim
+                💳 Instruksi Pembayaran
               </h2>
             </div>
-            <div className="p-6 text-center">
-              <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-4xl">
-                🎉
+
+            <div className="space-y-4 p-5">
+              {paymentMethods.length > 0 ? (
+                <div className="space-y-3">
+                  {paymentMethods.map((method) => (
+                    <button
+                      key={method.id}
+                      type="button"
+                      onClick={() => setSelectedMethod(method.id)}
+                      className={`w-full rounded-xl border-2 p-4 text-left transition ${
+                        selectedMethod === method.id
+                          ? "border-emerald-500 bg-emerald-50"
+                          : "border-slate-200 hover:border-emerald-300"
+                      }`}
+                    >
+                      <p className="font-semibold text-slate-900">{method.label}</p>
+                      {method.details && (
+                        <p className="mt-1 text-sm text-slate-600">{method.details}</p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm text-amber-700">
+                    Silakan hubungi admin untuk instruksi pembayaran.
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label
+                  htmlFor="proofUrl"
+                  className="mb-1.5 block text-sm font-semibold text-slate-700"
+                >
+                  Link Bukti Transfer
+                </label>
+                <input
+                  id="proofUrl"
+                  type="url"
+                  value={proofUrl}
+                  onChange={(e) => {
+                    setProofUrl(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="https://drive.google.com/file/d/..."
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-200"
+                />
+                {error && (
+                  <p className="mt-1.5 text-xs text-red-500">⚠️ {error}</p>
+                )}
               </div>
-              <h3 className="mb-2 text-lg font-bold text-emerald-900">
-                Bukti Transfer Terkirim!
-              </h3>
-              <p className="text-sm text-slate-600">
-                Admin akan memverifikasi pembayaran kamu. Halaman ini akan
-                otomatis update saat status berubah.
-              </p>
-              <div className="mt-4">{paymentStatusDisplay()}</div>
+
+              <button
+                type="button"
+                onClick={submitProof}
+                disabled={submittingProof}
+                className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50"
+              >
+                {submittingProof ? "Mengirim..." : "📤 Kirim Bukti Transfer"}
+              </button>
+
+              {proofSubmitted && (
+                <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-center text-sm font-medium text-emerald-700">
+                  Bukti transfer terkirim. Menunggu verifikasi admin.
+                </p>
+              )}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Action Buttons */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/"
@@ -666,24 +521,14 @@ function SuccessContent() {
           >
             🏠 Kembali ke Beranda
           </Link>
-          {!isExpiredOrFinal && (
-            <Link
-              href="/booking"
-              className="rounded-xl border-2 border-slate-300 bg-white px-6 py-3.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              📅 Booking Lagi
-            </Link>
-          )}
-          {isExpiredOrFinal && (
-            <Link
-              href="/booking"
-              className="rounded-xl border-2 border-slate-300 bg-white px-6 py-3.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              📅 Booking Baru
-            </Link>
-          )}
+          <Link
+            href="/booking"
+            className="rounded-xl border-2 border-slate-300 bg-white px-6 py-3.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            {isFinalOrInactive ? "📅 Booking Baru" : "📅 Booking Lagi"}
+          </Link>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

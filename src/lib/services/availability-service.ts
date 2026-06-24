@@ -4,6 +4,7 @@ import type { Booking, BlockedSlot } from "@/lib/types/domain";
 const ACTIVE_STATUSES: Booking["bookingStatus"][] = [
   "pending",
   "waiting_payment",
+  "waiting_verification",
   "paid",
   "confirmed",
 ];
