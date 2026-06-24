@@ -137,15 +137,118 @@
 
 **Status flow:** `pending` → `sent` | `failed` | `skipped`
 
+## Admin Authentication (Stage 9)
+
+- [x] Admin harus login sebelum akses dashboard (`/admin/*`).
+- [x] Admin login page tampil dengan tema sporty (dark gradient).
+- [x] Login form: email + password input.
+- [x] Login berhasil → redirect ke `/admin` dashboard.
+- [x] Login gagal → pesan error "Email atau password salah".
+- [x] Session tersimpan di cookie httpOnly (`lapangin_session`).
+- [x] Admin bisa logout dari sidebar.
+- [x] Logout → redirect ke `/admin/login`.
+- [x] Direct akses `/admin` tanpa session → redirect ke `/admin/login`.
+- [x] Default admin: `admin@arenabook.com` / `admin123`.
+- [x] `GET /api/auth/session` returns user info when logged in.
+- [x] `GET /api/auth/session` returns 401 when not logged in.
+
+### Admin Auth Architecture
+
+| Layer   | File                                     | Responsibility                         |
+| ------- | ---------------------------------------- | -------------------------------------- |
+| JWT     | `src/lib/auth/jwt.ts`                    | sign/verify JWT, hash/compare password |
+| Context | `src/lib/auth/context.tsx`               | AuthProvider, useAuth() hook           |
+| API     | `src/app/api/auth/admin/login/route.ts`  | Validate admin, set cookie             |
+| API     | `src/app/api/auth/admin/logout/route.ts` | Clear cookie                           |
+| API     | `src/app/api/auth/session/route.ts`      | Return current user from cookie        |
+| UI      | `src/app/admin/login/page.tsx`           | Admin login form                       |
+| Layout  | `src/components/admin/AdminLayout.tsx`   | Session check + redirect               |
+
+**Cookie:** `lapangin_session` — httpOnly, sameSite=lax, maxAge=86400, path=/
+
+## Customer Registration, Login & Loyalty Points (Stage 10)
+
+### Customer Auth
+
+- [x] Register page tampil (`/register`) dengan form: name, email, phone, password.
+- [x] Register berhasil → redirect ke `/login`.
+- [x] Register gagal (email duplikat) → pesan error.
+- [x] Login page tampil (`/login`) dengan form: email + password.
+- [x] Login berhasil → redirect ke homepage, navbar shows user menu.
+- [x] Login gagal → pesan error.
+- [x] `POST /api/auth/customer/register` creates customer with hashed password.
+- [x] `POST /api/auth/customer/login` validates and sets JWT cookie.
+- [x] `POST /api/auth/customer/logout` clears session.
+- [x] Navbar shows "Masuk" / "Daftar" buttons when logged out.
+- [x] Navbar shows user dropdown (name, profile link, logout) when logged in.
+
+### Customer Profile & Loyalty
+
+- [x] Profile page (`/profile`) shows customer info (name, email, phone).
+- [x] Profile shows loyalty points balance (animated counter).
+- [x] Profile shows loyalty tier badge (Bronze/Silver/Gold/Platinum with colors).
+- [x] Profile shows booking stats (total bookings, total spent).
+- [x] Profile shows redemption history.
+- [x] Profile shows available rewards with "Tukar" button.
+- [x] `GET /api/customer/loyalty` returns balance, tier, history, rewards.
+- [x] `POST /api/customer/loyalty` redeems a reward (deducts points).
+
+### Loyalty Points Integration
+
+- [x] Points earned when booking confirmed by admin (10 pts per Rp10,000).
+- [x] Points added to customer's loyalty balance.
+- [x] Tier auto-updates based on total points:
+  - Bronze: < 500 pts
+  - Silver: 500–1,999 pts
+  - Gold: 2,000–4,999 pts
+  - Platinum: ≥ 5,000 pts
+- [x] Redemption deducts points from balance.
+- [x] Redemption history recorded.
+
+### Loyalty Rewards Available
+
+| Reward               | Points Required | Reward Type  | Reward Value |
+| -------------------- | --------------- | ------------ | ------------ |
+| Diskon Rp10.000      | 500             | discount     | Rp10.000     |
+| Diskon Rp25.000      | 1.000           | discount     | Rp25.000     |
+| Gratis Main 1 Jam    | 2.000           | free_hour    | 1 jam        |
+| Gratis Main 2 Jam    | 3.500           | free_hour    | 2 jam        |
+| Gratis Sewa Lapangan | 5.000           | free_booking | 1 booking    |
+
+### Auth & Loyalty Architecture
+
+| Layer   | File                                              | Responsibility                                         |
+| ------- | ------------------------------------------------- | ------------------------------------------------------ |
+| JWT     | `src/lib/auth/jwt.ts`                             | SHA-256 hashing, JWT sign/verify                       |
+| Context | `src/lib/auth/context.tsx`                        | Admin + customer session management                    |
+| Types   | `src/lib/types/domain.ts`                         | Customer, LoyaltyReward, LoyaltyRedemption             |
+| Adapter | `src/lib/adapters/mock-adapter.ts`                | Customer CRUD, loyalty CRUD                            |
+| Adapter | `src/lib/adapters/google-sheets-adapter.ts`       | customers, loyalty_rewards, loyalty_redemptions sheets |
+| API     | `src/app/api/auth/customer/register/route.ts`     | Create customer account                                |
+| API     | `src/app/api/auth/customer/login/route.ts`        | Authenticate customer                                  |
+| API     | `src/app/api/auth/customer/logout/route.ts`       | Clear session                                          |
+| API     | `src/app/api/customer/loyalty/route.ts`           | GET balance+history, POST redeem                       |
+| UI      | `src/app/(auth)/register/page.tsx`                | Registration form                                      |
+| UI      | `src/app/(auth)/login/page.tsx`                   | Login form                                             |
+| UI      | `src/app/(auth)/profile/page.tsx`                 | Profile + loyalty dashboard                            |
+| UI      | `src/components/ui/Navbar.tsx`                    | Auth-aware navigation                                  |
+| Booking | `src/app/api/admin/bookings/[id]/status/route.ts` | Points earned on confirm                               |
+
 ## Build & Compilation
 
 - [x] `npm run build` berhasil tanpa error TypeScript.
-- [x] Semua 34 pages/routes ter-generate (termasuk notification routes + offline page).
+- [x] Semua pages/routes ter-generate (termasuk auth, loyalty, notification, offline).
 - [x] Admin pages ter-generate sebagai static pages.
 - [x] Admin API routes ter-generate sebagai dynamic server functions.
+- [x] Auth routes (`/login`, `/register`, `/profile`) ter-generate.
+- [x] Auth API routes (`/api/auth/*`, `/api/customer/loyalty`) ter-generate.
 - [x] `/admin/notifications` page ter-generate.
 - [x] `/api/admin/notifications` API route ter-generate.
 - [x] `/offline` page ter-generate sebagai static page.
+
+## Full E2E Flow Test
+
+- [x] Register customer → Login → Browse sports → Select venue → Select court → Pick date → Pick slot → Fill form → Submit booking → Booking success → Choose payment → Upload proof → Admin login → Confirm booking → Customer earns points → Check profile → Redeem reward.
 
 ## PWA (Stage 8)
 
@@ -183,6 +286,42 @@
 | Push notifications           | push event listener              | N/A (event-based)  |
 
 **Pre-cached:** `/offline.html`, `/icons/icon-192.png`, `/icons/icon-512.png`
+
+## UI/UX Optimization (Sports Theme)
+
+### Customer-Facing Pages
+
+- [x] Homepage uses gradient hero section with sporty green/emerald theme.
+- [x] Sport cards have hover effects and smooth transitions.
+- [x] Navbar has blur backdrop and gradient logo on scroll.
+- [x] Booking flow has step indicator with active/completed states.
+- [x] Slot selector has color-coded availability (green=available, red=booked, gray=past).
+- [x] Booking form has floating labels and animated focus states.
+- [x] Success page has animated checkmark and confetti-style celebration.
+- [x] Profile page has animated stats cards with gradient borders.
+- [x] Loyalty tier badges use gradient colors (Bronze→Platinum).
+- [x] All pages are mobile-first responsive (360px to 1440px+).
+- [x] Cards, buttons, and inputs have consistent rounded corners and shadows.
+
+### Admin Pages
+
+- [x] Admin login page has dark gradient sporty theme.
+- [x] Admin dashboard has stat cards with gradient backgrounds.
+- [x] Admin sidebar has active state with gradient highlight.
+- [x] Admin tables are responsive with horizontal scroll on mobile.
+- [x] Admin mobile has bottom navigation bar.
+- [x] Status badges use consistent color coding (amber=pending, green=confirmed, red=rejected).
+- [x] Admin layout has sticky header with blur backdrop.
+- [x] Empty states display friendly messages with icons.
+- [x] Loading states use skeleton animations.
+
+### Responsive Breakpoints
+
+| Breakpoint | Layout                            |
+| ---------- | --------------------------------- |
+| < 640px    | Mobile: single column, bottom nav |
+| 640–1024px | Tablet: 2-column grids            |
+| > 1024px   | Desktop: sidebar + content        |
 
 ## Deployment
 

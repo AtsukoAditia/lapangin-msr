@@ -181,3 +181,113 @@ export interface NotificationTemplate {
   subjectTemplate: string;
   messageTemplate: string;
 }
+
+// ── Customer & Auth ──
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  passwordHash: string;
+  avatar?: string;
+  isVerified: boolean;
+  isActive: boolean;
+  loyaltyPoints: number;
+  totalSpent: number;
+  memberSince: string;
+  lastLoginAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerPublic {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatar?: string;
+  loyaltyPoints: number;
+  loyaltyTier?: string;
+  totalSpent: number;
+  memberSince: string;
+}
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  role: "super_admin" | "admin" | "staff";
+  isActive: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+export interface AuthSession {
+  userId: string;
+  role: "admin" | "customer";
+  name: string;
+  email: string;
+  expiresAt: string;
+}
+
+// ── Loyalty Points ──
+
+export type LoyaltyTransactionType =
+  | "earned"
+  | "redeemed"
+  | "bonus"
+  | "expired"
+  | "adjusted";
+
+export interface LoyaltyTransaction {
+  id: string;
+  customerId: string;
+  bookingId?: string;
+  bookingCode?: string;
+  type: LoyaltyTransactionType;
+  points: number;
+  description: string;
+  createdAt: string;
+  expiresAt?: string;
+}
+
+export type RewardType =
+  | "discount_percentage"
+  | "discount_amount"
+  | "free_hour"
+  | "free_session";
+
+export interface Reward {
+  id: string;
+  name: string;
+  description: string;
+  type: RewardType;
+  pointsCost: number;
+  value: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface RewardRedemption {
+  id: string;
+  customerId: string;
+  rewardId: string;
+  rewardName: string;
+  pointsUsed: number;
+  bookingId?: string;
+  status: "pending" | "applied" | "expired";
+  createdAt: string;
+  usedAt?: string;
+}
+
+// ── Booking with Customer ──
+
+export interface BookingWithCustomer extends Booking {
+  customerId?: string;
+  pointsEarned?: number;
+  pointsRedeemed?: number;
+  discountAmount?: number;
+}

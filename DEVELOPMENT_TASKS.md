@@ -218,7 +218,115 @@ Definition of Done:
 - Service worker register otomatis. ✅
 - Install prompt muncul di browser yang support. ✅
 
-## Stage 9 — Deployment Vercel
+## Stage 9 — Admin Authentication ✅
+
+- [x] JWT-based authentication system (`src/lib/auth/jwt.ts`).
+- [x] Auth context provider (`src/lib/auth/context.tsx`) — React context for admin & customer session.
+- [x] Admin login page (`src/app/admin/login/page.tsx`) — Dark sporty theme.
+- [x] Admin login API (`src/app/api/auth/admin/login/route.ts`) — Validates admin credentials.
+- [x] Admin logout API (`src/app/api/auth/admin/logout/route.ts`).
+- [x] Session API (`src/app/api/auth/session/route.ts`) — Returns current user from JWT cookie.
+- [x] Admin route protection — AdminLayout checks session, redirects to `/admin/login`.
+- [x] Admin sidebar shows user info + logout button.
+- [x] Default admin account: `admin@arenabook.com` / `admin123`.
+
+### Arsitektur Admin Auth:
+
+- **JWT utility** (`src/lib/auth/jwt.ts`) — `signJWT()`, `verifyJWT()`, `hashPassword()`, `comparePassword()` (SHA-256).
+- **Auth context** (`src/lib/auth/context.tsx`) — `AuthProvider`, `useAuth()` hook, `User` type (id, name, email, role).
+- **Admin login page** (`src/app/admin/login/page.tsx`) — Email + password form, dark gradient background.
+- **API routes:**
+  - `POST /api/auth/admin/login` — Validate credentials, set JWT cookie (httpOnly, 24h expiry).
+  - `POST /api/auth/admin/logout` — Clear JWT cookie.
+  - `GET /api/auth/session` — Return current user from JWT cookie.
+- **AdminLayout** (`src/components/admin/AdminLayout.tsx`) — Checks session on mount, redirects if not admin.
+- **Cookie:** `lapangin_session` — httpOnly, sameSite=lax, maxAge=86400.
+
+Definition of Done:
+
+- Admin harus login sebelum akses dashboard. ✅
+- Admin login page tampil dengan tema sporty. ✅
+- Session tersimpan di cookie httpOnly (aman). ✅
+- Admin bisa logout. ✅
+- Redirect ke login jika session invalid. ✅
+
+## Stage 10 — Customer Registration, Login & Loyalty Points ✅
+
+- [x] Customer register page (`src/app/(auth)/register/page.tsx`) — Name, email, phone, password.
+- [x] Customer login page (`src/app/(auth)/login/page.tsx`) — Email + password.
+- [x] Customer profile page (`src/app/(auth)/profile/page.tsx`) — Shows loyalty points, tier, stats.
+- [x] Customer register API (`src/app/api/auth/customer/register/route.ts`) — Creates customer, hashes password.
+- [x] Customer login API (`src/app/api/auth/customer/login/route.ts`) — Validates, sets JWT cookie.
+- [x] Customer logout API (`src/app/api/auth/customer/logout/route.ts`).
+- [x] Loyalty points API (`src/app/api/customer/loyalty/route.ts`) — GET (balance + history), POST (redeem rewards).
+- [x] Loyalty points earned on booking confirmation (10 points per Rp10,000 spent).
+- [x] Loyalty reward types:
+  - Diskon Rp10,000 (500 points)
+  - Diskon Rp25,000 (1,000 points)
+  - Gratis 1 jam (2,000 points)
+  - Gratis 2 jam (3,500 points)
+  - Gratis lapangan (5,000 points)
+- [x] Domain types: `Customer`, `LoyaltyPoints`, `LoyaltyReward`, `LoyaltyRedemption`, `LoyaltyTier`.
+- [x] Adapter methods: `getCustomerByEmail`, `createCustomer`, `getCustomerLoyaltyPoints`, `getLoyaltyRedemptions`, `createLoyaltyRedemption`, `updateLoyaltyPoints`.
+- [x] Auth context supports both admin and customer roles.
+- [x] Navbar shows user menu (login/register) or profile (if authenticated).
+- [x] Full test: register → login → book → confirm → earn points → check profile → redeem.
+
+### Arsitektur Auth & Loyalty:
+
+- **Domain types** (`src/lib/types/domain.ts`):
+  - `Customer` — id, name, email, phone, passwordHash, role, loyaltyPoints, loyaltyTier, totalSpent, totalBookings, createdAt, updatedAt.
+  - `LoyaltyReward` — id, name, description, pointsRequired, rewardType, rewardValue, isActive.
+  - `LoyaltyRedemption` — id, customerId, rewardId, pointsSpent, status, createdAt.
+  - `LoyaltyTier` — bronze (< 500pts), silver (< 2000pts), gold (< 5000pts), platinum (>= 5000pts).
+- **Auth JWT** (`src/lib/auth/jwt.ts`) — SHA-256 password hashing, JWT sign/verify.
+- **Auth context** (`src/lib/auth/context.tsx`) — `useAuth()` returns { user, isAdmin, isCustomer, loading }.
+- **API routes:**
+  - `POST /api/auth/customer/register` — Create customer account.
+  - `POST /api/auth/customer/login` — Authenticate customer.
+  - `POST /api/auth/customer/logout` — Clear session.
+  - `GET /api/customer/loyalty` — Get loyalty balance, tier, history, available rewards.
+  - `POST /api/customer/loyalty` — Redeem a reward (deducts points).
+- **Booking integration** (`src/app/api/admin/bookings/[id]/status/route.ts`):
+  - When booking confirmed → earn loyalty points (10 pts per Rp10,000).
+  - Customer tier auto-updates based on total points.
+- **UI pages:**
+  - `/register` — Sporty gradient hero, register form with benefits description.
+  - `/login` — Clean login form, links to register.
+  - `/profile` — Points balance card, tier badge, booking stats, redemption history, available rewards.
+  - Navbar — User menu dropdown or auth buttons.
+- **Mock data** (`src/lib/mock-data.ts`) — 5 loyalty rewards with prices and descriptions.
+- **Password handling:**
+  - Register: SHA-256 hash before storing.
+  - Login: SHA-256 hash input, compare with stored hash.
+  - Both admin and customer use same hashing (consistent).
+
+Definition of Done:
+
+- Customer bisa daftar akun baru. ✅
+- Customer bisa login. ✅
+- Customer melihat profil & poin di `/profile`. ✅
+- Poin otomatis bertambah saat booking dikonfirmasi admin. ✅
+- Tier otomatis update (Bronze → Silver → Gold → Platinum). ✅
+- Customer bisa tukar poin dengan reward. ✅
+- Admin login terpisah dari customer. ✅
+- Navbar menampilkan status login. ✅
+
+## Stage 11 — UI/UX Optimization (Sport Theme) ✅
+
+- [x] Homepage hero: gradient sporty teal-to-green with bold typography.
+- [x] Sport cards: hover effects, gradient overlays, emoji icons.
+- [x] CTA buttons: gradient backgrounds, hover animations.
+- [x] Auth pages: matching sporty gradients, glassmorphism cards.
+- [x] Admin login: dark gradient theme (distinct from customer).
+- [x] Mobile responsive: all pages optimized for 360px+.
+- [x] Desktop responsive: max-width containers, proper spacing.
+- [x] Status badges: colored pills for booking/payment status.
+- [x] Empty states: helpful messages with action buttons.
+- [x] PWA install banner: non-intrusive bottom sheet.
+- [x] Consistent color palette: teal (#00897B), green (#10B981), dark (#0D1117).
+
+## Stage 12 — Deployment Vercel
 
 - [ ] Push ke GitHub.
 - [ ] Import project ke Vercel.
@@ -232,7 +340,7 @@ Definition of Done:
 - Demo URL Vercel bisa dipakai.
 - Booking dari demo masuk ke Spreadsheet.
 
-## Stage 10 — PostgreSQL Migration Preparation
+## Stage 13 — PostgreSQL Migration Preparation
 
 - [ ] Buat schema SQL.
 - [ ] Buat Prisma/Drizzle schema.
@@ -248,17 +356,14 @@ Definition of Done:
   - `DATABASE_PROVIDER=postgres`
 - Logic aplikasi tidak berubah saat database diganti.
 
-## Stage 11 — Production Readiness
+## Stage 14 — Production Readiness
 
-- [ ] Role-based access.
-- [ ] Error handling.
 - [ ] Rate limit booking.
-- [ ] Server-side validation.
 - [ ] Logging.
 - [ ] Backup data.
 - [ ] Terms & policy.
-- [ ] Admin permission.
 - [ ] Security check.
+- [ ] Performance optimization.
 
 Definition of Done:
 

@@ -17,6 +17,13 @@ import type {
   PaymentMethod,
   NotificationLog,
   NotificationPayload,
+  AdminUser,
+  CustomerPublic,
+  Customer,
+  LoyaltyTransaction,
+  LoyaltyTransactionType,
+  Reward,
+  RewardRedemption,
 } from "@/lib/types/domain";
 
 export class PostgresAdapter implements DatabaseAdapter {
@@ -179,5 +186,60 @@ export class PostgresAdapter implements DatabaseAdapter {
 
   async markNotificationRead(_id: string): Promise<NotificationLog> {
     throw new Error("PostgresAdapter markNotificationRead not implemented yet.");
+  }
+
+  // Auth - Admin
+  async authenticateAdmin(_email: string, _password: string): Promise<AdminUser | null> {
+    throw new Error("PostgresAdapter authenticateAdmin not implemented yet.");
+  }
+
+  async getAdminById(_id: string): Promise<AdminUser | null> {
+    throw new Error("PostgresAdapter getAdminById not implemented yet.");
+  }
+
+  // Auth - Customer
+  async registerCustomer(_data: { name: string; email: string; phone: string; passwordHash: string }): Promise<CustomerPublic> {
+    throw new Error("PostgresAdapter registerCustomer not implemented yet.");
+  }
+
+  async authenticateCustomer(_email: string, _password: string): Promise<CustomerPublic | null> {
+    throw new Error("PostgresAdapter authenticateCustomer not implemented yet.");
+  }
+
+  async getCustomerById(_id: string): Promise<CustomerPublic | null> {
+    throw new Error("PostgresAdapter getCustomerById not implemented yet.");
+  }
+
+  async getCustomerByEmail(_email: string): Promise<Customer | null> {
+    throw new Error("PostgresAdapter getCustomerByEmail not implemented yet.");
+  }
+
+  // Loyalty
+  async getLoyaltyTransactions(_customerId: string): Promise<LoyaltyTransaction[]> {
+    throw new Error("PostgresAdapter getLoyaltyTransactions not implemented yet.");
+  }
+
+  async addLoyaltyPoints(_customerId: string, _points: number, _bookingId: string | undefined, _description: string, _type: LoyaltyTransactionType): Promise<LoyaltyTransaction> {
+    throw new Error("PostgresAdapter addLoyaltyPoints not implemented yet.");
+  }
+
+  async redeemLoyaltyPoints(_customerId: string, _rewardId: string, _bookingId?: string): Promise<RewardRedemption> {
+    throw new Error("PostgresAdapter redeemLoyaltyPoints not implemented yet.");
+  }
+
+  async getRewards(): Promise<Reward[]> {
+    throw new Error("PostgresAdapter getRewards not implemented yet.");
+  }
+
+  async getActiveRewards(): Promise<Reward[]> {
+    throw new Error("PostgresAdapter getActiveRewards not implemented yet.");
+  }
+
+  async getCustomerRedemptions(_customerId: string): Promise<RewardRedemption[]> {
+    throw new Error("PostgresAdapter getCustomerRedemptions not implemented yet.");
+  }
+
+  async updateCustomerSpent(_customerId: string, _amount: number): Promise<void> {
+    throw new Error("PostgresAdapter updateCustomerSpent not implemented yet.");
   }
 }
