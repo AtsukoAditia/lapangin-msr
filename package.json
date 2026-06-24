@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
+    "doctor": "tsx scripts/doctor.ts",
+    "check": "npm run doctor && npm run type-check && npm run lint && npm run build",
     "db:generate": "tsx scripts/generate-spreadsheet.ts"
   },
   "dependencies": {
