@@ -13,13 +13,26 @@ export class PaymentService {
     proofUrl: string,
     actorId?: string,
   ): Promise<Booking> {
+    await this.adapter.expireBookings().catch(() => {});
+
     const booking = await this.adapter.getBookingById(bookingId);
-    if (!booking) {
-      throw new Error("Booking not found");
+    if (!booking) throw new Error("Booking not found");
+
+    if (booking.bookingStatus === "expired") {
+      throw new Error("Payment window has expired. Please create a new booking.");
     }
 
-    if (booking.bookingStatus !== "pending") {
-      throw new Error("Only pending bookings can submit payment proof");
+    if (
+      booking.bookingStatus === "waiting_payment" &&
+      booking.expiresAt &&
+      new Date(booking.expiresAt).getTime() <= Date.now()
+    ) {
+      await this.adapter.expireBookings().catch(() => {});
+      throw new Error("Payment window has expired. Please create a new booking.");
+    }
+
+    if (booking.bookingStatus !== "waiting_payment") {
+      throw new Error(`Booking status ${booking.bookingStatus} cannot submit payment proof.`);
     }
 
     const updated = await this.adapter.submitPaymentProof(bookingId, proofUrl);
@@ -31,7 +44,8 @@ export class PaymentService {
       actorType: "customer",
       actorId,
       details: `Payment proof submitted for booking ${booking.bookingCode}`,
-      newValue: proofUrl,
+      previousValue: booking.paymentStatus,
+      newValue: "waiting_confirmation",
     });
 
     return updated;
@@ -39,9 +53,7 @@ export class PaymentService {
 
   async confirmPayment(bookingId: string, actorId?: string): Promise<Booking> {
     const booking = await this.adapter.getBookingById(bookingId);
-    if (!booking) {
-      throw new Error("Booking not found");
-    }
+    if (!booking) throw new Error("Booking not found");
 
     if (booking.paymentStatus !== "waiting_confirmation") {
       throw new Error("Payment is not awaiting confirmation");
@@ -65,9 +77,7 @@ export class PaymentService {
 
   async rejectPayment(bookingId: string, actorId?: string): Promise<Booking> {
     const booking = await this.adapter.getBookingById(bookingId);
-    if (!booking) {
-      throw new Error("Booking not found");
-    }
+    if (!booking) throw new Error("Booking not found");
 
     if (booking.paymentStatus !== "waiting_confirmation") {
       throw new Error("Payment is not awaiting confirmation");
@@ -83,7 +93,7 @@ export class PaymentService {
       actorId,
       details: `Payment rejected for booking ${booking.bookingCode}`,
       previousValue: booking.paymentStatus,
-      newValue: "unpaid",
+      newValue: "rejected",
     });
 
     return updated;
