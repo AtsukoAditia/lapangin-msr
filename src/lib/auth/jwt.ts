@@ -1,15 +1,26 @@
 import { SignJWT, jwtVerify } from "jose";
 import type { AuthSession } from "@/lib/types/domain";
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "lapangin-secret-key-change-in-production"
-);
+import {
+  hashPassword as bcryptHashPassword,
+  verifyPassword as bcryptVerifyPassword,
+} from "./password";
 
 const ADMIN_TOKEN_NAME = "admin_auth_token";
 const CUSTOMER_TOKEN_NAME = "customer_token";
 const TOKEN_EXPIRY = "24h";
+const MIN_KEY_LENGTH = 32;
 
-export async function createToken(payload: Omit<AuthSession, "expiresAt">): Promise<string> {
+function getJwtKey(): Uint8Array {
+  const value = process.env.JWT_SECRET ?? "";
+  if (value.length < MIN_KEY_LENGTH) {
+    throw new Error(`JWT_SECRET must be at least ${MIN_KEY_LENGTH} characters.`);
+  }
+  return new TextEncoder().encode(value);
+}
+
+export async function createToken(
+  payload: Omit<AuthSession, "expiresAt">,
+): Promise<string> {
   const session: AuthSession = {
     ...payload,
     expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -19,13 +30,19 @@ export async function createToken(payload: Omit<AuthSession, "expiresAt">): Prom
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(TOKEN_EXPIRY)
-    .sign(JWT_SECRET);
+    .sign(getJwtKey());
 }
 
 export async function verifyToken(token: string): Promise<AuthSession | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload as unknown as AuthSession;
+    const { payload } = await jwtVerify(token, getJwtKey());
+    const session = payload as unknown as AuthSession;
+
+    if (new Date(session.expiresAt).getTime() <= Date.now()) {
+      return null;
+    }
+
+    return session;
   } catch {
     return null;
   }
@@ -39,14 +56,12 @@ export function getCustomerTokenName(): string {
   return CUSTOMER_TOKEN_NAME;
 }
 
-// Simple password hashing for demo (use bcrypt in production)
 export function hashPassword(password: string): string {
-  // Simple base64 encoding for demo - in production use bcrypt
-  return Buffer.from(password).toString("base64");
+  return bcryptHashPassword(password);
 }
 
 export function verifyPassword(password: string, hash: string): boolean {
-  return Buffer.from(password).toString("base64") === hash;
+  return bcryptVerifyPassword(password, hash);
 }
 
 export { ADMIN_TOKEN_NAME, CUSTOMER_TOKEN_NAME };

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { registerCustomer } from "@/lib/auth/service";
-import { createToken } from "@/lib/auth/jwt";
+import { createToken, CUSTOMER_TOKEN_NAME } from "@/lib/auth/jwt";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,14 +9,14 @@ export async function POST(request: NextRequest) {
     if (!name || !email || !phone || !password) {
       return NextResponse.json(
         { success: false, error: "Nama, email, telepon, dan password wajib diisi" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return NextResponse.json(
-        { success: false, error: "Password minimal 6 karakter" },
-        { status: 400 }
+        { success: false, error: "Password minimal 8 karakter" },
+        { status: 400 },
       );
     }
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    response.cookies.set("customer_token", token, {
+    response.cookies.set(CUSTOMER_TOKEN_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Terjadi kesalahan server";
     return NextResponse.json(
       { success: false, error: message },
-      { status: 409 }
+      { status: 409 },
     );
   }
 }

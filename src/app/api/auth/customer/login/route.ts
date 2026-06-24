@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateCustomer } from "@/lib/auth/service";
-import { createToken } from "@/lib/auth/jwt";
+import { createToken, CUSTOMER_TOKEN_NAME } from "@/lib/auth/jwt";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     if (!email || !password) {
       return NextResponse.json(
         { success: false, error: "Email dan password wajib diisi" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     if (!customer) {
       return NextResponse.json(
         { success: false, error: "Email atau password salah" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    response.cookies.set("customer_token", token, {
+    response.cookies.set(CUSTOMER_TOKEN_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     console.error("Customer login error:", error);
     return NextResponse.json(
       { success: false, error: "Terjadi kesalahan server" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

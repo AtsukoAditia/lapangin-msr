@@ -6,22 +6,13 @@ import { BookingService } from "@/lib/services/booking-service";
 import { validateBookingInput } from "@/lib/validators/booking-validator";
 
 export async function GET() {
-  try {
-    const adapter = getDatabaseAdapter();
-    const service = new BookingService(adapter);
-    const bookings = await service.getAllBookings();
-
-    return NextResponse.json({
-      data: bookings,
-      total: bookings.length,
-      message: "Daftar booking",
-    });
-  } catch {
-    return NextResponse.json(
-      { error: "Gagal mengambil data booking." },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(
+    {
+      error:
+        "Public booking list is disabled. Use admin routes or customer-specific lookup endpoints.",
+    },
+    { status: 405 },
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -41,20 +32,20 @@ export async function POST(request: NextRequest) {
       notes,
     } = body;
 
-    // ── Optional: Extract userId from customer session ──
     let userId: string | undefined;
     try {
       const cookieStore = await cookies();
       const token = cookieStore.get(CUSTOMER_TOKEN_NAME)?.value;
       if (token) {
         const session = await verifyToken(token);
-        if (session?.userId) userId = session.userId;
+        if (session?.role === "customer" && session.userId) {
+          userId = session.userId;
+        }
       }
     } catch {
       // Guest booking — no userId
     }
 
-    // ── Server-side validation using schema ──
     const validation = validateBookingInput({
       customerName: customerName?.trim() ?? "",
       customerPhone: customerPhone?.trim() ?? "",
@@ -71,7 +62,10 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       const firstError = validation.errors?.[0] ?? "Input tidak valid.";
-      return NextResponse.json({ error: firstError, errors: validation.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: firstError, errors: validation.errors },
+        { status: 400 },
+      );
     }
 
     const adapter = getDatabaseAdapter();
@@ -96,7 +90,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Gagal memproses request.";
-    // Return 409 for any conflict-related errors (double-booking prevention)
     const isConflict =
       message.includes("CONFLICT") ||
       message.includes("tidak tersedia") ||
