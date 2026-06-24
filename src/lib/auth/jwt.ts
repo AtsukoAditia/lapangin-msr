@@ -8,9 +8,13 @@ import {
 const ADMIN_TOKEN_NAME = "admin_auth_token";
 const CUSTOMER_TOKEN_NAME = "customer_token";
 const TOKEN_EXPIRY = "24h";
+const MIN_KEY_LENGTH = 32;
 
 function getJwtKey(): Uint8Array {
-  const value = process.env.JWT_SECRET || "lapangin-secret-key-change-in-production";
+  const value = process.env.JWT_SECRET ?? "";
+  if (value.length < MIN_KEY_LENGTH) {
+    throw new Error(`JWT_SECRET must be at least ${MIN_KEY_LENGTH} characters.`);
+  }
   return new TextEncoder().encode(value);
 }
 
