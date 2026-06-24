@@ -49,10 +49,12 @@ export interface Booking {
   bookingStatus:
     | "pending"
     | "waiting_payment"
+    | "waiting_verification"
     | "paid"
     | "confirmed"
     | "rejected"
     | "cancelled"
+    | "expired"
     | "completed"
     | "no_show";
   paymentStatus:
@@ -60,10 +62,13 @@ export interface Booking {
     | "waiting_confirmation"
     | "dp_paid"
     | "paid"
+    | "rejected"
     | "refunded";
   paymentProofUrl?: string;
+  paymentRejectionReason?: string;
   notes?: string;
   userId?: string;
+  expiresAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -93,6 +98,8 @@ export interface PricingRule {
 export type AuditLogAction =
   | "booking_created"
   | "booking_status_changed"
+  | "booking_confirmed"
+  | "booking_rejected"
   | "booking_conflict_blocked"
   | "blocked_slot_created"
   | "blocked_slot_deleted"

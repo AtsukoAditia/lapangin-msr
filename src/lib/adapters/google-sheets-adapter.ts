@@ -206,6 +206,64 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
     );
   }
 
+  async getBookingByCode(code: string): Promise<Booking | null> {
+    // ponytail: sheets full-scan, add column index when perf matters
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["bookings"];
+    if (!sheet) return null;
+
+    const rows = await sheet.getRows();
+    const targetRow = rows.find((row) => row.get("booking_code") === code);
+    if (!targetRow) return null;
+
+    return rowToBooking(targetRow.toObject());
+  }
+
+  async updatePaymentProof(bookingId: string, proofUrl: string): Promise<Booking> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["bookings"];
+    if (!sheet) throw new Error("Bookings sheet not found");
+
+    const rows = await sheet.getRows();
+    const targetRow = rows.find((row) => row.get("id") === bookingId);
+    if (!targetRow) throw new Error("Booking not found");
+
+    const now = new Date().toISOString();
+    targetRow.set("payment_proof_url", proofUrl);
+    targetRow.set("booking_status", "waiting_verification");
+    targetRow.set("payment_status", "waiting_confirmation");
+    targetRow.set("updated_at", now);
+    await targetRow.save();
+
+    return rowToBooking(targetRow.toObject());
+  }
+
+  async expireBookings(): Promise<number> {
+    // ponytail: sheets full-scan + row-by-row update; batch when perf matters
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["bookings"];
+    if (!sheet) return 0;
+
+    const now = new Date().toISOString();
+    const rows = await sheet.getRows();
+    let count = 0;
+
+    for (const row of rows) {
+      const expiresAt = row.get("expires_at") as string | undefined;
+      const bookingStatus = row.get("booking_status") as string;
+
+      if (bookingStatus === "waiting_payment" && expiresAt && expiresAt < now) {
+        row.set("booking_status", "expired");
+        row.set("payment_status", "unpaid");
+        row.set("updated_at", now);
+        await row.save();
+        count++;
+      }
+    }
+
+    return count;
+  }
+
   async createBooking(input: CreateBookingInput): Promise<Booking> {
     const doc = await getSpreadsheet();
     const sheet = doc.sheetsByTitle["bookings"];

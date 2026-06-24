@@ -87,7 +87,9 @@ export interface DatabaseAdapter {
   // Bookings
   getBookings(): Promise<Booking[]>;
   getBookingById(id: string): Promise<Booking | null>;
+  getBookingByCode(code: string): Promise<Booking | null>;
   getBookingsByCourtAndDate(courtId: string, date: string): Promise<Booking[]>;
+  expireBookings(): Promise<number>;
   createBooking(input: CreateBookingInput): Promise<Booking>;
   updateBookingStatus(id: string, status: Booking["bookingStatus"], paymentStatus?: Booking["paymentStatus"]): Promise<Booking>;
 
