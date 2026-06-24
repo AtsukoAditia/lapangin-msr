@@ -11,6 +11,7 @@ import {
   mockCourts,
 } from "@/lib/mock-data";
 import SlotSelector from "@/components/booking/SlotSelector";
+import BookingSteps from "@/components/booking/BookingSteps";
 
 type Props = {
   params: Promise<{ sport: string; venue: string; court: string }>;
@@ -47,8 +48,22 @@ export default async function CourtDetailPage({ params }: Props) {
 
   const pricing = getPricingForCourt(court.id);
 
+  const steps = [
+    { number: 1, label: "Pilih Olahraga", href: "/booking" },
+    { number: 2, label: "Pilih Venue", href: `/booking/${sport.slug}` },
+    { number: 3, label: "Pilih Jadwal" },
+    { number: 4, label: "Isi Data" },
+    { number: 5, label: "Selesai", href: "/booking" },
+  ];
+
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
+    <main className="mx-auto max-w-3xl px-4 pb-8">
+      <BookingSteps
+        currentStep={3}
+        steps={steps}
+        title={court.name}
+        subtitle={`${venue.name} · ${sport.name}`}
+      />
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-slate-500">
         <Link href="/" className="hover:text-slate-800">

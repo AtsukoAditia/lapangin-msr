@@ -128,7 +128,8 @@ src/
 
 **Stage 5 — Booking Flow**
 
-- Multi-step form (4 steps)
+- 5-step visual progress indicator (Pilih Olahraga → Pilih Venue → Pilih Lapangan → Isi Data → Selesai)
+- BookingSteps component rendered on all booking flow pages
 - Real-time availability check
 - Double-booking prevention
 - Payment method selection
@@ -283,7 +284,7 @@ POST /api/customer/loyalty        - Redeem reward (authenticated)
 
 - **Status Badges**: Color-coded booking statuses
 - **Slot Selector**: Interactive time slot picker
-- **Booking Steps**: Visual progress indicator
+- **Booking Steps**: 5-step visual progress indicator with icons and completion state (Pilih Olahraga → Pilih Venue → Pilih Lapangan → Isi Data → Selesai)
 - **Admin Layout**: Sidebar + topbar navigation
 - **Install Prompt**: PWA installation banner
 

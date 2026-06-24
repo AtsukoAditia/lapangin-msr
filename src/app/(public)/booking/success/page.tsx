@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
+import BookingSteps from "@/components/booking/BookingSteps";
 import type { Booking, PaymentMethod } from "@/lib/types/domain";
 
 function SuccessContent() {
@@ -124,20 +125,19 @@ function SuccessContent() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Success Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 py-10 sm:py-14">
-        <div className="mx-auto max-w-lg px-4 text-center">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/20 text-5xl backdrop-blur-sm">
-            ✅
-          </div>
-          <h1 className="mb-2 text-2xl font-black text-white sm:text-3xl">
-            Booking Berhasil!
-          </h1>
-          <p className="text-sm text-emerald-100 sm:text-base">
-            Terima kasih. Booking kamu sudah kami terima 🎉
-          </p>
-        </div>
-      </div>
+      {/* Step Indicator */}
+      <BookingSteps
+        currentStep={5}
+        steps={[
+          { number: 1, label: "Pilih Olahraga", href: "/booking" },
+          { number: 2, label: "Pilih Venue", href: "/booking" },
+          { number: 3, label: "Pilih Jadwal", href: "/booking" },
+          { number: 4, label: "Isi Data", href: "/booking" },
+          { number: 5, label: "Selesai" },
+        ]}
+        title="Booking Terkirim!"
+        subtitle="Menunggu konfirmasi admin. Kamu bisa upload bukti pembayaran di bawah."
+      />
 
       <div className="mx-auto max-w-lg px-4 -mt-6 pb-10">
         {/* Booking Code Card */}

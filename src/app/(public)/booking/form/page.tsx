@@ -126,7 +126,7 @@ function BookingFormContent() {
           <h1 className="mb-4 text-center text-xl font-bold text-slate-900">
             📝 Isi Data Booking
           </h1>
-          <BookingSteps currentStep={3} />
+          <BookingSteps currentStep={4} />
         </div>
       </div>
 

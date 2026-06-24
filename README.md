@@ -14,7 +14,7 @@
 ### 🏠 Halaman Publik
 
 - **Homepage** — Hero section, kategori olahraga, venue populer
-- **Pemesanan** — Pilih olahraga → venue → lapangan → jam → form → sukses
+- **Pemesanan** — 5 langkah: Pilih Olahraga → Pilih Venue → Pilih Lapangan → Isi Data → Selesai (visual step indicator di setiap halaman)
 - **Cek Booking** — Lihat status booking dengan kode booking
 - **Responsive** — Mobile-first design, PWA ready
 
@@ -38,15 +38,15 @@
 
 ## 🛠️ Tech Stack
 
-| Technology            | Purpose                       |
-| --------------------- | ----------------------------- |
+| Technology             | Purpose                        |
+| ---------------------- | ------------------------------ |
 | **Next.js App Router** | App routing & server rendering |
-| **TypeScript**        | Type safety                   |
-| **Tailwind CSS**      | Styling                       |
-| **JWT (HMAC-SHA256)** | Authentication                |
-| **Mock Adapter**      | Local/demo DB                 |
-| **Google Sheets**     | Demo online database option   |
-| **PostgreSQL**        | Production migration target   |
+| **TypeScript**         | Type safety                    |
+| **Tailwind CSS**       | Styling                        |
+| **JWT (HMAC-SHA256)**  | Authentication                 |
+| **Mock Adapter**       | Local/demo DB                  |
+| **Google Sheets**      | Demo online database option    |
+| **PostgreSQL**         | Production migration target    |
 
 ---
 
@@ -91,10 +91,10 @@ For CLINE local work, read: [`docs/CLINE_LOCAL_WORKFLOW.md`](docs/CLINE_LOCAL_WO
 
 ### Admin
 
-| Email                 | Password | Role        |
-| --------------------- | -------- | ----------- |
-| admin@lapangin.com    | admin123 | Super Admin |
-| owner@lapangin.com    | owner123 | Venue Owner |
+| Email              | Password | Role        |
+| ------------------ | -------- | ----------- |
+| admin@lapangin.com | admin123 | Super Admin |
+| owner@lapangin.com | owner123 | Venue Owner |
 
 **Login:** http://localhost:3000/admin/login
 
@@ -168,16 +168,16 @@ src/
 
 ## 📚 Dokumentasi
 
-| Document | Description |
-| --- | --- |
-| [Project Overview](docs/01-project-overview.md) | Visi & arsitektur |
-| [Module Roadmap](docs/02-module-roadmap-from-start-to-running.md) | Tahapan development |
-| [Testing Checklist](docs/06-testing-checklist.md) | Daftar test |
-| [UI Optimization & Loyalty](docs/08-ui-optimization-and-loyalty-module.md) | Optimasi UI & modul loyalty |
-| [Final System Overview](docs/10-final-system-overview.md) | Overview sistem |
-| [Stage 12 Hardening](docs/12-hardening-production-readiness.md) | Production-readiness checklist |
-| [System Truth](docs/SYSTEM_TRUTH.md) | Sumber kebenaran status sistem |
-| [CLINE Local Workflow](docs/CLINE_LOCAL_WORKFLOW.md) | Panduan aman kerja di VS Code + CLINE |
+| Document                                                                   | Description                           |
+| -------------------------------------------------------------------------- | ------------------------------------- |
+| [Project Overview](docs/01-project-overview.md)                            | Visi & arsitektur                     |
+| [Module Roadmap](docs/02-module-roadmap-from-start-to-running.md)          | Tahapan development                   |
+| [Testing Checklist](docs/06-testing-checklist.md)                          | Daftar test                           |
+| [UI Optimization & Loyalty](docs/08-ui-optimization-and-loyalty-module.md) | Optimasi UI & modul loyalty           |
+| [Final System Overview](docs/10-final-system-overview.md)                  | Overview sistem                       |
+| [Stage 12 Hardening](docs/12-hardening-production-readiness.md)            | Production-readiness checklist        |
+| [System Truth](docs/SYSTEM_TRUTH.md)                                       | Sumber kebenaran status sistem        |
+| [CLINE Local Workflow](docs/CLINE_LOCAL_WORKFLOW.md)                       | Panduan aman kerja di VS Code + CLINE |
 
 ---
 

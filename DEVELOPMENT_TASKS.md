@@ -332,10 +332,11 @@ Definition of Done:
 ### Booking Index Page:
 
 - **Route:** `/booking/` — Shows all available sports as clickable cards.
-- **Step indicator:** "Langkah 1 dari 3" badge for user guidance.
+- **Step indicator:** BookingSteps component shows 5-step progress (Pilih Olahraga → Pilih Venue → Pilih Lapangan → Isi Data → Selesai).
 - **Sports grid:** 2-column mobile, 3-column desktop with hover effects.
 - **Back link:** "Kembali ke Beranda" at bottom.
-- **Flow:** `/booking/` → `/booking/[sport]` → `/booking/[sport]/[venue]/[court]` → `/booking/form` → `/booking/success`.
+- **Flow:** `/booking/` (step 1) → `/booking/[sport]` (step 2) → `/booking/[sport]/[venue]/[court]` (step 3) → `/booking/form` (step 4) → `/booking/success` (step 5).
+- **BookingSteps component** (`src/components/booking/BookingSteps.tsx`) — Visual step indicator with icons, labels, and completion state. 5 steps total, rendered on all booking flow pages.
 
 ## Stage 12 — Deployment Vercel
 
