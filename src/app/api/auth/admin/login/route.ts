@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createToken, ADMIN_TOKEN_NAME } from "@/lib/auth/jwt";
-import { getDatabaseAdapter } from "@/lib/adapters";
+import { createToken } from "@/lib/auth/jwt";
+import { authenticateAdmin } from "@/lib/auth/service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,17 +8,16 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { success: false, error: "Email dan password wajib diisi" },
+        { error: "Email dan password wajib diisi" },
         { status: 400 }
       );
     }
 
-    const adapter = getDatabaseAdapter();
-    const admin = await adapter.authenticateAdmin(email, password);
-
+    const admin = await authenticateAdmin(email, password);
+    
     if (!admin) {
       return NextResponse.json(
-        { success: false, error: "Email atau password salah" },
+        { error: "Email atau password salah" },
         { status: 401 }
       );
     }
@@ -31,23 +29,29 @@ export async function POST(request: NextRequest) {
       email: admin.email,
     });
 
-    const cookieStore = await cookies();
-    cookieStore.set(ADMIN_TOKEN_NAME, token, {
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
+    });
+
+    response.cookies.set("admin_auth_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24,
       path: "/",
+      maxAge: 24 * 60 * 60, // 24 hours
     });
 
-    return NextResponse.json({
-      success: true,
-      user: { userId: admin.id, role: "admin", name: admin.name, email: admin.email },
-    });
+    return response;
   } catch (error) {
     console.error("Admin login error:", error);
     return NextResponse.json(
-      { success: false, error: "Terjadi kesalahan server" },
+      { error: "Terjadi kesalahan server" },
       { status: 500 }
     );
   }

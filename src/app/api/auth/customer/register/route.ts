@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createToken, hashPassword, CUSTOMER_TOKEN_NAME } from "@/lib/auth/jwt";
-import { getDatabaseAdapter } from "@/lib/adapters";
+import { registerCustomer } from "@/lib/auth/service";
+import { createToken } from "@/lib/auth/jwt";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,25 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const adapter = getDatabaseAdapter();
-
-    // Check if email already registered
-    const existing = await adapter.getCustomerByEmail(email);
-    if (existing) {
-      return NextResponse.json(
-        { success: false, error: "Email sudah terdaftar" },
-        { status: 409 }
-      );
-    }
-
-    const passwordHash = hashPassword(password);
-
-    const customer = await adapter.registerCustomer({
-      name,
-      email,
-      phone,
-      passwordHash,
-    });
+    const customer = await registerCustomer({ name, email, phone, password });
 
     const token = await createToken({
       userId: customer.id,
@@ -48,16 +29,7 @@ export async function POST(request: NextRequest) {
       email: customer.email,
     });
 
-    const cookieStore = await cookies();
-    cookieStore.set(CUSTOMER_TOKEN_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30,
-      path: "/",
-    });
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         userId: customer.id,
@@ -66,11 +38,22 @@ export async function POST(request: NextRequest) {
         email: customer.email,
       },
     });
-  } catch (error) {
+
+    response.cookies.set("customer_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+    });
+
+    return response;
+  } catch (error: unknown) {
     console.error("Customer register error:", error);
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan server";
     return NextResponse.json(
-      { success: false, error: "Terjadi kesalahan server" },
-      { status: 500 }
+      { success: false, error: message },
+      { status: 409 }
     );
   }
 }

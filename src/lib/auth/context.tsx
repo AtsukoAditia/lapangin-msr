@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string, role: "admin" | "customer") => {
     try {
-      const endpoint = role === "admin" ? "/api/auth/admin/login" : "/api/auth/login";
+      const endpoint = role === "admin" ? "/api/auth/admin/login" : "/api/auth/customer/login";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (formData: { name: string; email: string; phone: string; password: string }) => {
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/auth/customer/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await fetch("/api/auth/customer/logout", { method: "POST" });
     setUser(null);
   };
 

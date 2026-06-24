@@ -5,7 +5,7 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "lapangin-secret-key-change-in-production"
 );
 
-const ADMIN_TOKEN_NAME = "admin_token";
+const ADMIN_TOKEN_NAME = "admin_auth_token";
 const CUSTOMER_TOKEN_NAME = "customer_token";
 const TOKEN_EXPIRY = "24h";
 

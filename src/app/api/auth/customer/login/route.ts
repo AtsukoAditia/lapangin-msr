@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createToken, CUSTOMER_TOKEN_NAME } from "@/lib/auth/jwt";
-import { getDatabaseAdapter } from "@/lib/adapters";
+import { authenticateCustomer } from "@/lib/auth/service";
+import { createToken } from "@/lib/auth/jwt";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const adapter = getDatabaseAdapter();
-    const customer = await adapter.authenticateCustomer(email, password);
+    const customer = await authenticateCustomer(email, password);
 
     if (!customer) {
       return NextResponse.json(
@@ -31,8 +29,19 @@ export async function POST(request: NextRequest) {
       email: customer.email,
     });
 
-    const cookieStore = await cookies();
-    cookieStore.set(CUSTOMER_TOKEN_NAME, token, {
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        userId: customer.id,
+        role: "customer",
+        name: customer.name,
+        email: customer.email,
+        loyaltyPoints: customer.loyaltyPoints,
+        loyaltyTier: customer.loyaltyTier,
+      },
+    });
+
+    response.cookies.set("customer_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -40,15 +49,7 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        userId: customer.id,
-        role: "customer",
-        name: customer.name,
-        email: customer.email,
-      },
-    });
+    return response;
   } catch (error) {
     console.error("Customer login error:", error);
     return NextResponse.json(

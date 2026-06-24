@@ -1,26 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Detect browser autofill
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formRef.current) {
+        const emailInput = formRef.current.querySelector('input[name="admin-email"]') as HTMLInputElement;
+        const passwordInput = formRef.current.querySelector('input[name="admin-password"]') as HTMLInputElement;
+        if (emailInput && emailInput.value && !email) setEmail(emailInput.value);
+        if (passwordInput && passwordInput.value && !password) setPassword(passwordInput.value);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [email, password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
+    // Read values from DOM to handle autofill
+    const form = e.currentTarget as HTMLFormElement;
+    const formData = new FormData(form);
+    const emailValue = (formData.get("admin-email") as string) || email;
+    const passwordValue = (formData.get("admin-password") as string) || password;
+
     try {
       const res = await fetch("/api/auth/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: emailValue, password: passwordValue }),
       });
 
       const data = await res.json();
@@ -48,7 +68,7 @@ export default function AdminLoginPage() {
             <span className="text-white font-black text-2xl">⚡</span>
           </div>
           <h1 className="text-2xl font-black text-white">
-            Arena<span className="text-emerald-400">Book</span>
+            Lapang<span className="text-emerald-400">in</span>
           </h1>
           <p className="text-gray-400 mt-2">Admin Panel Login</p>
         </div>
@@ -73,11 +93,18 @@ export default function AdminLoginPage() {
               </label>
               <input
                 type="email"
+                name="admin-email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onAnimationStart={(e) => {
+                  // Detect autofill animation
+                  if (e.animationName === "onAutoFillStart") {
+                    setEmail(e.currentTarget.value);
+                  }
+                }}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                placeholder="admin@arenabook.com"
-                required
+                placeholder="admin@lapangin.com"
+                autoComplete="email"
               />
             </div>
 
@@ -87,11 +114,17 @@ export default function AdminLoginPage() {
               </label>
               <input
                 type="password"
+                name="admin-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onAnimationStart={(e) => {
+                  if (e.animationName === "onAutoFillStart") {
+                    setPassword(e.currentTarget.value);
+                  }
+                }}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                 placeholder="••••••••"
-                required
+                autoComplete="current-password"
               />
             </div>
           </div>
@@ -125,7 +158,7 @@ export default function AdminLoginPage() {
         <div className="mt-6 p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
           <p className="text-xs text-gray-400 text-center mb-2">Demo Credentials:</p>
           <p className="text-xs text-gray-500 text-center font-mono">
-            admin@lapangin.id / admin123
+            admin@lapangin.com / admin123
           </p>
         </div>
       </div>

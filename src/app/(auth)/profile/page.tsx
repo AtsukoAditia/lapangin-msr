@@ -93,8 +93,17 @@ export default function ProfilePage() {
         setProfile(profileData.user);
 
         if (loyaltyRes.ok) {
-          const loyaltyData = await loyaltyRes.json();
-          setLoyalty(loyaltyData);
+          const loyaltyResponse = await loyaltyRes.json();
+          if (loyaltyResponse.success && loyaltyResponse.data) {
+            setLoyalty({
+              transactions: loyaltyResponse.data.transactions || [],
+              points: loyaltyResponse.data.totalPoints || 0,
+              tier: loyaltyResponse.data.tier || 'bronze',
+              totalSpent: loyaltyResponse.data.totalSpent || 0,
+              rewards: loyaltyResponse.data.rewards || [],
+              redemptions: loyaltyResponse.data.redemptions || [],
+            });
+          }
         }
       } catch (err) {
         console.error("Failed to load profile:", err);
@@ -119,7 +128,19 @@ export default function ProfilePage() {
         alert("Berhasil menukarkan poin! 🎉");
         // Reload data
         const loyaltyRes = await fetch("/api/customer/loyalty");
-        if (loyaltyRes.ok) setLoyalty(await loyaltyRes.json());
+        if (loyaltyRes.ok) {
+          const resp = await loyaltyRes.json();
+          if (resp.success && resp.data) {
+            setLoyalty({
+              transactions: resp.data.transactions || [],
+              points: resp.data.totalPoints || 0,
+              tier: resp.data.tier || 'bronze',
+              totalSpent: resp.data.totalSpent || 0,
+              rewards: resp.data.rewards || [],
+              redemptions: resp.data.redemptions || [],
+            });
+          }
+        }
       } else {
         alert(data.error || "Gagal menukarkan poin");
       }

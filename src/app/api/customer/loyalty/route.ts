@@ -25,12 +25,15 @@ export async function GET() {
     const rewards = await adapter.getActiveRewards();
     const redemptions = await adapter.getCustomerRedemptions(session.userId);
     return NextResponse.json({ 
-      transactions, 
-      points: customer?.loyaltyPoints || 0,
-      tier: customer?.loyaltyTier || 'bronze',
-      totalSpent: customer?.totalSpent || 0,
-      rewards,
-      redemptions,
+      success: true,
+      data: {
+        transactions, 
+        totalPoints: customer?.loyaltyPoints || 0,
+        tier: customer?.loyaltyTier || 'bronze',
+        totalSpent: customer?.totalSpent || 0,
+        rewards,
+        redemptions,
+      },
     });
   } catch (error) {
     console.error("Get loyalty error:", error);
