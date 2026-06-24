@@ -9,6 +9,31 @@ This document is the single reference for the current implementation state.
 - PostgreSQL support: schema planned, adapter still not implemented
 - Notification delivery: log-only MVP, not real email/WhatsApp delivery yet
 
+## Product direction
+
+- Lapangin is moving toward a marketplace model for multiple sports venue owners across different areas.
+- Public discovery should support area/location filtering plus sport filtering.
+- Owners should be able to register venues/courts, but marketplace publication should remain controllable by platform admin.
+- Owner/admin access must be scoped: venue owners may only access their own venues, courts, bookings, pricing, and reports.
+
+## Booking flow truth
+
+- A booking created by a customer is not final success by default.
+- `/booking/success?code=...` must be treated as a status page, not a guaranteed final success page.
+- A new customer booking should start as a temporary hold with:
+  - `booking_status=waiting_payment`
+  - `payment_status=unpaid`
+  - `expires_at = created_at + 15 minutes`
+- The customer should see payment instructions and a countdown while the booking is still waiting for payment.
+- If the customer does not submit payment proof before `expires_at`, the booking should be considered expired and must not block availability.
+- After the customer submits payment proof, the booking should move to:
+  - `booking_status=waiting_verification`
+  - `payment_status=waiting_confirmation`
+- A booking is only final/valid after admin or owner confirmation changes it to `booking_status=confirmed`.
+- Loyalty points must only be awarded after booking confirmation, never when the temporary booking code is created.
+
+Detailed specification: `docs/13-marketplace-temporary-booking-payment-flow.md`.
+
 ## Authentication
 
 ### Cookie names
@@ -45,6 +70,8 @@ PostgreSQL must be the source of truth for real usage. The recommended schema is
 Critical production requirement:
 
 - Prevent overlapping bookings at database level, not only service level.
+- Add or confirm support for `expires_at` and active-booking filtering so expired temporary holds do not block future bookings.
+- Review booking/payment status enums before production migration so temporary booking, payment proof verification, rejection, and expiry are represented clearly.
 
 ## CI/CD
 
