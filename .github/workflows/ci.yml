@@ -17,6 +17,7 @@ jobs:
     timeout-minutes: 15
     env:
       DATABASE_PROVIDER: mock
+      JWT_SECRET: ci-lapangin-readiness-key-minimum-32-chars
       NEXT_TELEMETRY_DISABLED: "1"
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +25,8 @@ jobs:
           show-progress: false
       - name: Install dependencies
         run: npm ci --silent
+      - name: Local readiness doctor
+        run: npm run doctor
       - name: Type check
         id: typecheck
         continue-on-error: true
