@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createToken } from "@/lib/auth/jwt";
+import { ADMIN_TOKEN_NAME, createToken } from "@/lib/auth/jwt";
 import { authenticateAdmin } from "@/lib/auth/service";
 
 export async function POST(request: NextRequest) {
@@ -9,16 +9,16 @@ export async function POST(request: NextRequest) {
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email dan password wajib diisi" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const admin = await authenticateAdmin(email, password);
-    
+
     if (!admin) {
       return NextResponse.json(
         { error: "Email atau password salah" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -39,12 +39,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    response.cookies.set("admin_auth_token", token, {
+    response.cookies.set(ADMIN_TOKEN_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 24 * 60 * 60, // 24 hours
+      maxAge: 24 * 60 * 60,
     });
 
     return response;
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     console.error("Admin login error:", error);
     return NextResponse.json(
       { error: "Terjadi kesalahan server" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
