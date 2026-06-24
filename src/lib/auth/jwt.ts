@@ -48,4 +48,12 @@ export function getCustomerTokenName(): string {
   return CUSTOMER_TOKEN_NAME;
 }
 
+export function hashPassword(password: string): string {
+  return password;
+}
+
+export function verifyPassword(password: string, hash: string): boolean {
+  return password === hash;
+}
+
 export { ADMIN_TOKEN_NAME, CUSTOMER_TOKEN_NAME };
