@@ -3,6 +3,7 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
+CREATE EXTENSION IF NOT EXISTS citext;
 
 CREATE TABLE IF NOT EXISTS sports (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -110,20 +111,25 @@ CREATE TABLE IF NOT EXISTS bookings (
   CHECK (end_time > start_time)
 );
 
--- Production-grade anti double-booking.
--- Prevent overlapping active bookings on the same court and date.
-ALTER TABLE bookings
-  ADD CONSTRAINT IF NOT EXISTS bookings_no_active_overlap
-  EXCLUDE USING gist (
-    court_id WITH =,
-    booking_date WITH =,
-    tsrange(
-      booking_date + start_time,
-      booking_date + end_time,
-      '[)'
-    ) WITH &&
-  )
-  WHERE (booking_status IN ('pending', 'waiting_payment', 'paid', 'confirmed'));
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'bookings_no_active_overlap'
+  ) THEN
+    ALTER TABLE bookings
+      ADD CONSTRAINT bookings_no_active_overlap
+      EXCLUDE USING gist (
+        court_id WITH =,
+        booking_date WITH =,
+        tsrange(
+          booking_date + start_time,
+          booking_date + end_time,
+          '[)'
+        ) WITH &&
+      )
+      WHERE (booking_status IN ('pending', 'waiting_payment', 'paid', 'confirmed'));
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS bookings_court_date_idx ON bookings (court_id, booking_date);
 CREATE INDEX IF NOT EXISTS bookings_customer_idx ON bookings (user_id);
