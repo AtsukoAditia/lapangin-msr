@@ -287,21 +287,32 @@
 
 **Pre-cached:** `/offline.html`, `/icons/icon-192.png`, `/icons/icon-512.png`
 
-## UI/UX Optimization (Sports Theme)
+## UI/UX Optimization (Sports Theme — Stage 9)
+
+### Reusable Components
+
+- [x] `BookingSteps` component created (`src/components/booking/BookingSteps.tsx`).
+- [x] 5-step progress indicator: Pilih Olahraga → Pilih Venue → Pilih Slot → Detail Booking → Pembayaran.
+- [x] Steps show completed (green checkmark), active (colored), and inactive (gray) states.
+- [x] Responsive: full labels on desktop, compact on mobile.
 
 ### Customer-Facing Pages
 
-- [x] Homepage uses gradient hero section with sporty green/emerald theme.
-- [x] Sport cards have hover effects and smooth transitions.
+- [x] Homepage uses Indigo→Purple→Pink gradient hero with animated floating elements.
+- [x] Sport cards have hover scale effects, gradient icons, and "Mulai Booking" CTAs.
+- [x] Floating badges on hero (24/7, 6+ Olahraga, Mudah & Cepat).
+- [x] Trust indicators section (500+ Pelanggan, 50+ Partner, 24/7 Support, 100% Online).
+- [x] Booking Step 1 (`/booking`) uses BookingSteps + animated venue cards with gradient sport icons.
+- [x] Booking Step 2 (`/booking/[sport]`) has venue cards with gradient headers and sport-themed badges.
+- [x] Booking form has section dividers with icons (Contact, Schedule, Summary).
+- [x] Success page has confetti effect, ticket-style summary, gradient CTA buttons.
+- [x] Success page auto-fills data from URL params (bookingCode, date, time, court, price).
 - [x] Navbar has blur backdrop and gradient logo on scroll.
-- [x] Booking flow has step indicator with active/completed states.
 - [x] Slot selector has color-coded availability (green=available, red=booked, gray=past).
-- [x] Booking form has floating labels and animated focus states.
-- [x] Success page has animated checkmark and confetti-style celebration.
 - [x] Profile page has animated stats cards with gradient borders.
 - [x] Loyalty tier badges use gradient colors (Bronze→Platinum).
 - [x] All pages are mobile-first responsive (360px to 1440px+).
-- [x] Cards, buttons, and inputs have consistent rounded corners and shadows.
+- [x] Cards, buttons, and inputs have consistent rounded-2xl corners and shadows.
 
 ### Admin Pages
 

@@ -41,6 +41,19 @@ export async function POST(request: NextRequest) {
       notes,
     } = body;
 
+    // ── Optional: Extract userId from customer session ──
+    let userId: string | undefined;
+    try {
+      const cookieStore = await cookies();
+      const token = cookieStore.get(CUSTOMER_TOKEN_NAME)?.value;
+      if (token) {
+        const session = await verifyToken(token);
+        if (session?.userId) userId = session.userId;
+      }
+    } catch {
+      // Guest booking — no userId
+    }
+
     // ── Server-side validation using schema ──
     const validation = validateBookingInput({
       customerName: customerName?.trim() ?? "",
@@ -76,6 +89,7 @@ export async function POST(request: NextRequest) {
       endTime,
       durationMinutes: durationMinutes ?? 60,
       notes: notes?.trim(),
+      userId,
     });
 
     return NextResponse.json(booking, { status: 201 });

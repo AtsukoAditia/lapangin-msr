@@ -49,7 +49,7 @@ export default function Navbar() {
               <span className="text-white font-bold text-lg">⚡</span>
             </div>
             <span className="text-xl font-black text-gray-900 tracking-tight">
-              Arena<span className="text-emerald-600">Book</span>
+              Lapang<span className="text-emerald-600">in</span>
             </span>
           </Link>
 

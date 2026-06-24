@@ -31,6 +31,7 @@ export interface CreateBookingInput {
   durationMinutes: number;
   totalPrice: number;
   notes?: string;
+  userId?: string;
 }
 
 export interface UpdateCourtInput {
@@ -88,7 +89,7 @@ export interface DatabaseAdapter {
   getBookingById(id: string): Promise<Booking | null>;
   getBookingsByCourtAndDate(courtId: string, date: string): Promise<Booking[]>;
   createBooking(input: CreateBookingInput): Promise<Booking>;
-  updateBookingStatus(id: string, status: Booking["bookingStatus"]): Promise<Booking>;
+  updateBookingStatus(id: string, status: Booking["bookingStatus"], paymentStatus?: Booking["paymentStatus"]): Promise<Booking>;
 
   // Pricing
   getPricingRules(courtId: string): Promise<PricingRule[]>;
