@@ -276,12 +276,35 @@ export class MockAdapter implements DatabaseAdapter {
     return getBookings().find((b) => b.id === id) ?? null;
   }
 
+  async getBookingByCode(code: string): Promise<Booking | null> {
+    return getBookings().find((b) => b.bookingCode === code) ?? null;
+  }
+
+  async expireBookings(): Promise<number> {
+    const now = new Date();
+    let count = 0;
+    for (const b of getBookings()) {
+      if (
+        b.bookingStatus === "waiting_payment" &&
+        b.expiresAt &&
+        new Date(b.expiresAt) < now
+      ) {
+        b.bookingStatus = "expired";
+        b.paymentStatus = "unpaid";
+        b.updatedAt = now.toISOString();
+        count++;
+      }
+    }
+    return count;
+  }
+
   async getBookingsByCourtAndDate(courtId: string, date: string): Promise<Booking[]> {
     return getBookings().filter((b) => b.courtId === courtId && b.bookingDate === date);
   }
 
   async createBooking(input: CreateBookingInput): Promise<Booking> {
-    const now = new Date().toISOString();
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 15 * 60 * 1000);
     const booking: Booking = {
       id: crypto.randomUUID(),
       bookingCode: generateBookingCode(),
@@ -296,12 +319,13 @@ export class MockAdapter implements DatabaseAdapter {
       endTime: input.endTime,
       durationMinutes: input.durationMinutes,
       totalPrice: input.totalPrice,
-      bookingStatus: "pending",
+      bookingStatus: "waiting_payment",
       paymentStatus: "unpaid",
       notes: input.notes,
       userId: input.userId,
-      createdAt: now,
-      updatedAt: now,
+      expiresAt: expiresAt.toISOString(),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     };
     getBookings().push(booking);
     return { ...booking };
@@ -383,7 +407,7 @@ export class MockAdapter implements DatabaseAdapter {
     const store = getBookings();
     const index = store.findIndex((b) => b.id === bookingId);
     if (index === -1) throw new Error(`Booking not found: ${bookingId}`);
-    store[index] = { ...store[index], paymentProofUrl: proofUrl, paymentStatus: "waiting_confirmation", bookingStatus: "waiting_payment", updatedAt: new Date().toISOString() };
+    store[index] = { ...store[index], paymentProofUrl: proofUrl, paymentStatus: "waiting_confirmation", bookingStatus: "waiting_verification", expiresAt: undefined, updatedAt: new Date().toISOString() };
     return { ...store[index] };
   }
 
@@ -399,7 +423,7 @@ export class MockAdapter implements DatabaseAdapter {
     const store = getBookings();
     const index = store.findIndex((b) => b.id === bookingId);
     if (index === -1) throw new Error(`Booking not found: ${bookingId}`);
-    store[index] = { ...store[index], paymentStatus: "unpaid", bookingStatus: "pending", paymentProofUrl: undefined, updatedAt: new Date().toISOString() };
+    store[index] = { ...store[index], paymentStatus: "rejected", bookingStatus: "rejected", updatedAt: new Date().toISOString() };
     return { ...store[index] };
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabaseAdapter } from "@/lib/adapters";
 import { AvailabilityService } from "@/lib/services/availability-service";
+import { BookingService } from "@/lib/services/booking-service";
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,6 +31,13 @@ export async function GET(request: NextRequest) {
     }
 
     const adapter = getDatabaseAdapter();
+
+    // Expire stale waiting_payment bookings before checking availability
+    const bookingService = new BookingService(adapter);
+    await bookingService.expireBookings().catch(() => {
+      // non-critical — don't fail availability check
+    });
+
     const service = new AvailabilityService(adapter);
 
     const slots = await service.getAvailableSlots({

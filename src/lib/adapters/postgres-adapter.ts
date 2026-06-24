@@ -59,6 +59,14 @@ export class PostgresAdapter implements DatabaseAdapter {
     throw new Error("PostgresAdapter getBookingById not implemented yet.");
   }
 
+  async getBookingByCode(_code: string): Promise<Booking | null> {
+    throw new Error("PostgresAdapter getBookingByCode not implemented yet.");
+  }
+
+  async expireBookings(): Promise<number> {
+    throw new Error("PostgresAdapter expireBookings not implemented yet.");
+  }
+
   async getBookingsByCourtAndDate(
     _courtId: string,
     _date: string,

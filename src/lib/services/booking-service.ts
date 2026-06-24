@@ -17,6 +17,14 @@ export class BookingService {
     return this.adapter.getBookings();
   }
 
+  async getBookingById(id: string): Promise<Booking | null> {
+    return this.adapter.getBookingById(id);
+  }
+
+  async getBookingByCode(code: string): Promise<Booking | null> {
+    return this.adapter.getBookingByCode(code);
+  }
+
   async getBookingsByCourtAndDate(courtId: string, date: string): Promise<Booking[]> {
     return this.adapter.getBookingsByCourtAndDate(courtId, date);
   }
@@ -107,10 +115,33 @@ export class BookingService {
     return booking;
   }
 
+  /**
+   * Submit payment proof. Customer uploads proof URL.
+   * Sets booking_status=waiting_verification, payment_status=waiting_confirmation.
+   */
+  async submitPaymentProof(bookingId: string, proofUrl: string): Promise<Booking> {
+    const booking = await this.getBookingOrThrow(bookingId);
+
+    if (booking.bookingStatus !== "waiting_payment") {
+      throw new Error(`Booking dalam status ${booking.bookingStatus}, tidak bisa upload bukti bayar.`);
+    }
+
+    const result = await this.adapter.submitPaymentProof(bookingId, proofUrl);
+
+    await this.logAudit("payment_proof_submitted", bookingId, "customer", undefined,
+      `Payment proof submitted for ${booking.bookingCode}`
+    );
+
+    return result;
+  }
+
+  /**
+   * Admin confirms payment. Sets booking_status=confirmed, payment_status=paid.
+   */
   async confirmBooking(id: string, actorId?: string): Promise<Booking> {
     const booking = await this.getBookingOrThrow(id);
-    const result = await this.adapter.updateBookingStatus(id, "confirmed");
-    await this.logAudit("booking_status_changed", id, "admin", actorId,
+    const result = await this.adapter.confirmPayment(id, actorId);
+    await this.logAudit("booking_confirmed", id, "admin", actorId,
       `Booking ${booking.bookingCode} confirmed`,
       booking.bookingStatus, "confirmed"
     );
@@ -128,7 +159,6 @@ export class BookingService {
             `Poin dari booking ${booking.bookingCode} - Rp ${booking.totalPrice.toLocaleString("id-ID")}`,
             "earned"
           );
-          console.log(`[Loyalty] Awarded ${pointsEarned} points to user ${booking.userId}`);
         }
       } catch {
         console.error(`[Loyalty] Failed to award points for booking ${booking.bookingCode}`);
@@ -138,15 +168,31 @@ export class BookingService {
     return result;
   }
 
+  /**
+   * Admin rejects payment. Sets booking_status=cancelled, payment_status=unpaid.
+   * Frees the slot for other customers.
+   */
   async rejectBooking(id: string, actorId?: string): Promise<Booking> {
     const booking = await this.getBookingOrThrow(id);
-    const result = await this.adapter.updateBookingStatus(id, "rejected");
-    await this.logAudit("booking_status_changed", id, "admin", actorId,
+    const result = await this.adapter.rejectPayment(id, actorId);
+    await this.logAudit("booking_rejected", id, "admin", actorId,
       `Booking ${booking.bookingCode} rejected`,
       booking.bookingStatus, "rejected"
     );
     try { await sendBookingRejection(result); } catch { /* non-blocking */ }
     return result;
+  }
+
+  /**
+   * Expire bookings that have passed their expiry time.
+   * Returns number of expired bookings.
+   */
+  async expireBookings(): Promise<number> {
+    const count = await this.adapter.expireBookings();
+    if (count > 0) {
+      console.log(`[BookingService] Expired ${count} bookings`);
+    }
+    return count;
   }
 
   async cancelBooking(id: string, actorId?: string): Promise<Booking> {
