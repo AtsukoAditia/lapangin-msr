@@ -1,196 +1,253 @@
-import { getDatabaseAdapter } from "@/lib/adapters";
-import { sportEmoji } from "@/lib/sport-icons";
 import Link from "next/link";
+import { mockSports, mockVenues, mockCourts } from "@/lib/mock-data";
+import { sportEmoji } from "@/lib/sport-icons";
 
-export const dynamic = "force-dynamic";
-
-export default async function HomePage() {
-  const adapter = getDatabaseAdapter();
-  const sports = await adapter.getSports();
+export default function HomePage() {
+  const venueCount = mockVenues.length;
+  const courtCount = mockCourts.length;
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-emerald-300 rounded-full blur-3xl" />
+      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-20 -right-20 h-80 w-80 rounded-full bg-white/10 animate-pulse" />
+          <div className="absolute top-1/2 -left-10 h-60 w-60 rounded-full bg-white/5" />
+          <div className="absolute bottom-0 right-1/4 h-40 w-40 rounded-full bg-white/10" />
+          {/* Sport field lines */}
+          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <line x1="0" y1="30" x2="100" y2="70" stroke="currentColor" strokeWidth="0.3" className="text-white/20" />
+            <line x1="0" y1="50" x2="100" y2="90" stroke="currentColor" strokeWidth="0.2" className="text-white/15" />
+            <line x1="0" y1="70" x2="100" y2="20" stroke="currentColor" strokeWidth="0.3" className="text-white/15" />
+            <circle cx="50" cy="50" r="15" fill="none" stroke="currentColor" strokeWidth="0.3" className="text-white/10" />
+          </svg>
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 lg:py-32">
+
+        <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28 md:py-36">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-6">
-              <span className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse" />
-              Platform Booking Lapangan #1
+            {/* Sport icon cluster */}
+            <div className="mb-6 flex items-center justify-center gap-3 text-4xl sm:text-5xl md:text-6xl">
+              <span className="animate-bounce" style={{ animationDelay: '0ms' }}>⚽</span>
+              <span className="animate-bounce" style={{ animationDelay: '100ms' }}>🏸</span>
+              <span className="animate-bounce" style={{ animationDelay: '200ms' }}>🎾</span>
+              <span className="animate-bounce" style={{ animationDelay: '300ms' }}>🏀</span>
+              <span className="animate-bounce" style={{ animationDelay: '400ms' }}>🏓</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
-              Booking Lapangan
-              <br />
-              <span className="text-emerald-200">Jadi Mudah</span> ⚡
+
+            <h1 className="mb-4 text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+              Lapang
+              <span className="bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">in</span>
             </h1>
-            <p className="text-lg sm:text-xl text-emerald-100 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Futsal, Mini Soccer, Badminton, Padel, Tennis, Basket — semua bisa dipesan dalam hitungan detik. Tanpa ribet, tanpa telepon.
+            <p className="mx-auto mb-8 max-w-2xl text-lg text-emerald-100 sm:text-xl md:text-2xl leading-relaxed">
+              Booking lapangan olahraga jadi mudah, cepat, dan praktis.
+              <br className="hidden sm:block" />
+              Pilih venue, pilih waktu, langsung main! 🎯
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link
-                href="/booking/futsal"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-emerald-700 font-bold text-lg rounded-2xl hover:bg-emerald-50 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5"
+                href="/booking"
+                className="group inline-flex items-center gap-2 rounded-2xl bg-white px-10 py-4 text-lg font-bold text-emerald-700 shadow-2xl transition-all hover:bg-yellow-300 hover:text-emerald-800 hover:shadow-3xl hover:scale-105"
               >
                 🏟️ Booking Sekarang
+                <span className="group-hover:translate-x-1 transition-transform">→</span>
               </Link>
-              <Link
-                href="/register"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold text-lg rounded-2xl border-2 border-white/30 hover:bg-white/20 transition-all"
+              <a
+                href="#sports"
+                className="inline-flex items-center gap-2 rounded-2xl border-2 border-white/30 px-10 py-4 text-lg font-semibold text-white backdrop-blur-sm transition-all hover:border-white hover:bg-white/10 hover:scale-105"
               >
-                ✨ Daftar & Dapat Poin
-              </Link>
+                Lihat Olahraga ↓
+              </a>
+            </div>
+
+            {/* Stats */}
+            <div className="mt-14 grid grid-cols-3 gap-6 sm:gap-10 max-w-xl mx-auto">
+              <div className="rounded-2xl bg-white/10 backdrop-blur-sm px-4 py-4">
+                <div className="text-3xl font-black text-yellow-300 sm:text-4xl">{mockSports.length}+</div>
+                <div className="mt-1 text-xs text-emerald-200 sm:text-sm font-medium">Jenis Olahraga</div>
+              </div>
+              <div className="rounded-2xl bg-white/10 backdrop-blur-sm px-4 py-4">
+                <div className="text-3xl font-black text-yellow-300 sm:text-4xl">{venueCount}</div>
+                <div className="mt-1 text-xs text-emerald-200 sm:text-sm font-medium">Venue</div>
+              </div>
+              <div className="rounded-2xl bg-white/10 backdrop-blur-sm px-4 py-4">
+                <div className="text-3xl font-black text-yellow-300 sm:text-4xl">{courtCount}</div>
+                <div className="mt-1 text-xs text-emerald-200 sm:text-sm font-medium">Lapangan</div>
+              </div>
             </div>
           </div>
         </div>
-        {/* Wave separator */}
+
+        {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 80" fill="none" className="w-full">
-            <path d="M0 40C360 80 720 0 1080 40C1260 60 1380 50 1440 40V80H0V40Z" fill="white" />
+          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+            <path d="M0 80V40C240 10 480 0 720 15C960 30 1200 50 1440 40V80H0Z" fill="rgb(248 250 252)" />
           </svg>
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="bg-white py-8 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-            <div>
-              <div className="text-2xl sm:text-3xl font-black text-gray-900">6+</div>
-              <div className="text-sm text-gray-500 mt-1">Jenis Olahraga</div>
-            </div>
-            <div>
-              <div className="text-2xl sm:text-3xl font-black text-gray-900">10+</div>
-              <div className="text-sm text-gray-500 mt-1">Lapangan Tersedia</div>
-            </div>
-            <div>
-              <div className="text-2xl sm:text-3xl font-black text-gray-900">24/7</div>
-              <div className="text-sm text-gray-500 mt-1">Booking Online</div>
-            </div>
-            <div>
-              <div className="text-2xl sm:text-3xl font-black text-amber-500">⭐ Poin</div>
-              <div className="text-sm text-gray-500 mt-1">Reward Setiap Transaksi</div>
-            </div>
-          </div>
+      {/* Sports Section */}
+      <section id="sports" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+        <div className="mb-10 text-center sm:mb-14">
+          <span className="mb-3 inline-block rounded-full bg-emerald-100 px-5 py-1.5 text-xs font-bold text-emerald-700 tracking-wide uppercase">
+            Pilih Olahraga
+          </span>
+          <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">
+            Olahraga yang Tersedia
+          </h2>
+          <p className="mt-3 text-slate-500 max-w-lg mx-auto">
+            Pilih jenis olahraga favoritmu dan temukan lapangan terbaik di kotamu.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 sm:gap-6">
+          {mockSports.map((sport) => (
+            <Link
+              key={sport.id}
+              href={`/booking/${sport.slug}`}
+              className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm transition-all hover:border-emerald-400 hover:shadow-xl hover:-translate-y-2 hover:shadow-emerald-100"
+            >
+              <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500 opacity-0 transition group-hover:opacity-100" />
+              <div className="mb-3 text-5xl sm:text-6xl group-hover:scale-110 transition-transform duration-300">
+                {sportEmoji[sport.slug] || "🏟️"}
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 group-hover:text-emerald-700 sm:text-base transition-colors">
+                {sport.name}
+              </h3>
+              <div className="mt-2 flex items-center justify-center gap-1 text-xs text-emerald-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                Booking →
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
-      {/* Sports Grid */}
-      <section className="bg-gray-50 py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">
-              Pilih Olahraga Favoritmu 🏆
+      {/* How it works */}
+      <section className="bg-gradient-to-b from-slate-50 to-white">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+          <div className="mb-10 text-center sm:mb-14">
+            <span className="mb-3 inline-block rounded-full bg-emerald-100 px-5 py-1.5 text-xs font-bold text-emerald-700 tracking-wide uppercase">
+              Mudah & Cepat
+            </span>
+            <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">
+              Cara Booking
             </h2>
-            <p className="text-gray-600 text-lg max-w-xl mx-auto">
-              Temukan lapangan yang tersedia dan booking langsung. Cepat, mudah, dan pasti dapat tempat.
+            <p className="mt-3 text-slate-500 max-w-lg mx-auto">
+              Hanya 4 langkah mudah untuk booking lapangan favoritmu
             </p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
-            {sports.map((sport) => (
-              <Link
-                key={sport.id}
-                href={`/booking/${sport.id}`}
-                className="group relative bg-white rounded-2xl p-6 text-center hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-emerald-200 hover:-translate-y-1"
-              >
-                <div className="text-5xl sm:text-6xl mb-3 group-hover:scale-110 transition-transform duration-300">
-                  {sportEmoji[sport.id] || sportEmoji[sport.name.toLowerCase()] || "🏅"}
-                </div>
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base">{sport.name}</h3>
-                <p className="text-xs text-gray-500 mt-1">Lihat Lapangan →</p>
-                <div className="absolute inset-0 rounded-2xl ring-2 ring-emerald-500 ring-opacity-0 group-hover:ring-opacity-100 transition-all duration-300" />
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How it Works */}
-      <section className="bg-white py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">
-              Cara Booking 📱
-            </h2>
-            <p className="text-gray-600 text-lg">Hanya 3 langkah simpel</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { step: "1", icon: "🔍", title: "Pilih Lapangan", desc: "Pilih olahraga, venue, dan lapangan yang kamu inginkan" },
-              { step: "2", icon: "📅", title: "Pilih Jadwal", desc: "Tentukan tanggal dan jam yang tersedia sesuai keinginanmu" },
-              { step: "3", icon: "✅", title: "Konfirmasi & Bayar", desc: "Isi data diri, bayar, dan dapatkan konfirmasi booking" },
+              { step: "1", icon: "🔍", title: "Pilih Olahraga", desc: "Pilih jenis olahraga yang ingin dimainkan dari 6+ pilihan.", color: "from-emerald-500 to-emerald-600" },
+              { step: "2", icon: "🏟️", title: "Pilih Venue & Lapangan", desc: "Lihat venue terdekat dan lapangan yang tersedia.", color: "from-teal-500 to-teal-600" },
+              { step: "3", icon: "📅", title: "Pilih Jadwal", desc: "Pilih tanggal dan jam yang kamu inginkan, real-time!", color: "from-cyan-500 to-cyan-600" },
+              { step: "4", icon: "✅", title: "Bayar & Main!", desc: "Isi data, bayar, dan lapangan siap dipakai. Gampang!", color: "from-amber-500 to-amber-600" },
             ].map((item) => (
-              <div key={item.step} className="relative text-center p-8 rounded-2xl bg-gradient-to-b from-emerald-50 to-white border border-emerald-100">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg">
+              <div key={item.step} className="group relative rounded-2xl bg-white p-6 text-center shadow-sm border border-slate-100 hover:shadow-lg transition-all hover:-translate-y-1">
+                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${item.color} text-sm font-bold text-white shadow-lg`}>
                   {item.step}
                 </div>
-                <div className="text-5xl mb-4 mt-2">{item.icon}</div>
-                <h3 className="font-bold text-gray-900 text-lg mb-2">{item.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{item.desc}</p>
+                <div className="mb-3 mt-4 text-4xl group-hover:scale-110 transition-transform">{item.icon}</div>
+                <h3 className="mb-2 font-bold text-slate-900 text-lg">{item.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Loyalty Promo */}
-      <section className="bg-gradient-to-r from-amber-500 to-orange-500 py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <div className="text-6xl mb-6">⭐</div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
-            Kumpulin Poin, Dapetin Bonus!
-          </h2>
-          <p className="text-amber-100 text-lg mb-8 max-w-xl mx-auto">
-            Setiap transaksi booking menghasilkan poin yang bisa ditukar untuk potongan harga, bonus jam, bahkan gratis lapangan!
-          </p>
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-amber-600 font-bold text-lg rounded-2xl hover:bg-amber-50 transition-all shadow-xl"
-          >
-            🎯 Daftar Gratis & Mulai Kumpulin Poin
-          </Link>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="bg-gray-900 py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
-            Siap Main? Booking Sekarang! 🚀
-          </h2>
-          <p className="text-gray-400 text-lg mb-8">
-            Jangan sampai kehabisan slot. Booking lapangan favoritmu sekarang juga.
-          </p>
-          <Link
-            href="/booking/futsal"
-            className="inline-flex items-center gap-2 px-10 py-4 bg-emerald-600 text-white font-bold text-lg rounded-2xl hover:bg-emerald-500 transition-all shadow-xl"
-          >
-            🏟️ Mulai Booking
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 border-t border-gray-800 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">⚡</span>
+      {/* Loyalty Points Section */}
+      <section className="bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+          <div className="rounded-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 p-1">
+            <div className="rounded-3xl bg-white p-8 sm:p-12">
+              <div className="grid items-center gap-8 lg:grid-cols-2">
+                <div>
+                  <span className="inline-block rounded-full bg-amber-100 px-4 py-1.5 text-xs font-bold text-amber-700 tracking-wide uppercase mb-4">
+                    🎁 Program Loyalty
+                  </span>
+                  <h2 className="text-3xl font-black text-slate-900 sm:text-4xl mb-4">
+                    Kumpulkan Poin,
+                    <br />
+                    <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                      Dapatkan Reward!
+                    </span>
+                  </h2>
+                  <p className="text-slate-600 mb-6 leading-relaxed">
+                    Daftar sekarang dan nikmati program loyalty Lapangin!
+                    Setiap transaksi booking lapangan akan mendapatkan poin
+                    yang bisa ditukarkan untuk diskon, bonus jam, bahkan
+                    lapangan gratis! 🎉
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Link
+                      href="/register"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-3.5 text-base font-bold text-white shadow-lg transition-all hover:shadow-xl hover:scale-105"
+                    >
+                      ✨ Daftar Gratis
+                    </Link>
+                    <Link
+                      href="/login"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-200 px-8 py-3.5 text-base font-semibold text-slate-700 transition-all hover:border-emerald-400 hover:text-emerald-700"
+                    >
+                      Masuk →
+                    </Link>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { emoji: "🏆", title: "Bronze", desc: "1x Poin", sub: "Member Baru" },
+                    { emoji: "🥈", title: "Silver", desc: "1.5x Poin", sub: "Spent 500rb+" },
+                    { emoji: "🥇", title: "Gold", desc: "2x Poin", sub: "Spent 2jt+" },
+                    { emoji: "💎", title: "Diamond", desc: "3x Poin", sub: "Spent 5jt+" },
+                  ].map((tier) => (
+                    <div key={tier.title} className="rounded-2xl border border-slate-100 p-4 text-center hover:shadow-md transition-all hover:-translate-y-1">
+                      <div className="text-3xl mb-2">{tier.emoji}</div>
+                      <div className="font-bold text-slate-900">{tier.title}</div>
+                      <div className="text-sm font-semibold text-amber-600">{tier.desc}</div>
+                      <div className="text-xs text-slate-400 mt-1">{tier.sub}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <span className="text-lg font-black text-white">
-                Arena<span className="text-emerald-400">Book</span>
-              </span>
             </div>
-            <p className="text-sm text-gray-500">
-              © {new Date().getFullYear()} ArenaBook. All rights reserved.
-            </p>
           </div>
         </div>
-      </footer>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <circle cx="80" cy="20" r="20" fill="none" stroke="currentColor" strokeWidth="0.3" className="text-white/10" />
+            <circle cx="20" cy="80" r="15" fill="none" stroke="currentColor" strokeWidth="0.3" className="text-white/10" />
+          </svg>
+        </div>
+        <div className="relative mx-auto max-w-4xl px-4 py-16 text-center sm:py-20">
+          <h2 className="text-3xl font-black text-white sm:text-4xl">
+            Siap Bermain? 🏆
+          </h2>
+          <p className="mt-4 text-emerald-100 text-lg max-w-lg mx-auto">
+            Booking sekarang dan rasakan kemudahan Lapangin. Kumpulkan poin untuk reward eksklusif!
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/booking"
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-10 py-4 text-lg font-bold text-emerald-700 shadow-2xl transition-all hover:bg-yellow-300 hover:text-emerald-800 hover:scale-105"
+            >
+              🏟️ Mulai Booking
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 rounded-2xl border-2 border-white/40 px-10 py-4 text-lg font-semibold text-white transition-all hover:border-white hover:bg-white/10"
+            >
+              🎁 Daftar & Kumpulkan Poin
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

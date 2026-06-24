@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
 import { getCourtById, formatPrice } from "@/lib/mock-data";
+import BookingSteps from "@/components/booking/BookingSteps";
 
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
@@ -99,130 +100,191 @@ function BookingFormContent() {
 
   if (!court || !date || !startTime || !endTime) {
     return (
-      <div className="py-12 text-center text-slate-500">
-        Data booking tidak lengkap. Silakan pilih lapangan terlebih dahulu.
+      <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
+        <div className="mb-4 text-5xl">📋</div>
+        <p className="text-lg font-semibold text-slate-700">
+          Data booking tidak lengkap
+        </p>
+        <p className="mt-1 text-sm text-slate-500">
+          Silakan pilih lapangan terlebih dahulu.
+        </p>
+        <button
+          onClick={() => router.push("/booking")}
+          className="mt-4 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+        >
+          ← Pilih Lapangan
+        </button>
       </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-slate-900">
-        Formulir Booking
-      </h1>
-
-      {/* Summary */}
-      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm text-slate-500">Lapangan</span>
-          <span className="text-sm font-semibold text-slate-900">
-            {court.name}
-          </span>
-        </div>
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm text-slate-500">Tanggal</span>
-          <span className="text-sm font-semibold text-slate-900">{date}</span>
-        </div>
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm text-slate-500">Jam</span>
-          <span className="text-sm font-semibold text-slate-900">
-            {startTime} – {endTime}
-          </span>
-        </div>
-        <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-          <span className="text-sm text-slate-500">Total Harga</span>
-          <span className="text-lg font-bold text-emerald-700">
-            {formatPrice(totalPrice)}
-          </span>
+    <div className="min-h-screen bg-slate-50">
+      {/* Header with step indicator */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="mx-auto max-w-2xl px-4 pt-6 pb-2">
+          <h1 className="mb-4 text-center text-xl font-bold text-slate-900">
+            📝 Isi Data Booking
+          </h1>
+          <BookingSteps currentStep={3} />
         </div>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <p>{error}</p>
-            {isConflict && (
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(`/booking/${court.sportId}/${court.venueId}/${court.id}`)
-                }
-                className="mt-2 inline-block rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
-              >
-                Pilih Jam Lain
-              </button>
-            )}
+      <div className="mx-auto max-w-2xl px-4 py-6">
+        {/* Booking Summary Card */}
+        <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm">
+          <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3">
+            <h2 className="text-sm font-bold text-white">📋 Ringkasan Booking</h2>
           </div>
-        )}
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Nama Lengkap <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Masukkan nama"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-          />
+          <div className="p-5">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-sm">🏟️</span>
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500">Lapangan</p>
+                  <p className="text-sm font-semibold text-slate-900">{court.name}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-sm">📅</span>
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500">Tanggal</p>
+                  <p className="text-sm font-semibold text-slate-900">{date}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-sm">⏰</span>
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500">Jam</p>
+                  <p className="text-sm font-semibold text-slate-900">{startTime} – {endTime}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-sm">⏱️</span>
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500">Durasi</p>
+                  <p className="text-sm font-semibold text-slate-900">{durationMinutes} menit</p>
+                </div>
+              </div>
+              <div className="border-t border-slate-100 pt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-600">💰 Total Harga</span>
+                  <span className="text-xl font-extrabold text-emerald-600">
+                    {formatPrice(totalPrice)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Nomor HP <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="08xxxxxxxxxx"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-          />
-        </div>
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="bg-gradient-to-r from-slate-700 to-slate-800 px-5 py-3">
+              <h2 className="text-sm font-bold text-white">👤 Data Diri</h2>
+            </div>
+            <div className="space-y-4 p-5">
+              {error && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                  <p className="text-sm font-medium text-red-700">⚠️ {error}</p>
+                  {isConflict && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(`/booking/${court.sportId}/${court.venueId}/${court.id}`)
+                      }
+                      className="mt-2 inline-flex items-center gap-1 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
+                    >
+                      🔄 Pilih Jam Lain
+                    </button>
+                  )}
+                </div>
+              )}
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Email{" "}
-            <span className="text-xs font-normal text-slate-400">
-              (opsional)
-            </span>
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="email@example.com"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-          />
-        </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  Nama Lengkap <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Masukkan nama lengkap"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-200"
+                />
+              </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Catatan{" "}
-            <span className="text-xs font-normal text-slate-400">
-              (opsional)
-            </span>
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            placeholder="Misal: butuh 2 bola, ada acara khusus, dll."
-            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-          />
-        </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  Nomor HP <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">🇮🇩 +62</span>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="8123456789"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-16 pr-4 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-200"
+                  />
+                </div>
+              </div>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {submitting ? "Mengirim..." : "Kirim Booking"}
-        </button>
-      </form>
-    </main>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  Email <span className="text-xs font-normal text-slate-400">(opsional)</span>
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-200"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                  Catatan <span className="text-xs font-normal text-slate-400">(opsional)</span>
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Misal: butuh 2 bola, ada acara khusus, dll."
+                  className="w-full resize-none rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-200"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="mt-6">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 py-4 text-base font-bold text-white shadow-lg shadow-emerald-200 transition hover:from-emerald-700 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Memproses...
+                </span>
+              ) : (
+                "✅ Konfirmasi Booking"
+              )}
+            </button>
+            <p className="mt-3 text-center text-xs text-slate-400">
+              Dengan mengklik, kamu menyetujui syarat & ketentuan booking.
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -230,7 +292,12 @@ export default function BookingFormPage() {
   return (
     <Suspense
       fallback={
-        <div className="py-12 text-center text-slate-500">Memuat...</div>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
+            <p className="text-sm text-slate-500">Memuat formulir...</p>
+          </div>
+        </div>
       }
     >
       <BookingFormContent />

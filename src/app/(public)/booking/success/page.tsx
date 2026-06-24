@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState } from "react";
 import type { Booking, PaymentMethod } from "@/lib/types/domain";
 
 function SuccessContent() {
@@ -20,26 +20,21 @@ function SuccessContent() {
     "instructions",
   );
 
-  const loadBooking = useCallback(async () => {
-    if (!bookingId) return;
-    try {
-      const res = await fetch(`/api/bookings/${bookingId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setBooking(data.booking ?? data);
-      }
-    } catch {
-      // Silent fail for booking load
-    }
-  }, [bookingId]);
-
   useEffect(() => {
-    loadBooking();
-    fetch("/api/payments/methods")
+    if (!bookingId) return;
+    const controller = new AbortController();
+    fetch(`/api/bookings/${bookingId}`, { signal: controller.signal })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data) setBooking(data.booking ?? data);
+      })
+      .catch(() => {});
+    fetch("/api/payments/methods", { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => setPaymentMethods(data.methods ?? []))
       .catch(() => {});
-  }, [loadBooking]);
+    return () => controller.abort();
+  }, [bookingId]);
 
   const handleSubmitProof = async () => {
     if (!bookingId || !proofUrl.trim()) {
@@ -70,7 +65,12 @@ function SuccessContent() {
       }
 
       setStep("done");
-      await loadBooking();
+      // Reload booking data
+      const refreshRes = await fetch(`/api/bookings/${bookingId}`);
+      if (refreshRes.ok) {
+        const refreshed = await refreshRes.json();
+        setBooking(refreshed.booking ?? refreshed);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Gagal mengirim bukti transfer");
     } finally {
@@ -116,205 +116,263 @@ function SuccessContent() {
     if (!cfg) return null;
 
     return (
-      <div className={`rounded-lg border px-3 py-2 text-sm ${cfg.color}`}>
+      <div className={`rounded-xl border px-4 py-2.5 text-sm font-medium ${cfg.color}`}>
         {cfg.icon} Status Pembayaran: <strong>{cfg.label}</strong>
       </div>
     );
   };
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-16 text-center">
-      <div className="mb-6 text-6xl">✅</div>
-      <h1 className="mb-2 text-2xl font-bold text-slate-900">
-        Booking Berhasil!
-      </h1>
-      <p className="mb-6 text-slate-600">
-        Terima kasih. Booking kamu sudah kami terima.
-      </p>
-
-      <div className="mb-8 rounded-xl border border-emerald-200 bg-emerald-50 p-6">
-        <p className="mb-1 text-sm text-emerald-700">Kode Booking</p>
-        <p className="text-2xl font-extrabold tracking-wider text-emerald-800">
-          {bookingCode}
-        </p>
+    <div className="min-h-screen bg-slate-50">
+      {/* Success Header */}
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 py-10 sm:py-14">
+        <div className="mx-auto max-w-lg px-4 text-center">
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/20 text-5xl backdrop-blur-sm">
+            ✅
+          </div>
+          <h1 className="mb-2 text-2xl font-black text-white sm:text-3xl">
+            Booking Berhasil!
+          </h1>
+          <p className="text-sm text-emerald-100 sm:text-base">
+            Terima kasih. Booking kamu sudah kami terima 🎉
+          </p>
+        </div>
       </div>
 
-      {booking && (
-        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm">
-          <h3 className="mb-3 font-semibold text-slate-900">
-            Detail Booking
-          </h3>
-          <div className="space-y-1 text-sm text-slate-600">
-            <p>Tanggal: {booking.bookingDate}</p>
-            <p>
-              Jam: {booking.startTime} — {booking.endTime}
+      <div className="mx-auto max-w-lg px-4 -mt-6 pb-10">
+        {/* Booking Code Card */}
+        <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-lg">
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-5 text-center">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-600">
+              Kode Booking
             </p>
-            <p>Durasi: {booking.durationMinutes} menit</p>
-            <p className="text-lg font-bold text-emerald-700">
-              Total: Rp {booking.totalPrice.toLocaleString("id-ID")}
+            <p className="text-3xl font-extrabold tracking-widest text-emerald-700">
+              {bookingCode}
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Simpan kode ini untuk referensi pembayaran
             </p>
           </div>
-          <div className="mt-3">{paymentStatusDisplay()}</div>
-        </div>
-      )}
 
-      {step === "instructions" && (
-        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm">
-          <h3 className="mb-3 font-semibold text-slate-900">
-            Instruksi Pembayaran
-          </h3>
-
-          {paymentMethods.length > 0 ? (
-            <div className="space-y-3">
-              {paymentMethods.map((method) => (
-                <button
-                  key={method.id}
-                  onClick={() => setSelectedMethod(method.id)}
-                  className={`w-full rounded-lg border p-3 text-left transition ${
-                    selectedMethod === method.id
-                      ? "border-emerald-500 bg-emerald-50"
-                      : "border-slate-200 hover:border-emerald-300"
-                  }`}
-                >
+          {/* Booking Details */}
+          {booking && (
+            <div className="border-t border-slate-100 p-5">
+              <h3 className="mb-3 text-sm font-bold text-slate-900">📋 Detail Booking</h3>
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-sm">📅</span>
+                  <div className="flex-1">
+                    <p className="text-xs text-slate-500">Tanggal</p>
+                    <p className="text-sm font-semibold text-slate-900">{booking.bookingDate}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-sm">⏰</span>
+                  <div className="flex-1">
+                    <p className="text-xs text-slate-500">Jam</p>
+                    <p className="text-sm font-semibold text-slate-900">{booking.startTime} — {booking.endTime}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-sm">⏱️</span>
+                  <div className="flex-1">
+                    <p className="text-xs text-slate-500">Durasi</p>
+                    <p className="text-sm font-semibold text-slate-900">{booking.durationMinutes} menit</p>
+                  </div>
+                </div>
+                <div className="border-t border-slate-100 pt-3">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-slate-900">
-                        {method.label}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {method.type === "bank_transfer" && "Transfer Bank"}
-                        {method.type === "e_wallet" && "E-Wallet"}
-                        {method.type === "qris" && "QRIS"}
-                        {method.type === "cash" && "Tunai"}
-                      </p>
-                      {method.details && (
-                        <p className="mt-1 text-sm text-slate-600">
-                          {method.details}
-                        </p>
-                      )}
-                    </div>
-                    <span className="text-lg">
-                      {method.type === "bank_transfer" && "🏦"}
-                      {method.type === "e_wallet" && "📱"}
-                      {method.type === "qris" && "📲"}
-                      {method.type === "cash" && "💵"}
+                    <span className="text-sm font-medium text-slate-600">💰 Total Harga</span>
+                    <span className="text-xl font-extrabold text-emerald-600">
+                      Rp {booking.totalPrice.toLocaleString("id-ID")}
                     </span>
                   </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm text-amber-700">
-                Silakan hubungi admin untuk instruksi pembayaran. Admin akan
-                menghubungi via WhatsApp.
-              </p>
+                </div>
+                <div className="pt-1">{paymentStatusDisplay()}</div>
+              </div>
             </div>
           )}
-
-          <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
-            <p className="mb-1 font-medium text-slate-900">
-              Langkah Pembayaran:
-            </p>
-            <ol className="list-inside list-decimal space-y-1">
-              <li>Transfer sesuai nominal yang tertera</li>
-              <li>Simpan bukti transfer</li>
-              <li>Klik tombol di bawah untuk upload bukti transfer</li>
-            </ol>
-          </div>
-
-          <button
-            onClick={() => setStep("upload")}
-            className="mt-4 w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-emerald-700"
-          >
-            Saya Sudah Transfer — Kirim Bukti Transfer
-          </button>
         </div>
-      )}
 
-      {step === "upload" && (
-        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm">
-          <h3 className="mb-3 font-semibold text-slate-900">
-            Upload Bukti Transfer
-          </h3>
+        {/* Payment Instructions */}
+        {step === "instructions" && (
+          <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3">
+              <h2 className="text-sm font-bold text-white">💳 Instruksi Pembayaran</h2>
+            </div>
+            <div className="p-5">
+              {paymentMethods.length > 0 ? (
+                <div className="space-y-3">
+                  {paymentMethods.map((method) => (
+                    <button
+                      key={method.id}
+                      onClick={() => setSelectedMethod(method.id)}
+                      className={`w-full rounded-xl border-2 p-4 text-left transition ${
+                        selectedMethod === method.id
+                          ? "border-emerald-500 bg-emerald-50"
+                          : "border-slate-200 hover:border-emerald-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-slate-900">
+                            {method.label}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {method.type === "bank_transfer" && "🏦 Transfer Bank"}
+                            {method.type === "e_wallet" && "📱 E-Wallet"}
+                            {method.type === "qris" && "📲 QRIS"}
+                            {method.type === "cash" && "💵 Tunai"}
+                          </p>
+                          {method.details && (
+                            <p className="mt-1 text-sm text-slate-600">
+                              {method.details}
+                            </p>
+                          )}
+                        </div>
+                        {selectedMethod === method.id && (
+                          <span className="text-lg text-emerald-600">✓</span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm text-amber-700">
+                    💬 Silakan hubungi admin untuk instruksi pembayaran. Admin akan
+                    menghubungi via WhatsApp.
+                  </p>
+                </div>
+              )}
 
-          <div className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
-            <p>
-              Upload bukti transfer ke Google Drive / Imgur / layanan cloud
-              lainnya, lalu tempel link-nya di bawah ini.
-            </p>
-          </div>
+              <div className="mt-4 rounded-xl bg-slate-50 p-4">
+                <p className="mb-2 text-xs font-bold text-slate-700">Langkah Pembayaran:</p>
+                <div className="space-y-2">
+                  {[
+                    { num: 1, text: "Transfer sesuai nominal yang tertera" },
+                    { num: 2, text: "Simpan bukti transfer" },
+                    { num: 3, text: "Klik tombol di bawah untuk upload bukti transfer" },
+                  ].map((item) => (
+                    <div key={item.num} className="flex items-start gap-2.5">
+                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
+                        {item.num}
+                      </span>
+                      <p className="text-sm text-slate-600">{item.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          <div className="space-y-3">
-            <div>
-              <label
-                htmlFor="proofUrl"
-                className="mb-1 block text-sm font-medium text-slate-700"
+              <button
+                onClick={() => setStep("upload")}
+                className="mt-4 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition hover:from-emerald-700 hover:to-teal-700"
               >
-                Link Bukti Transfer *
-              </label>
-              <input
-                id="proofUrl"
-                type="url"
-                value={proofUrl}
-                onChange={(e) => {
-                  setProofUrl(e.target.value);
-                  setError("");
-                }}
-                placeholder="https://drive.google.com/file/d/..."
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-              {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+                📤 Saya Sudah Transfer — Kirim Bukti
+              </button>
             </div>
           </div>
+        )}
 
-          <div className="mt-4 flex gap-3">
-            <button
-              onClick={() => setStep("instructions")}
-              className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Kembali
-            </button>
-            <button
-              onClick={handleSubmitProof}
-              disabled={uploading}
-              className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow transition hover:bg-emerald-700 disabled:opacity-50"
-            >
-              {uploading ? "Mengirim..." : "Kirim Bukti Transfer"}
-            </button>
+        {/* Upload Proof */}
+        {step === "upload" && (
+          <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-5 py-3">
+              <h2 className="text-sm font-bold text-white">📤 Upload Bukti Transfer</h2>
+            </div>
+            <div className="p-5">
+              <div className="mb-4 rounded-xl bg-blue-50 p-3">
+                <p className="text-xs text-blue-700">
+                  ℹ️ Upload bukti transfer ke Google Drive / Imgur / layanan cloud
+                  lainnya, lalu tempel link-nya di bawah ini.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label
+                    htmlFor="proofUrl"
+                    className="mb-1.5 block text-sm font-semibold text-slate-700"
+                  >
+                    Link Bukti Transfer <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="proofUrl"
+                    type="url"
+                    value={proofUrl}
+                    onChange={(e) => {
+                      setProofUrl(e.target.value);
+                      setError("");
+                    }}
+                    placeholder="https://drive.google.com/file/d/..."
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-200"
+                  />
+                  {error && (
+                    <p className="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                      ⚠️ {error}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={() => setStep("instructions")}
+                  className="flex-1 rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  ← Kembali
+                </button>
+                <button
+                  onClick={handleSubmitProof}
+                  disabled={uploading}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50"
+                >
+                  {uploading ? "Mengirim..." : "📤 Kirim Bukti"}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {step === "done" && (
-        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center shadow-sm">
-          <div className="mb-3 text-4xl">🎉</div>
-          <h3 className="mb-2 font-semibold text-emerald-900">
-            Bukti Transfer Terkirim!
-          </h3>
-          <p className="text-sm text-emerald-700">
-            Admin akan memverifikasi pembayaran kamu. Booking akan dikonfirmasi
-            setelah pembayaran diverifikasi.
-          </p>
-          {booking && <div className="mt-3">{paymentStatusDisplay()}</div>}
-        </div>
-      )}
+        {/* Done */}
+        {step === "done" && (
+          <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm">
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-center">
+              <h2 className="text-sm font-bold text-white">✅ Bukti Terkirim</h2>
+            </div>
+            <div className="p-6 text-center">
+              <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-4xl">
+                🎉
+              </div>
+              <h3 className="mb-2 text-lg font-bold text-emerald-900">
+                Bukti Transfer Terkirim!
+              </h3>
+              <p className="text-sm text-slate-600">
+                Admin akan memverifikasi pembayaran kamu. Booking akan dikonfirmasi
+                setelah pembayaran diverifikasi.
+              </p>
+              {booking && <div className="mt-4">{paymentStatusDisplay()}</div>}
+            </div>
+          </div>
+        )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <Link
-          href="/"
-          className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-emerald-700"
-        >
-          Kembali ke Beranda
-        </Link>
-        <Link
-          href="/booking"
-          className="rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-        >
-          Booking Lagi
-        </Link>
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Link
+            href="/"
+            className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-emerald-200 transition hover:from-emerald-700 hover:to-teal-700"
+          >
+            🏠 Kembali ke Beranda
+          </Link>
+          <Link
+            href="/booking"
+            className="rounded-xl border-2 border-slate-300 bg-white px-6 py-3.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            📅 Booking Lagi
+          </Link>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -322,7 +380,12 @@ export default function BookingSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="py-16 text-center text-slate-500">Memuat...</div>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
+            <p className="text-sm text-slate-500">Memuat halaman...</p>
+          </div>
+        </div>
       }
     >
       <SuccessContent />
