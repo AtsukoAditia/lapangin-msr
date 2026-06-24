@@ -51,6 +51,9 @@ The project still has demo/in-memory auth paths. Production must move admin and 
 - Public `GET /api/bookings` must not expose all bookings.
 - Admin booking list must stay behind `/api/admin/*` and protected middleware.
 - Customer booking lookup should require at least booking code plus phone/email verification.
+- Public `GET /api/bookings/[code]` returns `BookingCodeRef` — no phone, email, or address exposed.
+- Booking success page polls `GET /api/bookings/[code]` every 5 seconds for real-time status updates.
+- Lazy expiry cleanup runs on `GET /api/availability` — stale `waiting_payment` bookings are cancelled before availability check.
 
 ## Loyalty points
 

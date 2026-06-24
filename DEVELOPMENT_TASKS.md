@@ -338,6 +338,51 @@ Definition of Done:
 - **Flow:** `/booking/` (step 1) → `/booking/[sport]` (step 2) → `/booking/[sport]/[venue]/[court]` (step 3) → `/booking/form` (step 4) → `/booking/success` (step 5).
 - **BookingSteps component** (`src/components/booking/BookingSteps.tsx`) — Visual step indicator with icons, labels, and completion state. 5 steps total, rendered on all booking flow pages.
 
+## Sprint 1 — Status-Aware Booking Success ✅
+
+- [x] Booking success page polls `/api/bookings/[code]` every 5 seconds for real-time status.
+- [x] Status-aware UI states:
+  - `waiting_payment`: countdown timer (15 min), payment instructions, upload proof link.
+  - `waiting_verification`: proof submitted confirmation.
+  - `confirmed`: full success with booking details, venue info, booking code.
+  - `cancelled/expired/rejected`: error state with next steps (re-book or contact admin).
+- [x] Public-safe booking API — no private customer data exposed (returns `BookingCodeRef` type).
+- [x] `expiresAt` field on Booking — 15-minute hold window.
+- [x] Lazy expiry cleanup — `expireBookings()` runs on availability API calls.
+- [x] New adapter methods: `getBookingByCode()`, `expireBookings()`.
+- [x] New service methods: `getBookingByCode()`, `submitPaymentProof()`, `confirmBooking()`, `rejectBooking()`, `expireBookings()`.
+- [x] Booking creation sets `expiresAt = now + 15min` with `bookingStatus = 'waiting_payment'`, `paymentStatus = 'unpaid'`.
+
+### Booking Status Flow:
+
+```
+Created (waiting_payment / unpaid, 15-min hold)
+  ├─ Customer uploads proof → waiting_verification / waiting_confirmation
+  │   ├─ Admin confirms → confirmed / paid ✅
+  │   └─ Admin rejects → cancelled / unpaid ❌
+  ├─ No action for 15 min → cancelled / unpaid (expired) ❌
+  └─ Admin manual cancel → cancelled / unpaid ❌
+```
+
+### Architecture Changes:
+
+- **Domain types** (`src/lib/types/domain.ts`) — Added `expiresAt` on `Booking`, `AuditLogAction` union type, `BookingCodeRef` for public API.
+- **DatabaseAdapter** — Added `getBookingByCode()`, `expireBookings()`.
+- **MockAdapter** — `createBooking()` sets 15-min `expiresAt`. `expireBookings()` cancels stale `waiting_payment` bookings. `getBookingByCode()` lookup by `bookingCode`.
+- **BookingService** — `getBookingByCode()`, `submitPaymentProof()`, `confirmBooking()`, `rejectBooking()`, `expireBookings()`.
+- **API `GET /api/bookings/[id]`** — Now accepts `bookingCode`, returns public-safe `BookingCodeRef` (no phone/email/address).
+- **API `GET /api/availability`** — Runs `expireBookings()` before checking slots (lazy cleanup).
+- **Success page** — Full rewrite: client-side polling, countdown timer, status-specific UI cards.
+
+### Definition of Done:
+
+- `/booking/success?code=XXX` shows correct status. ✅
+- New booking shows `waiting_payment` with countdown. ✅
+- Polling updates status without page refresh. ✅
+- Expired bookings don't block availability. ✅
+- No private data in public booking endpoint. ✅
+- All checks pass (`npm run check`). ✅
+
 ## Stage 12 — Deployment Vercel
 
 - [ ] Push ke GitHub.
