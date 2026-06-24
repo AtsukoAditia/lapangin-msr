@@ -63,6 +63,7 @@ export interface Booking {
     | "refunded";
   paymentProofUrl?: string;
   notes?: string;
+  userId?: string;
   createdAt: string;
   updatedAt: string;
 }

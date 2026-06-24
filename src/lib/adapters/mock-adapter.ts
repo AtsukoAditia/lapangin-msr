@@ -73,11 +73,21 @@ function getAdmins(): AdminUser[] {
     g.__lapanginAdmins = [
       {
         id: "admin-1",
-        username: "admin",
+        username: "superadmin",
         name: "Super Admin",
         email: "admin@lapangin.id",
-        passwordHash: hashPassword("admin123"),
+        passwordHash: hashPassword("Admin123!@#"),
         role: "super_admin",
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: "owner-1",
+        username: "venueowner",
+        name: "Venue Owner",
+        email: "owner@lapangin.id",
+        passwordHash: hashPassword("Owner123!@#"),
+        role: "admin",
         isActive: true,
         createdAt: new Date().toISOString(),
       },
@@ -289,6 +299,7 @@ export class MockAdapter implements DatabaseAdapter {
       bookingStatus: "pending",
       paymentStatus: "unpaid",
       notes: input.notes,
+      userId: input.userId,
       createdAt: now,
       updatedAt: now,
     };
@@ -296,11 +307,13 @@ export class MockAdapter implements DatabaseAdapter {
     return { ...booking };
   }
 
-  async updateBookingStatus(id: string, status: Booking["bookingStatus"]): Promise<Booking> {
+  async updateBookingStatus(id: string, status: Booking["bookingStatus"], paymentStatus?: Booking["paymentStatus"]): Promise<Booking> {
     const store = getBookings();
     const index = store.findIndex((b) => b.id === id);
     if (index === -1) throw new Error(`Booking not found: ${id}`);
-    store[index] = { ...store[index], bookingStatus: status, updatedAt: new Date().toISOString() };
+    const update: Partial<Booking> = { bookingStatus: status, updatedAt: new Date().toISOString() };
+    if (paymentStatus) update.paymentStatus = paymentStatus;
+    store[index] = { ...store[index], ...update };
     return { ...store[index] };
   }
 

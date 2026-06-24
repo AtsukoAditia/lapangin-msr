@@ -115,6 +115,26 @@ export class BookingService {
       booking.bookingStatus, "confirmed"
     );
     try { await sendBookingConfirmation(result); } catch { /* non-blocking */ }
+
+    // Award loyalty points if booking is linked to a customer
+    if (booking.userId) {
+      try {
+        const pointsEarned = Math.floor(booking.totalPrice / 10000);
+        if (pointsEarned > 0) {
+          await this.adapter.addLoyaltyPoints(
+            booking.userId,
+            pointsEarned,
+            booking.id,
+            `Poin dari booking ${booking.bookingCode} - Rp ${booking.totalPrice.toLocaleString("id-ID")}`,
+            "earned"
+          );
+          console.log(`[Loyalty] Awarded ${pointsEarned} points to user ${booking.userId}`);
+        }
+      } catch {
+        console.error(`[Loyalty] Failed to award points for booking ${booking.bookingCode}`);
+      }
+    }
+
     return result;
   }
 
