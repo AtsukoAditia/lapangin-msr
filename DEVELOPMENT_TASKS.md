@@ -228,7 +228,7 @@ Definition of Done:
 - [x] Session API (`src/app/api/auth/session/route.ts`) — Returns current user from JWT cookie.
 - [x] Admin route protection — AdminLayout checks session, redirects to `/admin/login`.
 - [x] Admin sidebar shows user info + logout button.
-- [x] Default admin account: `admin@arenabook.com` / `admin123`.
+- [x] Default admin account: `admin@lapangin.com` / `admin123`.
 
 ### Arsitektur Admin Auth:
 
@@ -325,6 +325,17 @@ Definition of Done:
 - [x] Empty states: helpful messages with action buttons.
 - [x] PWA install banner: non-intrusive bottom sheet.
 - [x] Consistent color palette: teal (#00897B), green (#10B981), dark (#0D1117).
+- [x] Booking index page (`/booking/`) — Sport selection with step indicator.
+- [x] "Booking Sekarang" buttons redirect to `/booking/` (sport selection).
+- [x] Homepage "Daftar & Dapat Poin" button links to `/register`.
+
+### Booking Index Page:
+
+- **Route:** `/booking/` — Shows all available sports as clickable cards.
+- **Step indicator:** "Langkah 1 dari 3" badge for user guidance.
+- **Sports grid:** 2-column mobile, 3-column desktop with hover effects.
+- **Back link:** "Kembali ke Beranda" at bottom.
+- **Flow:** `/booking/` → `/booking/[sport]` → `/booking/[sport]/[venue]/[court]` → `/booking/form` → `/booking/success`.
 
 ## Stage 12 — Deployment Vercel
 
