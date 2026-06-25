@@ -1,36 +1,64 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  getSportBySlug,
-  getVenuesBySport,
-  getCourtsBySport,
-  formatPrice,
-  mockSports,
-} from "@/lib/mock-data";
+import { getDatabaseAdapter } from "@/lib/adapters";
+import { formatPrice, mockSports } from "@/lib/mock-data";
 import BookingSteps from "@/components/booking/BookingSteps";
 import { sportEmoji } from "@/lib/sport-icons";
 
 type Props = {
   params: Promise<{ sport: string }>;
+  searchParams: Promise<{ areaId?: string }>;
 };
 
 export function generateStaticParams() {
   return mockSports.map((s) => ({ sport: s.slug }));
 }
 
-export default async function SportPage({ params }: Props) {
+export default async function SportPage({ params, searchParams }: Props) {
   const { sport: sportSlug } = await params;
-  const sport = getSportBySlug(sportSlug);
+  const { areaId } = await searchParams;
+  const adapter = getDatabaseAdapter();
+
+  const [sports, venues, courts, areas] = await Promise.all([
+    adapter.getSports(),
+    adapter.getVenues(),
+    adapter.getCourts(),
+    adapter.getAreas(),
+  ]);
+
+  const sport = sports.find((s) => s.slug === sportSlug);
   if (!sport) return notFound();
 
-  const venues = getVenuesBySport(sport.id);
+  // Filter venues that have courts for this sport
+  const sportCourtIds = courts
+    .filter((c) => c.sportId === sport.id)
+    .map((c) => c.venueId);
+  let filteredVenues = venues.filter(
+    (v) =>
+      v.isActive &&
+      v.approvalStatus === "active" &&
+      sportCourtIds.includes(v.id),
+  );
+
+  // Filter by area if selected
+  if (areaId) {
+    filteredVenues = filteredVenues.filter((v) => v.areaId === areaId);
+  }
+
+  const selectedArea = areaId
+    ? areas.find((a) => a.id === areaId)
+    : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <BookingSteps
         currentStep={2}
         title={`${sportEmoji[sport.id] || "🏅"} Lapangan ${sport.name}`}
-        subtitle="Pilih venue dan lapangan yang tersedia."
+        subtitle={
+          selectedArea
+            ? `Menampilkan venue di ${selectedArea.city}, ${selectedArea.province}`
+            : "Pilih venue dan lapangan yang tersedia."
+        }
         steps={[
           { number: 1, label: "Pilih Olahraga", href: "/booking" },
           { number: 2, label: "Pilih Lapangan" },
@@ -41,34 +69,50 @@ export default async function SportPage({ params }: Props) {
       />
 
       <main className="mx-auto max-w-5xl px-4 py-8">
-        {/* Back to sport selection */}
         <Link
-          href="/booking"
+          href={`/booking${areaId ? `?area=${areaId}` : ""}`}
           className="inline-flex items-center gap-1.5 text-sm text-emerald-600 hover:text-emerald-700 font-medium mb-6"
         >
-          ← Ganti Olahraga
+          ← Ganti Olahraga / Daerah
         </Link>
 
-        {venues.length === 0 ? (
-          <p className="text-slate-500">
-            Belum ada venue yang menyediakan olahraga ini.
-          </p>
+        {filteredVenues.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-4xl mb-4">🏟️</p>
+            <p className="text-slate-500 text-lg">
+              {areaId
+                ? "Belum ada venue di daerah ini untuk olahraga ini."
+                : "Belum ada venue yang menyediakan olahraga ini."}
+            </p>
+          </div>
         ) : (
           <div className="space-y-8">
-            {venues.map((venue) => {
-              const courts = getCourtsBySport(sport.id, venue.id);
+            {filteredVenues.map((venue) => {
+              const venueCourts = courts.filter(
+                (c) => c.venueId === venue.id && c.sportId === sport.id,
+              );
+              const area = areas.find((a) => a.id === venue.areaId);
               return (
                 <section key={venue.id}>
                   <div className="mb-3">
                     <h2 className="text-lg font-semibold text-slate-900">
                       {venue.name}
                     </h2>
-                    {venue.address && (
-                      <p className="text-sm text-slate-500">{venue.address}</p>
-                    )}
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      {area && (
+                        <span>
+                          📍 {area.city}, {area.province}
+                        </span>
+                      )}
+                      {venue.address && (
+                        <span className="before:content-['·'] before:mx-1">
+                          {venue.address}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {courts.map((court) => (
+                    {venueCourts.map((court) => (
                       <Link
                         key={court.id}
                         href={`/booking/${sport.slug}/${venue.slug}/${court.slug}`}
