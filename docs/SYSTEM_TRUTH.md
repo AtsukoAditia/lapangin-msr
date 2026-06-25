@@ -51,9 +51,9 @@ The project still has demo/in-memory auth paths. Production must move admin and 
 - Public `GET /api/bookings` must not expose all bookings.
 - Admin booking list must stay behind `/api/admin/*` and protected middleware.
 - Customer booking lookup should require at least booking code plus phone/email verification.
-- Public `GET /api/bookings/[code]` returns `BookingCodeRef` — no phone, email, or address exposed.
+- **Temporary MVP:** `GET /api/bookings/[code]` is open without phone/email verification. Returns only `PublicBooking` fields — no phone, email, or address exposed. This MUST be replaced with a verified lookup (booking code + phone or email) before production launch.
 - Booking success page polls `GET /api/bookings/[code]` every 5 seconds for real-time status updates.
-- Lazy expiry cleanup runs on `GET /api/availability` — stale `waiting_payment` bookings are cancelled before availability check.
+- Lazy expiry cleanup runs on both `GET /api/availability` and `GET /api/bookings/[code]` — stale `waiting_payment` bookings are expired before availability check and before booking lookup.
 
 ## Loyalty points
 
@@ -75,6 +75,42 @@ Critical production requirement:
 - Prevent overlapping bookings at database level, not only service level.
 - Add or confirm support for `expires_at` and active-booking filtering so expired temporary holds do not block future bookings.
 - Review booking/payment status enums before production migration so temporary booking, payment proof verification, rejection, and expiry are represented clearly.
+
+## Sprint 2 — Temporary booking hold
+
+- `Booking.expiresAt` field exists on domain type, defaults to `created_at + 15 minutes`.
+- `BookingService.createBooking()` sets `expiresAt` automatically.
+- `AvailabilityService.getAvailableSlots()` filters out expired `waiting_payment` bookings before checking overlaps.
+- Mock adapter seeds include `expiresAt` values.
+- `GET /api/bookings/[code]` runs lazy expiry cleanup — if `waiting_payment` and `expiresAt < now()`, booking marked `expired` before returning.
+- `GET /api/availability` also runs lazy expiry cleanup before slot check.
+
+## Sprint 3 — Multi-select time slots
+
+- `SlotSelector` component supports multi-select with contiguous-only validation.
+- Selecting non-contiguous slots shows warning and blocks submission.
+- `startTime`/`endTime`/`durationMinutes` calculated from first and last selected slot.
+- Pricing uses `PricingService.calculatePrice()` with `durationMinutes`.
+- `BookingService.createBooking()` validates contiguous slots server-side.
+
+## Sprint 4 — Manual payment proof
+
+- `POST /api/payments/proof` accepts `bookingCode`, `phone` (verification), and `proofUrl`.
+- On submit: `booking_status → waiting_verification`, `payment_status → waiting_confirmation`, `payment_submitted_at` set.
+- `POST /api/admin/bookings/[id]/confirm` sets `booking_status → confirmed`, `payment_status → paid`.
+- `POST /api/admin/bookings/[id]/reject` accepts `reason`, sets `booking_status → rejected`, `payment_status → rejected`.
+- Payment proof stored in `Booking.paymentProofUrl`.
+
+## Sprint 5 — Marketplace foundation
+
+- `Area` type + mock data (3 areas: Jakarta, Bandung, Surabaya).
+- `VenueOwner` type + mock data (2 owners).
+- `Venue` extended with `ownerId`, `areaId`, `approvalStatus`, `description`, `address`, `facilities`, `openTime`, `closeTime`.
+- `DatabaseAdapter` interface extended: `getAreas()`, `getAreaById()`, `getVenueOwners()`, `getVenueOwnerById()`, `getVenuesByOwner()`, `getBookingsByOwner()`.
+- Public APIs: `GET /api/areas`, `GET /api/sports`, `GET /api/venues?areaId=&sportId=`, `GET /api/courts?venueId=&sportId=`.
+- Main booking page (`/booking`) has area selection pills + sport cards with `areaId` pass-through.
+- Sport venue page (`/booking/[sport]`) filters venues by `areaId` query param.
+- Owner access control stub: `getVenuesByOwner()` and `getBookingsByOwner()` on mock adapter.
 
 ## CI/CD
 
