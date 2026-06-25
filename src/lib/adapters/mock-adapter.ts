@@ -24,12 +24,16 @@ import type {
   LoyaltyTransactionType,
   Reward,
   RewardRedemption,
+  Area,
+  VenueOwner,
 } from "@/lib/types/domain";
 import {
   mockSports,
   mockVenues,
   mockCourts,
   mockPricingRules,
+  mockAreas,
+  mockVenueOwners,
 } from "@/lib/mock-data";
 import { hashPassword, verifyPassword } from "@/lib/auth/jwt";
 
@@ -46,6 +50,8 @@ const g = globalThis as unknown as {
   __lapanginRewards: Reward[];
   __lapanginRedemptions: RewardRedemption[];
   __lapanginPaymentMethods: PaymentMethod[];
+  __lapanginAreas: Area[];
+  __lapanginVenueOwners: VenueOwner[];
 };
 
 function getBookings(): Booking[] {
@@ -154,6 +160,14 @@ function getRedemptions(): RewardRedemption[] {
   if (!g.__lapanginRedemptions) g.__lapanginRedemptions = [];
   return g.__lapanginRedemptions;
 }
+function getAreas(): Area[] {
+  if (!g.__lapanginAreas) g.__lapanginAreas = mockAreas.map(a => ({ ...a }));
+  return g.__lapanginAreas;
+}
+function getVenueOwners(): VenueOwner[] {
+  if (!g.__lapanginVenueOwners) g.__lapanginVenueOwners = mockVenueOwners.map(o => ({ ...o }));
+  return g.__lapanginVenueOwners;
+}
 function getPaymentMethods(): PaymentMethod[] {
   if (!g.__lapanginPaymentMethods) {
     g.__lapanginPaymentMethods = [
@@ -241,9 +255,35 @@ export class MockAdapter implements DatabaseAdapter {
     return mockSports.filter((s) => s.isActive);
   }
 
+  // ── Areas ──
+  async getAreas(): Promise<Area[]> {
+    return getAreas().filter(a => a.isActive);
+  }
+
+  // ── Venue Owners ──
+  async getVenueOwners(): Promise<VenueOwner[]> {
+    return [...getVenueOwners()];
+  }
+
+  async getVenueOwnerById(id: string): Promise<VenueOwner | null> {
+    return getVenueOwners().find(o => o.id === id) ?? null;
+  }
+
+  async getVenueOwnerByAdminId(adminId: string): Promise<VenueOwner | null> {
+    return getVenueOwners().find(o => o.adminId === adminId) ?? null;
+  }
+
   // ── Venues ──
   async getVenues(): Promise<Venue[]> {
-    return mockVenues.filter((v) => v.isActive);
+    return mockVenues.filter((v) => v.isActive && v.approvalStatus === "active");
+  }
+
+  async getVenuesByArea(areaId: string): Promise<Venue[]> {
+    return mockVenues.filter((v) => v.areaId === areaId && v.isActive && v.approvalStatus === "active");
+  }
+
+  async getVenuesByOwner(ownerId: string): Promise<Venue[]> {
+    return mockVenues.filter((v) => v.ownerId === ownerId);
   }
 
   // ── Courts ──
