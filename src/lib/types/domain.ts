@@ -7,6 +7,33 @@ export interface Sport {
   isActive: boolean;
 }
 
+export interface Area {
+  id: string;
+  province: string;
+  city: string;
+  district: string;
+  slug: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type VenueOwnerStatus = "pending_review" | "active" | "suspended" | "rejected";
+
+export interface VenueOwner {
+  id: string;
+  adminId: string;
+  businessName: string;
+  picName: string;
+  phone: string;
+  email: string;
+  status: VenueOwnerStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type VenueApprovalStatus = "draft" | "pending_review" | "active" | "rejected" | "suspended";
+
 export interface Venue {
   id: string;
   name: string;
@@ -17,6 +44,9 @@ export interface Venue {
   openTime: string;
   closeTime: string;
   isActive: boolean;
+  ownerId?: string;
+  areaId?: string;
+  approvalStatus: VenueApprovalStatus;
 }
 
 export interface Court {
