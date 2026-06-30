@@ -12,7 +12,9 @@ export interface Area {
   province: string;
   city: string;
   district: string;
+  village: string;
   slug: string;
+  label: string; // human-readable: "DKI Jakarta > Jakarta Selatan > Pancoran > Duren Tiga"
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

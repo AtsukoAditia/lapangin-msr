@@ -103,7 +103,7 @@ Critical production requirement:
 
 ## Sprint 5 — Marketplace foundation
 
-- `Area` type + mock data (3 areas: Jakarta, Bandung, Surabaya).
+- `Area` type + mock data (5 areas: Jakarta, Bandung, Surabaya, Tangerang, Sleman — all with village/district level).
 - `VenueOwner` type + mock data (2 owners).
 - `Venue` extended with `ownerId`, `areaId`, `approvalStatus`, `description`, `address`, `facilities`, `openTime`, `closeTime`.
 - `DatabaseAdapter` interface extended: `getAreas()`, `getAreaById()`, `getVenueOwners()`, `getVenueOwnerById()`, `getVenuesByOwner()`, `getBookingsByOwner()`.

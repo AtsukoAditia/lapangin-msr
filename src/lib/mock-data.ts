@@ -1,9 +1,12 @@
 import type { Sport, Venue, Court, PricingRule, Area, VenueOwner } from "./types/domain";
 
 export const mockAreas: Area[] = [
-  { id: "area-jaksel", province: "DKI Jakarta", city: "Jakarta Selatan", district: "Kebayoran Baru", slug: "jaksel-kebayoran", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
-  { id: "area-jakpus", province: "DKI Jakarta", city: "Jakarta Pusat", district: "Menteng", slug: "jakpus-menteng", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
-  { id: "area-bandung", province: "Jawa Barat", city: "Bandung", district: "Coblong", slug: "bandung-coblong", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-jaksel-1", province: "DKI Jakarta", city: "Jakarta Selatan", district: "Kebayoran Baru", village: "Selong", slug: "jaksel-kebayoran-selong", label: "DKI Jakarta > Jakarta Selatan > Kebayoran Baru > Selong", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-jaksel-2", province: "DKI Jakarta", city: "Jakarta Selatan", district: "Pancoran", village: "Duren Tiga", slug: "jaksel-pancoran-duren-tiga", label: "DKI Jakarta > Jakarta Selatan > Pancoran > Duren Tiga", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-jakpus-1", province: "DKI Jakarta", city: "Jakarta Pusat", district: "Menteng", village: "Menteng", slug: "jakpus-menteng-menteng", label: "DKI Jakarta > Jakarta Pusat > Menteng > Menteng", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-bdg-1", province: "Jawa Barat", city: "Bandung", district: "Coblong", village: "Dago", slug: "bandung-coblong-dago", label: "Jawa Barat > Bandung > Coblong > Dago", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-bdg-2", province: "Jawa Barat", city: "Bandung", district: "Sukajadi", village: "Pasteur", slug: "bandung-sukajadi-pasteur", label: "Jawa Barat > Bandung > Sukajadi > Pasteur", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-surabaya-1", province: "Jawa Timur", city: "Surabaya", district: "Gubeng", village: "Airlangga", slug: "surabaya-gubeng-airlangga", label: "Jawa Timur > Surabaya > Gubeng > Airlangga", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
 ];
 
 export const mockVenueOwners: VenueOwner[] = [
@@ -32,7 +35,7 @@ export const mockVenues: Venue[] = [
     closeTime: "23:00",
     isActive: true,
     ownerId: "owner-1",
-    areaId: "area-jaksel",
+    areaId: "area-jaksel-2",
     approvalStatus: "active",
   },
   {
@@ -46,7 +49,7 @@ export const mockVenues: Venue[] = [
     closeTime: "22:00",
     isActive: true,
     ownerId: "owner-2",
-    areaId: "area-jakpus",
+    areaId: "area-jakpus-1",
     approvalStatus: "active",
   },
 ];

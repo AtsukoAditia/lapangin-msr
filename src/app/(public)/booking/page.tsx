@@ -59,7 +59,7 @@ export default async function BookingIndexPage({
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
-                {area.city}, {area.province}
+                {area.label || `${area.city}, ${area.province}`}
               </Link>
             ))}
           </div>
