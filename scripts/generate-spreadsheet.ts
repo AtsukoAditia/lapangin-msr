@@ -41,14 +41,18 @@ const SHEET_DEFINITIONS: Record<string, string[]> = {
     "metadata", "ip_address", "user_agent",
   ],
   sports: ["id", "name", "slug", "is_active"],
-  venues: ["id", "name", "slug", "address", "maps_url", "phone", "open_time", "close_time", "is_active"],
+  areas: ["id", "province", "city", "district", "slug", "is_active", "created_at", "updated_at"],
+  venue_owners: ["id", "admin_id", "business_name", "pic_name", "phone", "email", "status", "created_at", "updated_at"],
+  venues: ["id", "name", "slug", "address", "maps_url", "phone", "open_time", "close_time", "owner_id", "area_id", "approval_status", "is_active"],
   courts: ["id", "venue_id", "sport_id", "name", "slug", "surface_type", "indoor_type", "capacity", "base_price", "is_active"],
   pricing_rules: ["id", "court_id", "day_type", "start_time", "end_time", "price_per_hour", "priority", "is_active"],
   bookings: [
     "id", "booking_code", "customer_name", "customer_phone", "customer_email",
     "venue_id", "court_id", "sport_id", "booking_date", "start_time", "end_time",
     "duration_minutes", "total_price", "booking_status", "payment_status",
-    "payment_proof_url", "notes", "created_at", "updated_at",
+    "payment_proof_url", "expires_at", "payment_submitted_at", "payment_verified_at",
+    "payment_rejected_at", "payment_rejection_reason", "verified_by_admin_id",
+    "notes", "created_at", "updated_at",
   ],
   blocked_slots: ["id", "court_id", "date", "start_time", "end_time", "reason"],
   audit_log: ["id", "timestamp", "action", "target_type", "target_id", "actor_type", "actor_id", "details", "previous_value", "new_value"],
@@ -67,6 +71,9 @@ const SHEET_DEFINITIONS: Record<string, string[]> = {
 
 // ── Seed Data ──
 
+const now = new Date().toISOString();
+const today = "2026-06-25";
+
 const SEED_SPORTS = [
   { id: "sport-futsal", name: "Futsal", slug: "futsal", is_active: "true" },
   { id: "sport-minisoccer", name: "Minisoccer", slug: "minisoccer", is_active: "true" },
@@ -76,16 +83,29 @@ const SEED_SPORTS = [
   { id: "sport-basket", name: "Basket", slug: "basket", is_active: "true" },
 ];
 
+const SEED_AREAS = [
+  { id: "area-jaksel", province: "DKI Jakarta", city: "Jakarta Selatan", district: "Kebayoran Baru", slug: "jakarta-selatan", is_active: "true", created_at: now, updated_at: now },
+  { id: "area-jakpus", province: "DKI Jakarta", city: "Jakarta Pusat", district: "Menteng", slug: "jakarta-pusat", is_active: "true", created_at: now, updated_at: now },
+  { id: "area-bdg", province: "Jawa Barat", city: "Bandung", district: "Coblong", slug: "bandung", is_active: "true", created_at: now, updated_at: now },
+];
+
+const SEED_VENUE_OWNERS = [
+  { id: "owner-1", admin_id: "admin-1", business_name: "Arena Sport Group", pic_name: "Admin Lapangin", phone: "081234567890", email: "admin@lapangin.id", status: "active", created_at: now, updated_at: now },
+  { id: "owner-2", admin_id: "", business_name: "Greenfield Sports", pic_name: "Pak Budi", phone: "081298765432", email: "budi@greenfield.id", status: "active", created_at: now, updated_at: now },
+];
+
 const SEED_VENUES = [
   {
     id: "venue-arena1", name: "Arena Sport Center", slug: "arena-sport-center",
     address: "Jl. Sudirman No. 123, Jakarta Selatan", maps_url: "https://maps.google.com/?q=-6.2088,106.8456",
-    phone: "081234567890", open_time: "06:00", close_time: "23:00", is_active: "true",
+    phone: "081234567890", open_time: "06:00", close_time: "23:00",
+    owner_id: "owner-1", area_id: "area-jaksel", approval_status: "active", is_active: "true",
   },
   {
     id: "venue-greenfield", name: "Greenfield Arena", slug: "greenfield-arena",
     address: "Jl. Gatot Subroto No. 45, Jakarta Pusat", maps_url: "https://maps.google.com/?q=-6.2100,106.8200",
-    phone: "081298765432", open_time: "07:00", close_time: "22:00", is_active: "true",
+    phone: "081298765432", open_time: "07:00", close_time: "22:00",
+    owner_id: "owner-2", area_id: "area-jakpus", approval_status: "active", is_active: "true",
   },
 ];
 
@@ -135,44 +155,53 @@ const SEED_PRICING_RULES = [
   { id: "pr-bsk1-weekend", court_id: "court-bsk1", day_type: "weekend", start_time: "07:00", end_time: "22:00", price_per_hour: "120000", priority: "3", is_active: "true" },
 ];
 
-const now = new Date().toISOString();
-const today = "2026-06-25";
-
 const SEED_BOOKINGS = [
   {
     id: "bk-001", booking_code: "AB-TEST001", customer_name: "Budi Santoso", customer_phone: "081234567890",
     customer_email: "budi@example.com", venue_id: "venue-arena1", court_id: "court-f1", sport_id: "sport-futsal",
     booking_date: today, start_time: "08:00", end_time: "10:00", duration_minutes: "120",
     total_price: "240000", booking_status: "confirmed", payment_status: "paid",
-    payment_proof_url: "", notes: "Main bareng teman kantor", created_at: now, updated_at: now,
+    payment_proof_url: "", expires_at: "", payment_submitted_at: "", payment_verified_at: now,
+    payment_rejected_at: "", payment_rejection_reason: "", verified_by_admin_id: "admin-1",
+    notes: "Main bareng teman kantor", created_at: now, updated_at: now,
   },
   {
     id: "bk-002", booking_code: "AB-TEST002", customer_name: "Siti Rahayu", customer_phone: "081298765432",
     customer_email: "siti@example.com", venue_id: "venue-arena1", court_id: "court-b1", sport_id: "sport-badminton",
     booking_date: today, start_time: "17:00", end_time: "19:00", duration_minutes: "120",
-    total_price: "160000", booking_status: "pending", payment_status: "unpaid",
-    payment_proof_url: "", notes: "", created_at: now, updated_at: now,
+    total_price: "160000", booking_status: "waiting_payment", payment_status: "unpaid",
+    payment_proof_url: "", expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+    payment_submitted_at: "", payment_verified_at: "", payment_rejected_at: "",
+    payment_rejection_reason: "", verified_by_admin_id: "",
+    notes: "", created_at: now, updated_at: now,
   },
   {
     id: "bk-003", booking_code: "AB-TEST003", customer_name: "Andi Wijaya", customer_phone: "081345678901",
     customer_email: "andi@example.com", venue_id: "venue-greenfield", court_id: "court-p1", sport_id: "sport-padel",
     booking_date: "2026-06-26", start_time: "10:00", end_time: "12:00", duration_minutes: "120",
-    total_price: "300000", booking_status: "waiting_payment", payment_status: "waiting_confirmation",
-    payment_proof_url: "https://example.com/proof.jpg", notes: "Booking pagi", created_at: now, updated_at: now,
+    total_price: "300000", booking_status: "waiting_verification", payment_status: "waiting_confirmation",
+    payment_proof_url: "https://example.com/proof.jpg", expires_at: "",
+    payment_submitted_at: now, payment_verified_at: "", payment_rejected_at: "",
+    payment_rejection_reason: "", verified_by_admin_id: "",
+    notes: "Booking pagi", created_at: now, updated_at: now,
   },
   {
     id: "bk-004", booking_code: "AB-TEST004", customer_name: "Dewi Lestari", customer_phone: "081567890123",
     customer_email: "dewi@example.com", venue_id: "venue-arena1", court_id: "court-ms1", sport_id: "sport-minisoccer",
     booking_date: "2026-06-27", start_time: "15:00", end_time: "17:00", duration_minutes: "120",
     total_price: "400000", booking_status: "confirmed", payment_status: "paid",
-    payment_proof_url: "", notes: "", created_at: now, updated_at: now,
+    payment_proof_url: "", expires_at: "", payment_submitted_at: now, payment_verified_at: now,
+    payment_rejected_at: "", payment_rejection_reason: "", verified_by_admin_id: "admin-1",
+    notes: "", created_at: now, updated_at: now,
   },
   {
     id: "bk-005", booking_code: "AB-TEST005", customer_name: "Rizky Pratama", customer_phone: "081678901234",
     customer_email: "", venue_id: "venue-greenfield", court_id: "court-t1", sport_id: "sport-tenis",
     booking_date: today, start_time: "07:00", end_time: "09:00", duration_minutes: "120",
     total_price: "200000", booking_status: "cancelled", payment_status: "refunded",
-    payment_proof_url: "", notes: "Batal karena hujan", created_at: now, updated_at: now,
+    payment_proof_url: "", expires_at: "", payment_submitted_at: "", payment_verified_at: "",
+    payment_rejected_at: "", payment_rejection_reason: "", verified_by_admin_id: "",
+    notes: "Batal karena hujan", created_at: now, updated_at: now,
   },
 ];
 
@@ -692,6 +721,8 @@ const SEED_ACTIVITY_LOGS = [
 const SEED_DATA: Record<string, Record<string, string>[]> = {
   activity_logs: SEED_ACTIVITY_LOGS,
   sports: SEED_SPORTS,
+  areas: SEED_AREAS,
+  venue_owners: SEED_VENUE_OWNERS,
   venues: SEED_VENUES,
   courts: SEED_COURTS,
   pricing_rules: SEED_PRICING_RULES,
