@@ -1,5 +1,19 @@
 # CLINE Stage Prompts
 
+## Impeccable Design Integration
+
+Untuk semua stage yang melibatkan UI/UX, gunakan impeccable design skills:
+
+- Baca `PRODUCT.md` sebelum mengerjakan UI
+- Jalankan `node .github/skills/impeccable/scripts/context.mjs` di awal session
+- Gunakan `/impeccable critique <page>` untuk review UX setelah selesai
+- Gunakan `/impeccable polish <component>` sebelum ship
+- Gunakan `/impeccable audit <area>` untuk cek a11y/perf/responsive
+- Ikuti design rules: OKLCH colors, contrast 4.5:1, mobile-first
+- Setelah edit UI, jalankan `node .github/skills/impeccable/scripts/detect.mjs <target>`
+
+Skill files ada di `.github/skills/impeccable/`.
+
 ## Stage 0 — Persiapan Project ✅
 
 ```txt

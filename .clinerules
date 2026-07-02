@@ -7,6 +7,7 @@ You are developing Lapangin, a web-based PWA sports court booking system.
 Build a clean, maintainable, production-oriented MVP for booking sports courts such as futsal, minisoccer, badminton, padel, tennis, and basketball.
 
 The app must:
+
 - Run locally.
 - Deploy to Vercel.
 - Be mobile responsive.
@@ -29,6 +30,7 @@ These files define the current safety boundaries after Stage 12.
 ## Tech Stack
 
 Use:
+
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
@@ -37,6 +39,7 @@ Use:
 - Database adapter pattern
 
 Do not:
+
 - Hardcode database access in UI components.
 - Put business logic directly inside page components.
 - Create huge files.
@@ -60,6 +63,7 @@ Database Adapter
 Mock / Google Sheets / PostgreSQL
 
 Important:
+
 - UI must not directly call Google Sheets or PostgreSQL.
 - Booking logic must live in `src/lib/services`.
 - Data access must live in `src/lib/adapters`.
@@ -84,6 +88,7 @@ Important:
 ## Required Modules
 
 Build incrementally:
+
 1. App shell and layout.
 2. Public homepage.
 3. Court listing.
@@ -117,6 +122,7 @@ Build incrementally:
 ## Booking Rules
 
 A booking must have:
+
 - id
 - bookingCode
 - customerName
@@ -136,6 +142,7 @@ A booking must have:
 - updatedAt
 
 Booking status:
+
 - pending
 - waiting_payment
 - paid
@@ -146,6 +153,7 @@ Booking status:
 - no_show
 
 Payment status:
+
 - unpaid
 - waiting_confirmation
 - dp_paid
@@ -153,6 +161,7 @@ Payment status:
 - refunded
 
 Prevent double booking:
+
 - Check courtId + bookingDate + startTime + endTime.
 - Active blocking statuses: pending, waiting_payment, paid, confirmed.
 - Validate again on the server before saving.
@@ -161,6 +170,7 @@ Prevent double booking:
 ## Development Workflow
 
 For every task:
+
 1. Read existing files first.
 2. Read docs when touching core modules.
 3. Make the smallest useful change.
@@ -182,6 +192,7 @@ For every task:
 ## Environment Variables
 
 Use:
+
 - `DATABASE_PROVIDER`
 - `JWT_SECRET`
 - `GOOGLE_SHEETS_SPREADSHEET_ID`
@@ -207,9 +218,38 @@ Or:
 npm run check
 ```
 
+## Impeccable Design Skills
+
+Impeccable is installed at `.github/skills/impeccable/`. It provides design, UX, and frontend quality tools for AI agents.
+
+### When to use
+
+- `/impeccable init` — Run once per session if PRODUCT.md missing. Already done; skip.
+- `/impeccable critique <page>` — UX design review with heuristic scoring.
+- `/impeccable audit <area>` — Technical quality checks (a11y, perf, responsive).
+- `/impeccable polish <component>` — Final quality pass before shipping.
+- `/impeccable craft <feature>` — Shape UX/UI then build end-to-end.
+- `/impeccable live` — Visual variant mode in browser.
+
+### Setup per session
+
+1. Run `node .github/skills/impeccable/scripts/context.mjs` once.
+2. If target file/route specified, pass `--target <path>`.
+3. For sub-commands, always load `reference/<command>.md` first.
+4. PRODUCT.md lives at project root (register: product).
+5. DESIGN.md and live config can be added later via `/impeccable document` and `/impeccable live`.
+
+### Integration rules
+
+- Read PRODUCT.md before any design task.
+- Follow impeccable's design rules for UI work: OKLCH colors, proper contrast (4.5:1), no side-stripe borders, no gradient text, no glassmorphism default.
+- Mobile-first responsive design enforced.
+- After UI edits, run `node .github/skills/impeccable/scripts/detect.mjs <target>` to catch anti-patterns.
+
 ## Testing Direction
 
 Test:
+
 - Available slots display.
 - Booking creation.
 - Double booking prevention.
