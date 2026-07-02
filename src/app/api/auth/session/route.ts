@@ -10,12 +10,12 @@ export async function GET() {
   const token = adminToken || customerToken;
   
   if (!token) {
-    return NextResponse.json({ user: null }, { status: 401 });
+    return NextResponse.json({ user: null });
   }
 
   const session = await verifyToken(token);
   if (!session) {
-    return NextResponse.json({ user: null }, { status: 401 });
+    return NextResponse.json({ user: null });
   }
 
   return NextResponse.json({

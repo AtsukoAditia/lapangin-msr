@@ -22,6 +22,8 @@ import type {
   NotificationPayload,
   AdminUser,
   CustomerPublic,
+  Area,
+  VenueOwner,
   LoyaltyTransaction,
   LoyaltyTransactionType,
   Reward,
@@ -76,6 +78,9 @@ function rowToVenue(row: Record<string, unknown>): Venue {
     openTime: String(row.open_time ?? ""),
     closeTime: String(row.close_time ?? ""),
     isActive: String(row.is_active).toLowerCase() === "true",
+    approvalStatus: String(row.approval_status ?? "active") as Venue["approvalStatus"],
+    ownerId: row.owner_id ? String(row.owner_id) : undefined,
+    areaId: row.area_id ? String(row.area_id) : undefined,
   };
 }
 
@@ -173,7 +178,29 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
     if (!sheet) return [];
 
     const rows = await sheet.getRows();
-    return rows.map((row) => rowToVenue(row.toObject())).filter((v) => v.isActive);
+    return rows.map((row) => rowToVenue(row.toObject())).filter((v) => v.isActive && v.approvalStatus === "active");
+  }
+
+  async getVenuesByArea(areaId: string, sportId?: string): Promise<Venue[]> {
+    const venues = await this.getVenues();
+    let filtered = venues.filter((v) => v.areaId === areaId);
+    if (sportId) {
+      const courts = await this.getCourts();
+      const venueIds = new Set(courts.filter((c) => c.sportId === sportId).map((c) => c.venueId));
+      filtered = filtered.filter((v) => venueIds.has(v.id));
+    }
+    return filtered;
+  }
+
+  async getVenuesByOwner(ownerId: string): Promise<Venue[]> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["venues"];
+    if (!sheet) return [];
+
+    const rows = await sheet.getRows();
+    return rows
+      .map((row) => rowToVenue(row.toObject()))
+      .filter((v) => v.ownerId === ownerId);
   }
 
   async getCourts(): Promise<Court[]> {
@@ -797,4 +824,29 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
   }
 
   async updateCustomerSpent(_customerId: string, _amount: number): Promise<void> {}
+
+  // Area methods
+  async getAreas(): Promise<Area[]> { return []; }
+  async getAreaById(_id: string): Promise<Area | null> { return null; }
+
+  // Venue owner methods
+  async getVenueOwners(): Promise<VenueOwner[]> { return []; }
+  async getVenueOwnerById(_id: string): Promise<VenueOwner | null> { return null; }
+  async getVenueOwnerByAdminId(_adminId: string): Promise<VenueOwner | null> { return null; }
+  async createVenueOwner(_data: Omit<VenueOwner, "id" | "createdAt" | "updatedAt">): Promise<VenueOwner> {
+    throw new Error("Venue owners not supported with Google Sheets adapter");
+  }
+  async updateVenueOwnerStatus(_id: string, _status: VenueOwner["status"]): Promise<VenueOwner> {
+    throw new Error("Venue owners not supported with Google Sheets adapter");
+  }
+
+  // Venue approval methods
+  async updateVenueApproval(_id: string, _approvalStatus: Venue["approvalStatus"]): Promise<Venue> {
+    throw new Error("Venue approval not supported with Google Sheets adapter");
+  }
+
+  // Booking update methods
+  async updateBooking(_id: string, _updates: Partial<Booking>): Promise<Booking> {
+    throw new Error("Update booking not supported with Google Sheets adapter");
+  }
 }

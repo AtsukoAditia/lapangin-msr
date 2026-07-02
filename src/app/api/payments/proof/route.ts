@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentService } from "@/lib/services/payment-service";
+import { BookingService } from "@/lib/services/booking-service";
+import { getDatabaseAdapter } from "@/lib/adapters";
 import type { Booking } from "@/lib/types/domain";
-
-const paymentService = new PaymentService();
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +15,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const booking = await paymentService.submitPaymentProof(bookingId, proofUrl);
+    const adapter = getDatabaseAdapter();
+    const service = new BookingService(adapter);
+    const booking = await service.submitPaymentProof(bookingId, proofUrl);
     return NextResponse.json({ success: true, booking: toPublicPaymentBooking(booking) });
   } catch (error) {
     const message =

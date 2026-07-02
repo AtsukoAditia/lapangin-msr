@@ -1,4 +1,18 @@
-import type { Sport, Venue, Court, PricingRule } from "./types/domain";
+import type { Sport, Venue, Court, PricingRule, Area, VenueOwner } from "./types/domain";
+
+export const mockAreas: Area[] = [
+  { id: "area-jaksel-1", province: "DKI Jakarta", city: "Jakarta Selatan", district: "Kebayoran Baru", village: "Selong", slug: "jaksel-kebayoran-selong", label: "DKI Jakarta > Jakarta Selatan > Kebayoran Baru > Selong", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-jaksel-2", province: "DKI Jakarta", city: "Jakarta Selatan", district: "Pancoran", village: "Duren Tiga", slug: "jaksel-pancoran-duren-tiga", label: "DKI Jakarta > Jakarta Selatan > Pancoran > Duren Tiga", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-jakpus-1", province: "DKI Jakarta", city: "Jakarta Pusat", district: "Menteng", village: "Menteng", slug: "jakpus-menteng-menteng", label: "DKI Jakarta > Jakarta Pusat > Menteng > Menteng", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-bdg-1", province: "Jawa Barat", city: "Bandung", district: "Coblong", village: "Dago", slug: "bandung-coblong-dago", label: "Jawa Barat > Bandung > Coblong > Dago", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-bdg-2", province: "Jawa Barat", city: "Bandung", district: "Sukajadi", village: "Pasteur", slug: "bandung-sukajadi-pasteur", label: "Jawa Barat > Bandung > Sukajadi > Pasteur", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "area-surabaya-1", province: "Jawa Timur", city: "Surabaya", district: "Gubeng", village: "Airlangga", slug: "surabaya-gubeng-airlangga", label: "Jawa Timur > Surabaya > Gubeng > Airlangga", isActive: true, createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+];
+
+export const mockVenueOwners: VenueOwner[] = [
+  { id: "owner-1", adminId: "admin-1", businessName: "Arena Sports Group", picName: "Budi Santoso", phone: "081234567890", email: "budi@arena.com", status: "active", createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+  { id: "owner-2", adminId: "admin-2", businessName: "Greenfield Sports", picName: "Sari Dewi", phone: "081298765432", email: "sari@greenfield.com", status: "active", createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" },
+];
 
 export const mockSports: Sport[] = [
   { id: "sport-futsal", name: "Futsal", slug: "futsal", isActive: true },
@@ -20,6 +34,9 @@ export const mockVenues: Venue[] = [
     openTime: "06:00",
     closeTime: "23:00",
     isActive: true,
+    ownerId: "owner-1",
+    areaId: "area-jaksel-2",
+    approvalStatus: "active",
   },
   {
     id: "venue-greenfield",
@@ -31,6 +48,9 @@ export const mockVenues: Venue[] = [
     openTime: "07:00",
     closeTime: "22:00",
     isActive: true,
+    ownerId: "owner-2",
+    areaId: "area-jakpus-1",
+    approvalStatus: "active",
   },
 ];
 
@@ -206,12 +226,12 @@ export function getCourtsBySport(
   );
 }
 
-// Helper: get venues that have courts for a given sport
-export function getVenuesBySport(sportId: string): Venue[] {
+// Helper: get venues that have courts for a given sport, optionally filtered by area
+export function getVenuesBySport(sportId: string, areaId?: string): Venue[] {
   const venueIds = new Set(
     mockCourts.filter((c) => c.sportId === sportId && c.isActive).map((c) => c.venueId)
   );
-  return mockVenues.filter((v) => venueIds.has(v.id) && v.isActive);
+  return mockVenues.filter((v) => venueIds.has(v.id) && v.isActive && v.approvalStatus === "active" && (!areaId || v.areaId === areaId));
 }
 
 // Helper: get sport by slug

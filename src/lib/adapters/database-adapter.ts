@@ -16,6 +16,8 @@ import type {
   LoyaltyTransaction,
   Reward,
   RewardRedemption,
+  Area,
+  VenueOwner,
 } from "@/lib/types/domain";
 
 export interface CreateBookingInput {
@@ -75,8 +77,18 @@ export interface DatabaseAdapter {
   // Sports
   getSports(): Promise<Sport[]>;
 
+  // Areas
+  getAreas(): Promise<Area[]>;
+
+  // Venue Owners
+  getVenueOwners(): Promise<VenueOwner[]>;
+  getVenueOwnerByAdminId(adminId: string): Promise<VenueOwner | null>;
+  getVenueOwnerById(id: string): Promise<VenueOwner | null>;
+
   // Venues
   getVenues(): Promise<Venue[]>;
+  getVenuesByArea(areaId: string): Promise<Venue[]>;
+  getVenuesByOwner(ownerId: string): Promise<Venue[]>;
 
   // Courts
   getCourts(): Promise<Court[]>;

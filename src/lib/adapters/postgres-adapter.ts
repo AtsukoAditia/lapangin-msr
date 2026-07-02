@@ -83,6 +83,7 @@ export class PostgresAdapter implements DatabaseAdapter {
   async updateBookingStatus(
     _id: string,
     _status: Booking["bookingStatus"],
+    _paymentStatus?: Booking["paymentStatus"],
   ): Promise<Booking> {
     throw new Error(
       "PostgresAdapter updateBookingStatus not implemented yet.",
@@ -249,5 +250,41 @@ export class PostgresAdapter implements DatabaseAdapter {
 
   async updateCustomerSpent(_customerId: string, _amount: number): Promise<void> {
     throw new Error("PostgresAdapter updateCustomerSpent not implemented yet.");
+  }
+
+  async getAreas(): Promise<import("@/lib/types/domain").Area[]> {
+    throw new Error("PostgresAdapter getAreas not implemented yet.");
+  }
+
+  async getAreaById(_id: string): Promise<import("@/lib/types/domain").Area | null> {
+    throw new Error("PostgresAdapter getAreaById not implemented yet.");
+  }
+
+  async getVenueOwners(): Promise<import("@/lib/types/domain").VenueOwner[]> {
+    throw new Error("PostgresAdapter getVenueOwners not implemented yet.");
+  }
+
+  async getVenueOwnerById(_id: string): Promise<import("@/lib/types/domain").VenueOwner | null> {
+    throw new Error("PostgresAdapter getVenueOwnerById not implemented yet.");
+  }
+
+  async getVenueOwnerByAdminId(_adminId: string): Promise<import("@/lib/types/domain").VenueOwner | null> {
+    throw new Error("PostgresAdapter getVenueOwnerByAdminId not implemented yet.");
+  }
+
+  async getVenuesByOwner(_ownerId: string): Promise<Venue[]> {
+    throw new Error("PostgresAdapter getVenuesByOwner not implemented yet.");
+  }
+
+  async getVenuesByArea(_areaId: string, _sportId?: string): Promise<Venue[]> {
+    throw new Error("PostgresAdapter getVenuesByArea not implemented yet.");
+  }
+
+  async getBookingsByOwner(_ownerId: string): Promise<Booking[]> {
+    throw new Error("PostgresAdapter getBookingsByOwner not implemented yet.");
+  }
+
+  async updateBooking(_id: string, _updates: Partial<Booking>): Promise<Booking> {
+    throw new Error("PostgresAdapter updateBooking not implemented yet.");
   }
 }

@@ -24,6 +24,7 @@
     "jose": "^6.2.3",
     "lucide-react": "latest",
     "next": "latest",
+    "pg": "8.22.0",
     "react": "latest",
     "react-dom": "latest",
     "zod": "latest"

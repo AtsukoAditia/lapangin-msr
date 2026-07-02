@@ -40,9 +40,15 @@ export class AvailabilityService {
       this.adapter.getBlockedSlots(courtId, date),
     ]);
 
-    const activeBookings = bookings.filter((b) =>
-      ACTIVE_STATUSES.includes(b.bookingStatus),
-    );
+    const now = new Date();
+    const activeBookings = bookings.filter((b) => {
+      if (!ACTIVE_STATUSES.includes(b.bookingStatus)) return false;
+      // Expired waiting_payment bookings don't block slots
+      if (b.bookingStatus === "waiting_payment" && b.expiresAt) {
+        if (new Date(b.expiresAt) <= now) return false;
+      }
+      return true;
+    });
 
     const slots: TimeSlot[] = [];
     const openMinutes = timeToMinutes(openTime);

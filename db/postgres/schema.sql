@@ -1,116 +1,189 @@
--- Lapangin PostgreSQL schema draft
--- Stage 12: Production readiness foundation
+-- Lapangin PostgreSQL schema
+-- Aligned with seed.sql and app needs
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 CREATE EXTENSION IF NOT EXISTS citext;
 
-CREATE TABLE IF NOT EXISTS sports (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  slug text NOT NULL UNIQUE,
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+-- ============================================================
+-- Areas
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS areas (
+  id VARCHAR(50) PRIMARY KEY,
+  province VARCHAR(100) NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  district VARCHAR(100) NOT NULL,
+  village VARCHAR(100) NOT NULL DEFAULT '',
+  slug VARCHAR(150) UNIQUE NOT NULL,
+  label VARCHAR(500) NOT NULL DEFAULT '',
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS areas_slug_idx ON areas (slug);
+
+-- ============================================================
+-- Sports
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS sports (
+  id VARCHAR(50) PRIMARY KEY,
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  icon TEXT NOT NULL DEFAULT '',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- Admins (before venue_owners which refs admins)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS admins (
+  id VARCHAR(50) PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  email CITEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('super_admin', 'admin', 'staff', 'owner')),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_login_at TIMESTAMPTZ
+);
+
+-- ============================================================
+-- Venue owners
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS venue_owners (
+  id VARCHAR(50) PRIMARY KEY,
+  admin_id VARCHAR(50) REFERENCES admins(id) ON DELETE SET NULL,
+  business_name TEXT NOT NULL,
+  pic_name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email CITEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('pending_review', 'active', 'suspended', 'rejected')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- Venues
+-- ============================================================
 
 CREATE TABLE IF NOT EXISTS venues (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  slug text NOT NULL UNIQUE,
-  address text NOT NULL DEFAULT '',
-  maps_url text NOT NULL DEFAULT '',
-  phone text NOT NULL DEFAULT '',
-  open_time time NOT NULL DEFAULT '06:00',
-  close_time time NOT NULL DEFAULT '23:00',
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  id VARCHAR(50) PRIMARY KEY,
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  owner_id VARCHAR(50) REFERENCES venue_owners(id) ON DELETE SET NULL,
+  area_id VARCHAR(50) REFERENCES areas(id) ON DELETE SET NULL,
+  address TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  email TEXT NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
+  maps_url TEXT NOT NULL DEFAULT '',
+  open_time TIME NOT NULL DEFAULT '06:00',
+  close_time TIME NOT NULL DEFAULT '23:00',
+  facilities JSONB NOT NULL DEFAULT '[]',
+  images JSONB,
+  approval_status TEXT NOT NULL DEFAULT 'draft' CHECK (approval_status IN ('draft', 'pending_review', 'active', 'rejected', 'suspended')),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS venues_owner_idx ON venues (owner_id);
+CREATE INDEX IF NOT EXISTS venues_area_idx ON venues (area_id);
+
+-- ============================================================
+-- Courts
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS courts (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  venue_id uuid NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
-  sport_id uuid NOT NULL REFERENCES sports(id) ON DELETE RESTRICT,
-  name text NOT NULL,
-  slug text NOT NULL,
-  surface_type text NOT NULL DEFAULT '',
-  indoor_type text NOT NULL CHECK (indoor_type IN ('indoor', 'outdoor', 'semi_outdoor')),
-  capacity integer NOT NULL DEFAULT 0,
-  base_price integer NOT NULL DEFAULT 0 CHECK (base_price >= 0),
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
+  id VARCHAR(50) PRIMARY KEY,
+  venue_id VARCHAR(50) NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+  sport_id VARCHAR(50) NOT NULL REFERENCES sports(id) ON DELETE RESTRICT,
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL,
+  surface_type TEXT NOT NULL DEFAULT '',
+  indoor_type TEXT NOT NULL CHECK (indoor_type IN ('indoor', 'outdoor', 'semi_outdoor')),
+  capacity INTEGER NOT NULL DEFAULT 0,
+  base_price INTEGER NOT NULL DEFAULT 0 CHECK (base_price >= 0),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (venue_id, slug)
 );
 
+-- ============================================================
+-- Customers
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS customers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  email citext UNIQUE,
-  phone text NOT NULL,
-  password_hash text NOT NULL,
-  avatar text,
-  is_verified boolean NOT NULL DEFAULT false,
-  is_active boolean NOT NULL DEFAULT true,
-  loyalty_points integer NOT NULL DEFAULT 0 CHECK (loyalty_points >= 0),
-  total_spent integer NOT NULL DEFAULT 0 CHECK (total_spent >= 0),
-  member_since timestamptz NOT NULL DEFAULT now(),
-  last_login_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email CITEXT UNIQUE,
+  phone TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  avatar TEXT,
+  is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  loyalty_points INTEGER NOT NULL DEFAULT 0 CHECK (loyalty_points >= 0),
+  total_spent INTEGER NOT NULL DEFAULT 0 CHECK (total_spent >= 0),
+  member_since TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_login_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS admins (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  username text NOT NULL UNIQUE,
-  name text NOT NULL,
-  email citext NOT NULL UNIQUE,
-  password_hash text NOT NULL,
-  role text NOT NULL CHECK (role IN ('super_admin', 'admin', 'staff')),
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  last_login_at timestamptz
-);
+-- ============================================================
+-- Bookings
+-- ============================================================
 
 CREATE TABLE IF NOT EXISTS bookings (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  booking_code text NOT NULL UNIQUE,
-  customer_name text NOT NULL,
-  customer_phone text NOT NULL,
-  customer_email citext,
-  user_id uuid REFERENCES customers(id) ON DELETE SET NULL,
-  venue_id uuid NOT NULL REFERENCES venues(id) ON DELETE RESTRICT,
-  court_id uuid NOT NULL REFERENCES courts(id) ON DELETE RESTRICT,
-  sport_id uuid NOT NULL REFERENCES sports(id) ON DELETE RESTRICT,
-  booking_date date NOT NULL,
-  start_time time NOT NULL,
-  end_time time NOT NULL,
-  duration_minutes integer NOT NULL CHECK (duration_minutes > 0),
-  total_price integer NOT NULL CHECK (total_price >= 0),
-  booking_status text NOT NULL CHECK (
+  id VARCHAR(50) PRIMARY KEY,
+  booking_code TEXT NOT NULL UNIQUE,
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+  customer_email CITEXT,
+  user_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+  venue_id VARCHAR(50) NOT NULL REFERENCES venues(id) ON DELETE RESTRICT,
+  court_id VARCHAR(50) NOT NULL REFERENCES courts(id) ON DELETE RESTRICT,
+  sport_id VARCHAR(50) NOT NULL REFERENCES sports(id) ON DELETE RESTRICT,
+  booking_date DATE NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  duration_minutes INTEGER NOT NULL CHECK (duration_minutes > 0),
+  total_price INTEGER NOT NULL CHECK (total_price >= 0),
+  booking_status TEXT NOT NULL CHECK (
     booking_status IN (
-      'pending',
-      'waiting_payment',
-      'paid',
-      'confirmed',
-      'rejected',
-      'cancelled',
-      'completed',
-      'no_show'
+      'pending', 'waiting_payment', 'waiting_verification',
+      'paid', 'confirmed', 'rejected', 'expired',
+      'cancelled', 'completed', 'no_show'
     )
   ),
-  payment_status text NOT NULL CHECK (
-    payment_status IN ('unpaid', 'waiting_confirmation', 'dp_paid', 'paid', 'refunded')
+  payment_status TEXT NOT NULL CHECK (
+    payment_status IN ('unpaid', 'waiting_confirmation', 'dp_paid', 'paid', 'rejected', 'refunded')
   ),
-  payment_proof_url text,
-  notes text,
-  points_awarded_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ,
+  payment_proof_url TEXT,
+  payment_submitted_at TIMESTAMPTZ,
+  payment_verified_at TIMESTAMPTZ,
+  payment_rejected_at TIMESTAMPTZ,
+  payment_rejection_reason TEXT,
+  verified_by_admin_id VARCHAR(50) REFERENCES admins(id) ON DELETE SET NULL,
+  notes TEXT,
+  points_awarded_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CHECK (end_time > start_time)
 );
 
+-- Overlap constraint
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -121,101 +194,136 @@ BEGIN
       EXCLUDE USING gist (
         court_id WITH =,
         booking_date WITH =,
-        tsrange(
-          booking_date + start_time,
-          booking_date + end_time,
-          '[)'
-        ) WITH &&
+        tsrange(booking_date + start_time, booking_date + end_time, '[)') WITH &&
       )
-      WHERE (booking_status IN ('pending', 'waiting_payment', 'paid', 'confirmed'));
+      WHERE (booking_status IN ('waiting_payment', 'waiting_verification', 'paid', 'confirmed'));
   END IF;
 END $$;
 
 CREATE INDEX IF NOT EXISTS bookings_court_date_idx ON bookings (court_id, booking_date);
 CREATE INDEX IF NOT EXISTS bookings_customer_idx ON bookings (user_id);
 CREATE INDEX IF NOT EXISTS bookings_code_idx ON bookings (booking_code);
+CREATE INDEX IF NOT EXISTS bookings_status_idx ON bookings (booking_status);
+
+-- ============================================================
+-- Blocked slots
+-- ============================================================
 
 CREATE TABLE IF NOT EXISTS blocked_slots (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  court_id uuid NOT NULL REFERENCES courts(id) ON DELETE CASCADE,
-  date date NOT NULL,
-  start_time time NOT NULL,
-  end_time time NOT NULL,
-  reason text,
-  created_at timestamptz NOT NULL DEFAULT now(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  court_id VARCHAR(50) NOT NULL REFERENCES courts(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CHECK (end_time > start_time)
 );
 
-CREATE INDEX IF NOT EXISTS blocked_slots_court_date_idx ON blocked_slots (court_id, date);
+-- ============================================================
+-- Pricing rules
+-- ============================================================
 
 CREATE TABLE IF NOT EXISTS pricing_rules (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  court_id uuid NOT NULL REFERENCES courts(id) ON DELETE CASCADE,
-  day_type text NOT NULL CHECK (day_type IN ('weekday', 'weekend', 'holiday', 'all')),
-  start_time time NOT NULL,
-  end_time time NOT NULL,
-  price_per_hour integer NOT NULL CHECK (price_per_hour >= 0),
-  priority integer NOT NULL DEFAULT 0,
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
+  id VARCHAR(50) PRIMARY KEY,
+  court_id VARCHAR(50) NOT NULL REFERENCES courts(id) ON DELETE CASCADE,
+  day_type TEXT NOT NULL CHECK (day_type IN ('weekday', 'weekend', 'holiday', 'all')),
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  price_per_hour INTEGER NOT NULL CHECK (price_per_hour >= 0),
+  priority INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CHECK (end_time > start_time)
 );
 
-CREATE TABLE IF NOT EXISTS payment_methods (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  label text NOT NULL,
-  type text NOT NULL CHECK (type IN ('bank_transfer', 'e_wallet', 'qris', 'cash')),
-  account_name text NOT NULL DEFAULT '',
-  account_number text,
-  provider text NOT NULL DEFAULT '',
-  details text NOT NULL DEFAULT '',
-  instructions text NOT NULL DEFAULT '',
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+-- ============================================================
+-- Operating hours
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS operating_hours (
+  id VARCHAR(50) PRIMARY KEY,
+  court_id VARCHAR(50) NOT NULL REFERENCES courts(id) ON DELETE CASCADE,
+  day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+  open_time TIME NOT NULL,
+  close_time TIME NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ============================================================
+-- Payment methods
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS payment_methods (
+  id VARCHAR(50) PRIMARY KEY,
+  name TEXT NOT NULL,
+  label TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('bank_transfer', 'e_wallet', 'qris', 'cash')),
+  account_name TEXT NOT NULL DEFAULT '',
+  account_number TEXT,
+  bank_name TEXT,
+  provider TEXT NOT NULL DEFAULT '',
+  details TEXT NOT NULL DEFAULT '',
+  instructions TEXT NOT NULL DEFAULT '',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- Audit logs
+-- ============================================================
 
 CREATE TABLE IF NOT EXISTS audit_logs (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  timestamp timestamptz NOT NULL DEFAULT now(),
-  action text NOT NULL,
-  target_type text NOT NULL,
-  target_id uuid NOT NULL,
-  actor_type text NOT NULL CHECK (actor_type IN ('customer', 'admin', 'system')),
-  actor_id uuid,
-  details text NOT NULL DEFAULT '',
-  previous_value text,
-  new_value text
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  action TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  target_id TEXT NOT NULL,
+  actor_type TEXT NOT NULL CHECK (actor_type IN ('customer', 'admin', 'system')),
+  actor_id TEXT,
+  details TEXT NOT NULL DEFAULT '',
+  previous_value TEXT,
+  new_value TEXT
 );
+
+-- ============================================================
+-- Notification logs
+-- ============================================================
 
 CREATE TABLE IF NOT EXISTS notification_logs (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  type text NOT NULL,
-  channel text NOT NULL,
-  recipient text NOT NULL,
-  subject text,
-  message text NOT NULL,
-  status text NOT NULL CHECK (status IN ('pending', 'sent', 'failed', 'read')),
-  booking_id uuid REFERENCES bookings(id) ON DELETE SET NULL,
-  booking_code text,
-  error_message text,
-  sent_at timestamptz,
-  read_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now()
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  recipient TEXT NOT NULL,
+  subject TEXT,
+  message TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('pending', 'sent', 'failed', 'read')),
+  booking_id VARCHAR(50) REFERENCES bookings(id) ON DELETE SET NULL,
+  booking_code TEXT,
+  error_message TEXT,
+  sent_at TIMESTAMPTZ,
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- ============================================================
+-- Loyalty transactions
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS loyalty_transactions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id uuid NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
-  booking_id uuid REFERENCES bookings(id) ON DELETE SET NULL,
-  booking_code text,
-  type text NOT NULL CHECK (type IN ('earned', 'redeemed', 'bonus', 'expired', 'adjusted')),
-  points integer NOT NULL,
-  description text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  expires_at timestamptz
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  booking_id VARCHAR(50) REFERENCES bookings(id) ON DELETE SET NULL,
+  booking_code TEXT,
+  type TEXT NOT NULL CHECK (type IN ('earned', 'redeemed', 'bonus', 'expired', 'adjusted')),
+  points INTEGER NOT NULL,
+  description TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS loyalty_one_earned_tx_per_booking
