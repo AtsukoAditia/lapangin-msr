@@ -3,6 +3,7 @@ import { sportEmoji } from "@/lib/sport-icons";
 import Link from "next/link";
 import type { Metadata } from "next";
 import BookingSteps from "@/components/booking/BookingSteps";
+import AreaSelect from "@/components/booking/AreaSelect";
 
 export const metadata: Metadata = {
   title: "Booking Lapangan — Lapangin",
@@ -34,35 +35,14 @@ export default async function BookingIndexPage({
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-6 pb-16">
         {/* Step 1: Area Selection */}
-        <div className="mb-8">
+        <div className="mb-8 relative z-10">
           <h2 className="text-lg font-semibold text-gray-800 mb-3">
             📍 Pilih Daerah
           </h2>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/booking"
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                !selectedAreaId
-                  ? "bg-emerald-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Semua Daerah
-            </Link>
-            {activeAreas.map((area) => (
-              <Link
-                key={area.id}
-                href={`/booking?area=${area.id}`}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedAreaId === area.id
-                    ? "bg-emerald-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {area.label || `${area.city}, ${area.province}`}
-              </Link>
-            ))}
-          </div>
+          <AreaSelect
+            areas={activeAreas}
+            selectedAreaId={selectedAreaId}
+          />
         </div>
 
         {/* Step 2: Sport Selection */}
