@@ -38,10 +38,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       .then((res) => res.json())
       .then((data) => {
         if (cancelled) return;
-        if (!data.session || data.session.role !== "admin") {
+        const adminRoles = ["admin", "super_admin", "staff"];
+        if (!data.user || !adminRoles.includes(data.user.role)) {
           router.push("/admin/login");
         } else {
-          setSession(data.session);
+          setSession(data.user);
           setLoading(false);
         }
       })
