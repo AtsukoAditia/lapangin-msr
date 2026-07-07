@@ -17,8 +17,8 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ==================== ADMINS (before venue_owners) ====================
 INSERT INTO admins (id, username, name, email, password_hash, role, is_active, created_at, updated_at) VALUES
-  ('admin-1', 'admin',      'Super Admin',   'admin@lapangin.id',  '$2b$10$PogPeENNeY9.gNDNbMg9mOAKWgPwExS8.o54sE/BHFH2LkTMNlzGy', 'super_admin', true, NOW(), NOW()),
-  ('owner-1', 'venueowner', 'Venue Owner',   'owner@lapangin.id',  '$2b$10$8RkQCFdl7l/aC3czGPRGeOrx1CXhkl/ZJUCmS5p3AUVynuOuVdeyC', 'admin',       true, NOW(), NOW())
+  ('admin-1', 'superadmin', 'Super Admin',   'admin@lapangin.id',  '$2b$10$c6oIJREEQCdxIc8mY/1T2uAxZA/uSIlyQ4KsdNxRlC0KnxW9tPvXS', 'super_admin', true, NOW(), NOW()),
+  ('owner-1', 'venueowner', 'Venue Owner',   'owner@lapangin.id',  '$2b$10$dIBbN.TQD1XHEJWAV6ubqObTOIgm37WsMjhSbcK1Y6qQyhJLQH7n.', 'admin',       true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- ==================== VENUE OWNERS ====================

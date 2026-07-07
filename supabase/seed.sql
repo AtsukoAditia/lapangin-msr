@@ -18,8 +18,8 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ==================== ADMINS ====================
 INSERT INTO admins (id, username, name, email, password_hash, role, is_active, created_at, last_login_at) VALUES
-  ('admin-1', 'admin',      'Super Admin',   'admin@lapangin.id',  '$2b$10$PogPeENNeY9.gNDNbMg9mOAKWgPwExS8.o54sE/BHFH2LkTMNlzGy', 'super_admin', true, '2026-06-25T00:00:00Z', NULL),
-  ('owner-1', 'venueowner', 'Venue Owner',   'owner@lapangin.id',  '$2b$10$8RkQCFdl7l/aC3czGPRGeOrx1CXhkl/ZJUCmS5p3AUVynuOuVdeyC', 'admin',       true, '2026-06-25T00:00:00Z', NULL)
+  ('admin-1', 'superadmin', 'Super Admin',   'admin@lapangin.id',  '$2b$10$c6oIJREEQCdxIc8mY/1T2uAxZA/uSIlyQ4KsdNxRlC0KnxW9tPvXS', 'super_admin', true, '2026-06-25T00:00:00Z', NULL),
+  ('owner-1', 'venueowner', 'Venue Owner',   'owner@lapangin.id',  '$2b$10$dIBbN.TQD1XHEJWAV6ubqObTOIgm37WsMjhSbcK1Y6qQyhJLQH7n.', 'admin',       true, '2026-06-25T00:00:00Z', NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- ==================== VENUE OWNERS ====================

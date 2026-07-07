@@ -50,7 +50,7 @@ export default async function SportPage({ params, searchParams }: Props) {
     : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-slate-50">
       <BookingSteps
         currentStep={2}
         title={`${sportEmoji[sport.id] || "🏅"} Lapangan ${sport.name}`}
@@ -60,11 +60,12 @@ export default async function SportPage({ params, searchParams }: Props) {
             : "Pilih venue dan lapangan yang tersedia."
         }
         steps={[
-          { number: 1, label: "Pilih Olahraga", href: "/booking" },
-          { number: 2, label: "Pilih Lapangan" },
-          { number: 3, label: "Pilih Jadwal" },
-          { number: 4, label: "Isi Data" },
-          { number: 5, label: "Berhasil" },
+          { number: 1, label: "Pilih Olahraga", href: "/booking", icon: "🏆" },
+          { number: 2, label: "Pilih Lapangan", icon: "🏟️" },
+          { number: 3, label: "Pilih Jam Main", icon: "⏰" },
+          { number: 4, label: "Data Pelanggan", icon: "👤" },
+          { number: 5, label: "Pembayaran", icon: "💳" },
+          { number: 6, label: "Konfirmasi", icon: "✅" },
         ]}
       />
 

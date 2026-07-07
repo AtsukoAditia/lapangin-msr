@@ -45,22 +45,32 @@ function generateFallbackSlots(openTime: string, closeTime: string): Slot[] {
   return slots;
 }
 
-function getNext7Days(): { date: string; label: string; dayName: string }[] {
-  const days: { date: string; label: string; dayName: string }[] = [];
+function getNext7Days(): { date: string; label: string; dayName: string; isToday: boolean }[] {
+  const days: { date: string; label: string; dayName: string; isToday: boolean }[] = [];
   const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  
   for (let i = 0; i < 7; i++) {
     const d = new Date();
     d.setDate(d.getDate() + i);
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
+    const dateStr = `${yyyy}-${mm}-${dd}`;
     days.push({
-      date: `${yyyy}-${mm}-${dd}`,
+      date: dateStr,
       label: `${dd}/${mm}`,
       dayName: dayNames[d.getDay()],
+      isToday: dateStr === todayStr,
     });
   }
   return days;
+}
+
+function getCurrentTimeMinutes(): number {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
 }
 
 export default function SlotSelector({
@@ -74,7 +84,7 @@ export default function SlotSelector({
   const router = useRouter();
   const dates = getNext7Days();
   const [selectedDate, setSelectedDate] = useState(dates[0].date);
-  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+  const [selectedSlots, setSelectedSlots] = useState<Slot[]>([]);
   const [slots, setSlots] = useState<Slot[]>(() =>
     generateFallbackSlots(openTime, closeTime)
   );
@@ -126,20 +136,99 @@ export default function SlotSelector({
     };
   }, [courtId, selectedDate, openTime, closeTime]);
 
+  // Clear selected slots when date changes
+  useEffect(() => {
+    setSelectedSlots([]);
+  }, [selectedDate]);
+
+  function handleSlotClick(slot: Slot) {
+    const isSelected = selectedSlots.some(
+      (s) => s.startTime === slot.startTime && s.endTime === slot.endTime
+    );
+
+    if (isSelected) {
+      // Remove slot
+      setSelectedSlots(selectedSlots.filter(
+        (s) => !(s.startTime === slot.startTime && s.endTime === slot.endTime)
+      ));
+    } else {
+      // Add slot (validate consecutive)
+      if (selectedSlots.length === 0) {
+        setSelectedSlots([slot]);
+      } else {
+        // Check if slot is consecutive with existing selections
+        const sortedSlots = [...selectedSlots].sort(
+          (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+        );
+        const firstSlot = sortedSlots[0];
+        const lastSlot = sortedSlots[sortedSlots.length - 1];
+
+        const slotStart = timeToMinutes(slot.startTime);
+        const slotEnd = timeToMinutes(slot.endTime);
+        const firstStart = timeToMinutes(firstSlot.startTime);
+        const lastEnd = timeToMinutes(lastSlot.endTime);
+
+        // Check if slot is adjacent to first or last
+        if (slotEnd === firstStart || slotStart === lastEnd) {
+          setSelectedSlots([...selectedSlots, slot]);
+        } else {
+          // Not consecutive, replace selection
+          setSelectedSlots([slot]);
+        }
+      }
+    }
+  }
+
+  function isSlotDisabled(slot: Slot): boolean {
+    if (!slot.isAvailable) return true;
+    if (loadingSlots) return true;
+    
+    // Check if slot is in the past for today
+    const selectedDateInfo = dates.find((d) => d.date === selectedDate);
+    if (selectedDateInfo?.isToday) {
+      const currentMinutes = getCurrentTimeMinutes();
+      const slotStartMinutes = timeToMinutes(slot.startTime);
+      if (slotStartMinutes <= currentMinutes) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
   function handleContinue() {
-    if (!selectedDate || !selectedSlot) return;
+    if (selectedSlots.length === 0) return;
+
+    // Sort slots by start time
+    const sortedSlots = [...selectedSlots].sort(
+      (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+    );
+
+    const firstSlot = sortedSlots[0];
+    const lastSlot = sortedSlots[sortedSlots.length - 1];
 
     const params = new URLSearchParams({
       courtId,
       date: selectedDate,
-      startTime: selectedSlot.startTime,
-      endTime: selectedSlot.endTime,
+      startTime: firstSlot.startTime,
+      endTime: lastSlot.endTime,
       sport: sportSlug,
       venue: venueSlug,
       court: courtSlug,
+      duration: String(sortedSlots.length),
     });
     router.push(`/booking/form?${params.toString()}`);
   }
+
+  // Calculate total duration
+  const totalDuration = selectedSlots.length;
+  const sortedSelectedSlots = [...selectedSlots].sort(
+    (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+  );
+  const timeRange =
+    sortedSelectedSlots.length > 0
+      ? `${sortedSelectedSlots[0].startTime} - ${sortedSelectedSlots[sortedSelectedSlots.length - 1].endTime}`
+      : "";
 
   return (
     <div>
@@ -150,7 +239,6 @@ export default function SlotSelector({
             key={d.date}
             onClick={() => {
               setSelectedDate(d.date);
-              setSelectedSlot(null);
             }}
             className={`flex min-w-[64px] flex-col items-center rounded-xl px-3 py-2 text-sm font-medium transition ${
               selectedDate === d.date
@@ -160,6 +248,9 @@ export default function SlotSelector({
           >
             <span className="text-xs">{d.dayName}</span>
             <span>{d.label}</span>
+            {d.isToday && (
+              <span className="text-[10px] opacity-75">Hari ini</span>
+            )}
           </button>
         ))}
       </div>
@@ -170,26 +261,47 @@ export default function SlotSelector({
         </div>
       )}
 
+      {/* Selection info */}
+      {selectedSlots.length > 0 && (
+        <div className="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-emerald-900">
+                {totalDuration} jam dipilih
+              </p>
+              <p className="text-xs text-emerald-700">{timeRange}</p>
+            </div>
+            <button
+              onClick={() => setSelectedSlots([])}
+              className="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
+            >
+              Hapus semua
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Time slots grid */}
       <div className="mb-5 grid grid-cols-3 gap-2 sm:grid-cols-4">
         {slots.map((slot) => {
           const slotKey = `${slot.startTime}-${slot.endTime}`;
-          const selectedKey = selectedSlot
-            ? `${selectedSlot.startTime}-${selectedSlot.endTime}`
-            : null;
+          const isSelected = selectedSlots.some(
+            (s) => s.startTime === slot.startTime && s.endTime === slot.endTime
+          );
+          const isDisabled = isSlotDisabled(slot);
           const label = `${slot.startTime} – ${slot.endTime}`;
 
           return (
             <button
               key={slotKey}
-              disabled={loadingSlots || !slot.isAvailable}
-              onClick={() => setSelectedSlot(slot)}
+              disabled={isDisabled}
+              onClick={() => handleSlotClick(slot)}
               className={`rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                loadingSlots || !slot.isAvailable
+                isDisabled
                   ? "cursor-not-allowed bg-slate-100 text-slate-400 line-through"
-                  : selectedKey === slotKey
-                    ? "bg-emerald-600 text-white shadow"
-                    : "border border-slate-200 bg-white text-slate-700 hover:border-emerald-400"
+                  : isSelected
+                    ? "bg-emerald-600 text-white shadow ring-2 ring-emerald-600 ring-offset-2"
+                    : "border border-slate-200 bg-white text-slate-700 hover:border-emerald-400 hover:bg-emerald-50"
               }`}
             >
               {label}
@@ -204,18 +316,23 @@ export default function SlotSelector({
         </p>
       )}
 
+      {/* Help text */}
+      <p className="mb-4 text-xs text-slate-500 text-center">
+        💡 Pilih beberapa jam berurutan untuk booking lebih lama
+      </p>
+
       {/* Continue button */}
       <button
         onClick={handleContinue}
-        disabled={!selectedSlot || loadingSlots}
+        disabled={selectedSlots.length === 0 || loadingSlots}
         className={`w-full rounded-xl py-3 text-sm font-semibold transition ${
-          selectedSlot && !loadingSlots
+          selectedSlots.length > 0 && !loadingSlots
             ? "bg-emerald-600 text-white shadow hover:bg-emerald-700"
             : "cursor-not-allowed bg-slate-200 text-slate-400"
         }`}
       >
-        {selectedSlot
-          ? `Lanjut Booking — ${selectedSlot.startTime} – ${selectedSlot.endTime}`
+        {selectedSlots.length > 0
+          ? `Lanjut Booking — ${totalDuration} jam (${timeRange})`
           : "Pilih jam terlebih dahulu"}
       </button>
     </div>

@@ -5,8 +5,8 @@ import { verifyToken, ADMIN_TOKEN_NAME, CUSTOMER_TOKEN_NAME } from "@/lib/auth/j
 export async function GET() {
   const cookieStore = await cookies();
   
-  const adminToken = cookieStore.get("admin_session")?.value || cookieStore.get(ADMIN_TOKEN_NAME)?.value;
-  const customerToken = cookieStore.get(CUSTOMER_TOKEN_NAME)?.value;
+   const adminToken = cookieStore.get(ADMIN_TOKEN_NAME)?.value;
+   const customerToken = cookieStore.get(CUSTOMER_TOKEN_NAME)?.value;
   const token = adminToken || customerToken;
   
   if (!token) {

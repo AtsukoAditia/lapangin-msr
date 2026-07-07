@@ -28,10 +28,14 @@ function isCustomerApiRoute(pathname: string): boolean {
   return CUSTOMER_API_ROUTES.some((route) => pathname.startsWith(route));
 }
 
-async function hasRole(token: string | undefined, role: "admin" | "customer") {
+async function hasRole(token: string | undefined, role: "admin" | "super_admin" | "staff" | "customer") {
   if (!token) return false;
   const session = await verifyToken(token);
-  return session?.role === role;
+  if (!session?.role) return false;
+  if (role === "admin") {
+    return session.role === "admin" || session.role === "super_admin" || session.role === "staff";
+  }
+  return session.role === role;
 }
 
 export async function middleware(request: NextRequest) {

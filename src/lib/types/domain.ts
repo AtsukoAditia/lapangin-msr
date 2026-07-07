@@ -267,7 +267,7 @@ export interface AdminUser {
 
 export interface AuthSession {
   userId: string;
-  role: "admin" | "customer";
+  role: "admin" | "super_admin" | "staff" | "customer";
   name: string;
   email: string;
   expiresAt: string;

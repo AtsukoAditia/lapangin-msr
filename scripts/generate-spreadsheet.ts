@@ -267,8 +267,13 @@ const SEED_NOTIFICATION_LOGS = [
 
 const SEED_ADMIN_USERS = [
   {
-    id: "admin-1", name: "Admin Lapangin", email: "admin@lapangin.id",
-    password_hash: "$2a$10$N9qo8uLOickgx2ZMRZoMye.IjfdGECygmbBKl6LOBhG.aP5bJkRi", // password: admin123
+    id: "admin-1", name: "Super Admin", email: "admin@lapangin.id",
+    password_hash: "$2b$10$nqVUtvNgF1EXm9pqLiVTQOetT6geXw0gHFjHd03x6Y8uO/v/Ft7mO", // password: Admin123!@#
+    role: "super_admin", is_active: "true", created_at: now,
+  },
+  {
+    id: "owner-1", name: "Venue Owner", email: "owner@lapangin.id",
+    password_hash: "$2b$10$PBtyTDlbmSKYI5XLiziL0eg51As8BoWNSq4MvnzPK33L1KqLlGNk2", // password: Owner123!@#
     role: "admin", is_active: "true", created_at: now,
   },
 ];

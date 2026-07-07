@@ -1,13 +1,13 @@
 /**
  * Standalone Auth Service
- * 
+ *
  * Works independently of the database adapter.
  * Uses in-memory stores for demo/development.
  * In production, this would be replaced by PostgreSQL/Supabase auth.
- * 
- * Admin accounts:
- *   - admin@lapangin.com / admin123 (Super Admin)
- *   - owner@lapangin.com / owner123 (Owner/Venue Admin)
+ *
+ * Admin accounts (synced with PostgreSQL/Supabase/Spreadsheet):
+ *   - admin@lapangin.id / Admin123!@# (Super Admin)
+ *   - owner@lapangin.id / Owner123!@# (Owner/Venue Admin)
  */
 
 import type { AdminUser, Customer, CustomerPublic } from "@/lib/types/domain";
@@ -53,24 +53,24 @@ function seedAdmins() {
 
   const defaultAdmins: StoredAdmin[] = [
     {
-      id: "admin-001",
+      id: "admin-1",
       username: "superadmin",
       name: "Super Admin",
-      email: "admin@lapangin.com",
-      password: "admin123",
+      email: "admin@lapangin.id",
+      password: "Admin123!@#",
       role: "super_admin",
       isActive: true,
-      createdAt: "2024-01-01T00:00:00Z",
+      createdAt: new Date().toISOString(),
     },
     {
-      id: "owner-001",
+      id: "owner-1",
       username: "venueowner",
       name: "Venue Owner",
-      email: "owner@lapangin.com",
-      password: "owner123",
+      email: "owner@lapangin.id",
+      password: "Owner123!@#",
       role: "admin",
       isActive: true,
-      createdAt: "2024-01-01T00:00:00Z",
+      createdAt: new Date().toISOString(),
     },
   ];
 

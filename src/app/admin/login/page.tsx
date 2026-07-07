@@ -50,8 +50,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.push("/admin");
-      router.refresh();
+      window.location.href = "/admin";
     } catch {
       setError("Terjadi kesalahan. Coba lagi.");
     } finally {
@@ -158,7 +157,10 @@ export default function AdminLoginPage() {
         <div className="mt-6 p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
           <p className="text-xs text-gray-400 text-center mb-2">Demo Credentials:</p>
           <p className="text-xs text-gray-500 text-center font-mono">
-            admin@lapangin.com / admin123
+            admin@lapangin.id / Admin123!@#
+          </p>
+          <p className="text-xs text-gray-600 text-center font-mono mt-1">
+            owner@lapangin.id / Owner123!@#
           </p>
         </div>
       </div>
