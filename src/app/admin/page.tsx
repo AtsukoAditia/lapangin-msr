@@ -32,7 +32,9 @@ export default function AdminDashboard() {
           setStats({
             totalBookings: bookings.length,
             pendingBookings: bookings.filter(
-              (b: { bookingStatus: string }) => b.bookingStatus === "pending"
+              (b: { bookingStatus: string }) => 
+                b.bookingStatus === "pending" || 
+                b.bookingStatus === "waiting_verification"
             ).length,
             confirmedBookings: bookings.filter(
               (b: { bookingStatus: string }) =>

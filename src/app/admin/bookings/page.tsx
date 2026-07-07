@@ -13,10 +13,15 @@ const STATUS_CONFIG: Record<
     label: "Tunggu Bayar",
     color: "bg-orange-100 text-orange-800",
   },
+  waiting_verification: {
+    label: "Verifikasi Pembayaran",
+    color: "bg-purple-100 text-purple-800",
+  },
   paid: { label: "Dibayar", color: "bg-blue-100 text-blue-800" },
   confirmed: { label: "Dikonfirmasi", color: "bg-emerald-100 text-emerald-800" },
   rejected: { label: "Ditolak", color: "bg-red-100 text-red-800" },
   cancelled: { label: "Dibatalkan", color: "bg-gray-100 text-gray-800" },
+  expired: { label: "Kadaluarsa", color: "bg-stone-100 text-stone-800" },
   completed: { label: "Selesai", color: "bg-green-100 text-green-800" },
   no_show: { label: "No Show", color: "bg-stone-100 text-stone-800" },
 };
@@ -183,10 +188,12 @@ export default function AdminBookingsPage() {
               color={
                 key === "pending" ? "bg-amber-500" :
                 key === "waiting_payment" ? "bg-orange-500" :
+                key === "waiting_verification" ? "bg-purple-500" :
                 key === "paid" ? "bg-blue-500" :
                 key === "confirmed" ? "bg-emerald-500" :
                 key === "rejected" ? "bg-red-500" :
                 key === "cancelled" ? "bg-slate-500" :
+                key === "expired" ? "bg-stone-500" :
                 key === "completed" ? "bg-green-500" :
                 "bg-stone-500"
               }
@@ -225,7 +232,9 @@ export default function AdminBookingsPage() {
                   booking.bookingStatus === "confirmed" || booking.bookingStatus === "paid" ? "bg-emerald-500" :
                   booking.bookingStatus === "pending" ? "bg-amber-500" :
                   booking.bookingStatus === "waiting_payment" ? "bg-orange-500" :
+                  booking.bookingStatus === "waiting_verification" ? "bg-purple-500" :
                   booking.bookingStatus === "rejected" || booking.bookingStatus === "cancelled" ? "bg-red-400" :
+                  booking.bookingStatus === "expired" ? "bg-stone-400" :
                   booking.bookingStatus === "completed" ? "bg-blue-500" :
                   "bg-slate-300"
                 }`} />
@@ -297,7 +306,7 @@ export default function AdminBookingsPage() {
 
                     {/* Action buttons */}
                     <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end">
-                      {booking.bookingStatus === "waiting_payment" &&
+                      {booking.bookingStatus === "waiting_verification" &&
                         booking.paymentProofUrl && (
                           <>
                             <button
