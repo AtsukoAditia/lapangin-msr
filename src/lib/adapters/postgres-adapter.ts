@@ -145,7 +145,7 @@ export class PostgresAdapter implements DatabaseAdapter {
   // ── Sports ──
   async getSports(): Promise<Sport[]> {
     const rows = await query<Record<string, unknown>>("SELECT id, name, slug, is_active FROM sports WHERE is_active = true");
-    return rows.map((r) => ({ id: r.id as string, name: r.name as string, slug: r.slug as string, isActive: r.is_active as boolean }));
+    return rows.map((r) => ({ id: r.id as string, name: r.name as string, slug: r.slug as string, isActive: (r.isActive ?? r.is_active) as boolean }));
   }
 
   // ── Areas ──
