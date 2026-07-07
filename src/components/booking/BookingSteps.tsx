@@ -30,87 +30,95 @@ export default function BookingSteps({
   subtitle,
 }: BookingStepsProps) {
   return (
-    <div className="bg-gradient-to-r from-emerald-600 to-teal-600 py-8 sm:py-10">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-        {/* Step Indicators — circle on top, label below */}
-        <div className="flex items-start justify-center mb-6">
+    <div className="relative bg-emerald-600 py-3 sm:py-5 overflow-hidden">
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
+        {/* Desktop: full step indicators */}
+        <div className="hidden sm:flex items-start justify-center mb-3">
           {steps.map((step, i) => {
             const isCompleted = step.number < currentStep;
             const isCurrent = step.number === currentStep;
 
             const circleClass = isCompleted
-              ? "bg-emerald-400 text-white"
+              ? "bg-emerald-400 text-white shadow-md shadow-emerald-500/30"
               : isCurrent
-                ? "bg-white text-emerald-700 shadow-lg"
-                : "bg-white/20 text-white/50";
+                ? "bg-white text-emerald-700 shadow-lg shadow-white/25 ring-4 ring-white/20"
+                : "bg-white/15 text-white/40 backdrop-blur-sm";
 
             const labelClass = isCompleted
               ? "text-emerald-200"
               : isCurrent
                 ? "text-white font-semibold"
-                : "text-white/40";
+                : "text-white/35";
 
-            const circleContent = isCompleted ? "✓" : step.number;
+            const circleContent = isCompleted ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              step.number
+            );
 
             return (
               <div key={step.number} className="flex items-center">
-                {/* Step: circle + label stacked vertically */}
                 <div className="flex flex-col items-center">
                   {isCompleted && step.href ? (
-                    <Link
-                      href={step.href}
-                      className="flex flex-col items-center group"
-                    >
-                      <span
-                        className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${circleClass} group-hover:scale-110`}
-                      >
+                    <Link href={step.href} className="flex flex-col items-center group">
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${circleClass} group-hover:scale-110`}>
                         {circleContent}
                       </span>
-                      <span
-                        className={`mt-1.5 text-[10px] sm:text-xs transition-colors ${labelClass} group-hover:text-white`}
-                      >
+                      <span className={`mt-1.5 text-[10px] leading-tight transition-colors ${labelClass} group-hover:text-white`}>
                         {step.label}
                       </span>
                     </Link>
                   ) : (
                     <div className="flex flex-col items-center">
-                      <span
-                        className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${circleClass}`}
-                      >
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${circleClass} ${isCurrent ? "scale-110" : ""}`}>
                         {circleContent}
                       </span>
-                      <span
-                        className={`mt-1.5 text-[10px] sm:text-xs ${labelClass}`}
-                      >
+                      <span className={`mt-1.5 text-[10px] leading-tight ${labelClass}`}>
                         {step.label}
                       </span>
                     </div>
                   )}
                 </div>
-
-                {/* Connector line */}
                 {i < steps.length - 1 && (
-                  <div
-                    className={`w-6 sm:w-14 h-0.5 mt-[-10px] mx-1 sm:mx-2 rounded-full ${
-                      step.number < currentStep
-                        ? "bg-emerald-400/70"
-                        : "bg-white/20"
-                    }`}
-                  />
+                  <div className="flex items-center mt-[-12px] mx-1">
+                    <div className={`h-0.5 w-8 rounded-full transition-all duration-300 ${step.number < currentStep ? "bg-emerald-300" : "bg-white/20"}`} />
+                  </div>
                 )}
               </div>
             );
           })}
         </div>
 
+        {/* Mobile: compact progress dots */}
+        <div className="flex sm:hidden items-center justify-center gap-1 mb-2">
+          {steps.map((step) => {
+            const isCompleted = step.number < currentStep;
+            const isCurrent = step.number === currentStep;
+            return (
+              <span
+                key={step.number}
+                className={`h-1 rounded-full transition-all duration-200 ${
+                  isCompleted
+                    ? "bg-emerald-300 w-3"
+                    : isCurrent
+                      ? "bg-white w-5"
+                      : "bg-white/25 w-1"
+                }`}
+              />
+            );
+          })}
+        </div>
+
         {/* Title */}
         {title && (
-          <h1 className="text-2xl sm:text-3xl font-black text-white mb-2">
+          <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
             {title}
           </h1>
         )}
         {subtitle && (
-          <p className="text-emerald-100 text-sm sm:text-base max-w-lg mx-auto">
+          <p className="text-emerald-100/70 text-[11px] sm:text-xs max-w-md mx-auto">
             {subtitle}
           </p>
         )}
