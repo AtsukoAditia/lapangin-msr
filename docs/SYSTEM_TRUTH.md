@@ -41,6 +41,10 @@ Detailed specification: `docs/13-marketplace-temporary-booking-payment-flow.md`.
 - Admin: `admin_auth_token`
 - Customer: `customer_token`
 
+### Admin roles
+
+JWT tokens store the actual admin role from DB (`super_admin`, `admin`, or `staff`). Middleware and AdminLayout client-side check both accept all three admin roles. Do not hardcode `role === "admin"` anywhere.
+
 ### Current limitation
 
 The project still has demo/in-memory auth paths. Production must move admin and customer accounts to a persistent database and remove demo credential fallback.
