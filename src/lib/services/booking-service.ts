@@ -77,11 +77,15 @@ export class BookingService {
     }
 
     const basePrice = courtData.basePrice ?? 0;
-    const totalPrice = calculatePrice({
+    const baseTotalPrice = calculatePrice({
       durationMinutes: input.durationMinutes,
       basePrice,
       pricingRules,
     });
+
+    // Generate unique 3-digit code for transfer identification
+    const uniqueCode = generateUniqueCode();
+    const totalPrice = baseTotalPrice + uniqueCode;
 
     // ── 4. Re-check conflicts right before save (double-booking prevention) ──
     // This prevents race conditions where two requests pass step 2 simultaneously.
@@ -275,4 +279,12 @@ function isValidTimeRange(startTime: string, endTime: string): boolean {
   const endMinutes = eh * 60 + em;
 
   return endMinutes > startMinutes;
+}
+
+/**
+ * Generate unique 3-digit code (100-999) for transfer identification.
+ * This makes each payment amount unique so admin can easily match transfers to bookings.
+ */
+function generateUniqueCode(): number {
+  return Math.floor(Math.random() * 900) + 100;
 }
