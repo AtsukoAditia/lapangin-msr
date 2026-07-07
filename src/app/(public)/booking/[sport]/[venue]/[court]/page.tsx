@@ -1,15 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  getSportBySlug,
-  getVenueBySlug,
-  getCourtBySlug,
-  getPricingForCourt,
-  formatPrice,
-  mockSports,
-  mockVenues,
-  mockCourts,
-} from "@/lib/mock-data";
+import { getDatabaseAdapter } from "@/lib/adapters";
+import { formatPrice } from "@/lib/mock-data";
 import SlotSelector from "@/components/booking/SlotSelector";
 import BookingSteps from "@/components/booking/BookingSteps";
 
@@ -17,53 +9,56 @@ type Props = {
   params: Promise<{ sport: string; venue: string; court: string }>;
 };
 
-export function generateStaticParams() {
-  const paths: { sport: string; venue: string; court: string }[] = [];
-  for (const sport of mockSports) {
-    for (const venue of mockVenues) {
-      const courts = mockCourts.filter(
-        (c) => c.sportId === sport.id && c.venueId === venue.id && c.isActive
-      );
-      for (const court of courts) {
-        paths.push({
-          sport: sport.slug,
-          venue: venue.slug,
-          court: court.slug,
-        });
-      }
-    }
-  }
-  return paths;
-}
-
 export default async function CourtDetailPage({ params }: Props) {
   const { sport: sportSlug, venue: venueSlug, court: courtSlug } =
     await params;
 
-  const sport = getSportBySlug(sportSlug);
-  const venue = getVenueBySlug(venueSlug);
-  const court = venue ? getCourtBySlug(venueSlug, courtSlug) : undefined;
+  const adapter = getDatabaseAdapter();
+
+  const [sports, venues, courts] = await Promise.all([
+    adapter.getSports(),
+    adapter.getVenues(),
+    adapter.getCourts(),
+  ]);
+
+  const sport = sports.find((s) => s.slug === sportSlug && s.isActive);
+  const venue = venues.find((v) => v.slug === venueSlug && v.isActive);
+  const court = courts.find(
+    (c) =>
+      c.slug === courtSlug &&
+      c.venueId === venue?.id &&
+      c.isActive,
+  );
 
   if (!sport || !venue || !court) return notFound();
 
-  const pricing = getPricingForCourt(court.id);
+  const pricing = await adapter.getPricingRules(court.id);
 
   const steps = [
-    { number: 1, label: "Pilih Olahraga", href: "/booking" },
-    { number: 2, label: "Pilih Venue", href: `/booking/${sport.slug}` },
-    { number: 3, label: "Pilih Jadwal" },
-    { number: 4, label: "Isi Data" },
-    { number: 5, label: "Selesai", href: "/booking" },
+    { number: 1, label: "Pilih Olahraga", href: "/booking", icon: "🏆" },
+    { number: 2, label: "Pilih Lapangan", href: `/booking/${sport.slug}`, icon: "🏟️" },
+    { number: 3, label: "Pilih Jam Main", icon: "⏰" },
+    { number: 4, label: "Data Pelanggan", icon: "👤" },
+    { number: 5, label: "Pembayaran", icon: "💳" },
+    { number: 6, label: "Konfirmasi", icon: "✅" },
   ];
 
+  // Format open/close time (strip seconds)
+  const fmtTime = (t: string) => {
+    const parts = t.split(":");
+    return `${parts[0]}:${parts[1]}`;
+  };
+
   return (
-    <main className="mx-auto max-w-3xl px-4 pb-8">
+    <div className="min-h-screen bg-slate-50">
       <BookingSteps
         currentStep={3}
         steps={steps}
-        title={court.name}
-        subtitle={`${venue.name} · ${sport.name}`}
+        title={`${court.name}`}
+        subtitle={`${venue.name} · ${venue.address || ""}`}
       />
+
+    <main className="mx-auto max-w-3xl px-4 pb-8 pt-6">
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-slate-500">
         <Link href="/" className="hover:text-slate-800">
@@ -101,7 +96,7 @@ export default async function CourtDetailPage({ params }: Props) {
             </span>
           )}
           <span className="rounded bg-slate-100 px-2 py-0.5">
-            Jam {venue.openTime} – {venue.closeTime}
+            Jam {fmtTime(venue.openTime)} – {fmtTime(venue.closeTime)}
           </span>
         </div>
       </div>
@@ -159,10 +154,11 @@ export default async function CourtDetailPage({ params }: Props) {
           sportSlug={sport.slug}
           venueSlug={venue.slug}
           courtSlug={court.slug}
-          openTime={venue.openTime}
-          closeTime={venue.closeTime}
+          openTime={fmtTime(venue.openTime)}
+          closeTime={fmtTime(venue.closeTime)}
         />
       </div>
     </main>
+    </div>
   );
 }
