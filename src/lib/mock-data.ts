@@ -155,7 +155,7 @@ export const mockSports: Sport[] = [
 
 // ── Venues (distributed across ALL areas) ──
 export const mockVenues: Venue[] = [
-  // ── area-jaksel-1: Kebayoran Baru, Selong ──
+  // ── area-jkt-selatan: Jakarta Selatan ──
   {
     id: "venue-selong-futsal",
     name: "Selong Futsal Arena",
@@ -167,11 +167,10 @@ export const mockVenues: Venue[] = [
     closeTime: "23:00",
     isActive: true,
     ownerId: "owner-1",
-    areaId: "area-jaksel-1",
+    areaId: "area-jkt-selatan",
     approvalStatus: "active",
   },
 
-  // ── area-jaksel-2: Pancoran, Duren Tiga ──
   {
     id: "venue-arena1",
     name: "Arena Sport Center",
@@ -183,27 +182,11 @@ export const mockVenues: Venue[] = [
     closeTime: "23:00",
     isActive: true,
     ownerId: "owner-1",
-    areaId: "area-jaksel-2",
+    areaId: "area-jkt-selatan",
     approvalStatus: "active",
   },
 
-  // ── area-jakpus-1: Menteng ──
-  {
-    id: "venue-greenfield",
-    name: "Greenfield Arena",
-    slug: "greenfield-arena",
-    address: "Jl. Gatot Subroto No. 45, Menteng, Jakarta Pusat",
-    mapsUrl: "https://maps.google.com",
-    phone: "081298765432",
-    openTime: "07:00",
-    closeTime: "22:00",
-    isActive: true,
-    ownerId: "owner-2",
-    areaId: "area-jakpus-1",
-    approvalStatus: "active",
-  },
-
-  // ── area-bdg-1: Coblong, Dago ──
+  // ── area-bdg-kota: Kota Bandung ──
   {
     id: "venue-dago-sport",
     name: "Dago Sports Complex",
@@ -215,11 +198,10 @@ export const mockVenues: Venue[] = [
     closeTime: "23:00",
     isActive: true,
     ownerId: "owner-3",
-    areaId: "area-bdg-1",
+    areaId: "area-bdg-kota",
     approvalStatus: "active",
   },
 
-  // ── area-bdg-2: Sukajadi, Pasteur ──
   {
     id: "venue-pasteur-arena",
     name: "Pasteur Sports Arena",
@@ -231,11 +213,10 @@ export const mockVenues: Venue[] = [
     closeTime: "22:00",
     isActive: true,
     ownerId: "owner-3",
-    areaId: "area-bdg-2",
+    areaId: "area-bdg-kota",
     approvalStatus: "active",
   },
 
-  // ── area-bdg-kota: Kota Bandung ──
   {
     id: "venue-bdg",
     name: "Lapangan Bandung Sport",
@@ -251,7 +232,7 @@ export const mockVenues: Venue[] = [
     approvalStatus: "active",
   },
 
-  // ── area-surabaya-1: Gubeng, Airlangga ──
+  // ── area-sby-kota: Kota Surabaya ──
   {
     id: "venue-surabaya-arena",
     name: "Airlangga Sport Center",
@@ -263,7 +244,71 @@ export const mockVenues: Venue[] = [
     closeTime: "23:00",
     isActive: true,
     ownerId: "owner-4",
-    areaId: "area-surabaya-1",
+    areaId: "area-sby-kota",
+    approvalStatus: "active",
+  },
+
+  // ── area-smg-kota: Kota Semarang ──
+  {
+    id: "venue-greenfield",
+    name: "Greenfield Arena",
+    slug: "greenfield-arena",
+    address: "Jl. Gatot Subroto No. 45, Semarang",
+    mapsUrl: "https://maps.google.com",
+    phone: "081298765432",
+    openTime: "07:00",
+    closeTime: "22:00",
+    isActive: true,
+    ownerId: "owner-2",
+    areaId: "area-smg-kota",
+    approvalStatus: "active",
+  },
+
+  // ── area-blp-kota: Denpasar ──
+  {
+    id: "venue-denpasar-sport",
+    name: "Denpasar Sport Center",
+    slug: "denpasar-sport-center",
+    address: "Jl. Teuku Umar No. 88, Denpasar",
+    mapsUrl: "https://maps.google.com",
+    phone: "0361-123456",
+    openTime: "06:00",
+    closeTime: "23:00",
+    isActive: true,
+    ownerId: "owner-1",
+    areaId: "area-blp-kota",
+    approvalStatus: "active",
+  },
+
+  // ── area-yog-kota: Yogyakarta ──
+  {
+    id: "venue-yogya-arena",
+    name: "Yogyakarta Arena",
+    slug: "yogyakarta-arena",
+    address: "Jl. Malioboro No. 50, Yogyakarta",
+    mapsUrl: "https://maps.google.com",
+    phone: "0274-888777",
+    openTime: "06:00",
+    closeTime: "23:00",
+    isActive: true,
+    ownerId: "owner-2",
+    areaId: "area-yog-kota",
+    approvalStatus: "active",
+  },
+
+  // ── area-mdn-kota: Medan ──
+  {
+    id: "venue-medan-sport",
+    name: "Medan Sport Center",
+    slug: "medan-sport-center",
+    address: "Jl. Gatot Subroto No. 100, Medan",
+    mapsUrl: "https://maps.google.com",
+    phone: "061-555666",
+    openTime: "06:00",
+    closeTime: "23:00",
+    isActive: true,
+    ownerId: "owner-4",
+    areaId: "area-mdn-kota",
     approvalStatus: "active",
   },
 ];
