@@ -1,9 +1,10 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useState } from "react";
-import { getCourtById, formatPrice } from "@/lib/mock-data";
+import { Suspense, useState, useEffect } from "react";
+import { formatPrice } from "@/lib/mock-data";
 import BookingSteps from "@/components/booking/BookingSteps";
+import type { Court } from "@/lib/types/domain";
 
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
@@ -23,7 +24,29 @@ function BookingFormContent() {
   const startTime = searchParams.get("startTime") ?? "";
   const endTime = searchParams.get("endTime") ?? "";
 
-  const court = getCourtById(courtId);
+  const [court, setCourt] = useState<Court | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCourt() {
+      if (!courtId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/courts`);
+        const data = await res.json().catch(() => ({}));
+        const courts = data.courts ?? data.data ?? [];
+        const found = courts.find((c: Court) => c.id === courtId) ?? null;
+        setCourt(found);
+      } catch {
+        setCourt(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCourt();
+  }, [courtId]);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -98,6 +121,15 @@ function BookingFormContent() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
+        <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
+        <p className="text-sm text-slate-500">Memuat data lapangan...</p>
+      </div>
+    );
+  }
+
   if (!court || !date || !startTime || !endTime) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
@@ -121,14 +153,11 @@ function BookingFormContent() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header with step indicator */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="mx-auto max-w-2xl px-4 pt-6 pb-2">
-          <h1 className="mb-4 text-center text-xl font-bold text-slate-900">
-            📝 Isi Data Booking
-          </h1>
-          <BookingSteps currentStep={4} />
-        </div>
-      </div>
+      <BookingSteps
+        currentStep={4}
+        title="📝 Isi Data Booking"
+        subtitle="Lengkapi data diri Anda untuk melanjutkan pemesanan"
+      />
 
       <div className="mx-auto max-w-2xl px-4 py-6">
         {/* Booking Summary Card */}
