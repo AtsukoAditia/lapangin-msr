@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { getDatabaseAdapter } from "@/lib/adapters";
 import { formatPrice } from "@/lib/mock-data";
 import SlotSelector from "@/components/booking/SlotSelector";
 import BookingSteps from "@/components/booking/BookingSteps";
+import NotAvailable from "@/components/ui/NotAvailable";
 
 type Props = {
   params: Promise<{ sport: string; venue: string; court: string }>;
@@ -30,7 +30,17 @@ export default async function CourtDetailPage({ params }: Props) {
       c.isActive,
   );
 
-  if (!sport || !venue || !court) return notFound();
+  if (!sport || !venue || !court) {
+    return (
+      <NotAvailable
+        title="Lapangan Tidak Tersedia"
+        description="Lapangan yang Anda cari tidak ditemukan atau tidak tersedia. Silakan pilih lapangan lain."
+        icon="🏟️"
+        backHref={`/booking/${sportSlug}`}
+        backLabel="Kembali ke Daftar Lapangan"
+      />
+    );
+  }
 
   const pricing = await adapter.getPricingRules(court.id);
 

@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { getDatabaseAdapter } from "@/lib/adapters";
 import { formatPrice, mockSports } from "@/lib/mock-data";
 import BookingSteps from "@/components/booking/BookingSteps";
 import { sportEmoji } from "@/lib/sport-icons";
+import NotAvailable from "@/components/ui/NotAvailable";
 
 type Props = {
   params: Promise<{ sport: string }>;
@@ -27,7 +27,17 @@ export default async function SportPage({ params, searchParams }: Props) {
   ]);
 
   const sport = sports.find((s) => s.slug === sportSlug);
-  if (!sport) return notFound();
+  if (!sport) {
+    return (
+      <NotAvailable
+        title="Olahraga Tidak Tersedia"
+        description="Olahraga yang Anda cari tidak ditemukan atau belum tersedia. Silakan pilih olahraga lain."
+        icon="⚽"
+        backHref="/booking"
+        backLabel="Kembali ke Pilih Olahraga"
+      />
+    );
+  }
 
   // Filter venues that have courts for this sport
   const sportCourtIds = courts
