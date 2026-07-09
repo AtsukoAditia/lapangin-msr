@@ -120,19 +120,55 @@ export class BookingService {
   }
 
   /**
-   * Submit payment proof. Customer uploads proof URL.
-   * Sets booking_status=waiting_verification, payment_status=waiting_confirmation.
+   * Submit payment proof by internal booking ID.
+   *
+   * This method is retained for admin/internal compatibility only. Public APIs
+   * should prefer submitPaymentProofByCode() so clients do not rely on internal IDs.
    */
   async submitPaymentProof(bookingId: string, proofUrl: string): Promise<Booking> {
     const booking = await this.getBookingOrThrow(bookingId);
 
-    if (booking.bookingStatus !== "waiting_payment") {
-      throw new Error(`Booking dalam status ${booking.bookingStatus}, tidak bisa upload bukti bayar.`);
-    }
+    this.assertCanSubmitPaymentProof(booking);
 
     const result = await this.adapter.submitPaymentProof(bookingId, proofUrl);
 
     await this.logAudit("payment_proof_submitted", bookingId, "customer", undefined,
+      `Payment proof submitted for ${booking.bookingCode}`
+    );
+
+    return result;
+  }
+
+  /**
+   * Submit payment proof by public booking code.
+   *
+   * Phone verification is supported now and should become mandatory before
+   * production. It is optional during the current MVP so the existing success
+   * page can keep working while the UI is updated.
+   */
+  async submitPaymentProofByCode(input: {
+    bookingCode: string;
+    phone?: string;
+    proofUrl: string;
+  }): Promise<Booking> {
+    const booking = await this.adapter.getBookingByCode(input.bookingCode);
+
+    if (!booking) {
+      throw new Error(`Booking dengan kode ${input.bookingCode} tidak ditemukan.`);
+    }
+
+    if (
+      input.phone &&
+      normalizePhone(input.phone) !== normalizePhone(booking.customerPhone)
+    ) {
+      throw new Error("Nomor telepon tidak sesuai dengan data booking.");
+    }
+
+    this.assertCanSubmitPaymentProof(booking);
+
+    const result = await this.adapter.submitPaymentProof(booking.id, input.proofUrl);
+
+    await this.logAudit("payment_proof_submitted", booking.id, "customer", undefined,
       `Payment proof submitted for ${booking.bookingCode}`
     );
 
@@ -240,6 +276,16 @@ export class BookingService {
     return booking;
   }
 
+  private assertCanSubmitPaymentProof(booking: Booking): void {
+    if (booking.bookingStatus !== "waiting_payment") {
+      throw new Error(`Booking dalam status ${booking.bookingStatus}, tidak bisa upload bukti bayar.`);
+    }
+
+    if (booking.expiresAt && new Date(booking.expiresAt).getTime() <= Date.now()) {
+      throw new Error("Booking sudah kadaluarsa. Silakan buat booking baru.");
+    }
+  }
+
   private async logAudit(
     action: AuditLogAction,
     targetId: string,
@@ -279,6 +325,10 @@ function isValidTimeRange(startTime: string, endTime: string): boolean {
   const endMinutes = eh * 60 + em;
 
   return endMinutes > startMinutes;
+}
+
+function normalizePhone(value: string): string {
+  return value.replace(/\D/g, "").replace(/^62/, "0");
 }
 
 /**
