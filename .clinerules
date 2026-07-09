@@ -1,6 +1,6 @@
 # CLINE RULES — Lapangin
 
-You are developing Lapangin, a web-based PWA sports court booking system.
+You are developing Lapangin, a web-based PWA sports court booking marketplace and venue operations platform.
 
 ## Main Goal
 
@@ -13,19 +13,37 @@ The app must:
 - Be mobile responsive.
 - Support PWA basics.
 - Use mock mode for normal local feature work.
-- Keep Google Spreadsheet as demo database support.
-- Be architected for easy migration to PostgreSQL/Supabase.
-- Include public booking flow and admin CMS.
+- Keep Google Spreadsheet as demo database support only.
+- Be architected for easy migration to PostgreSQL.
+- Include public booking flow, customer auth, loyalty foundation, and admin/owner CMS.
+
+## Product Direction
+
+Lapangin is a **booking-first marketplace** for sports venue booking in Indonesia.
+
+Do not build advanced community features before the supporting booking/payment/auth/loyalty/owner gaps are closed.
+
+Advanced features such as referral, team invite, public roster, open play, sparring, and tournaments must be built only after their dependency gaps are handled.
 
 ## Current Source of Truth
 
 Before changing core app behavior, read:
 
-- `docs/SYSTEM_TRUTH.md`
-- `docs/CLINE_LOCAL_WORKFLOW.md`
-- `docs/12-hardening-production-readiness.md`
+1. `docs/SYSTEM_TRUTH.md`
+2. `docs/CLINE_LOCAL_WORKFLOW.md`
+3. `docs/14-marketplace-gap-sync-plan.md`
+4. Related source files
 
-These files define the current safety boundaries after Stage 12.
+Older docs may contain historical notes. If docs disagree, follow `docs/SYSTEM_TRUTH.md`.
+
+## Canonical Demo Accounts
+
+Use only:
+
+- `admin@lapangin.id / Admin123!@#`
+- `owner@lapangin.id / Owner123!@#`
+
+Do not reintroduce old credentials such as `admin@lapangin.com / admin123`.
 
 ## Tech Stack
 
@@ -34,8 +52,9 @@ Use:
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
-- shadcn/ui style components
 - Server-side validation
+- JWT with env-only secret
+- bcryptjs password hashing
 - Database adapter pattern
 
 Do not:
@@ -47,6 +66,7 @@ Do not:
 - Ignore mobile responsiveness.
 - Ignore error states and loading states.
 - Add JWT fallback secrets.
+- Store plaintext passwords.
 - Expose private booking/customer data through public endpoints.
 - Upgrade many dependencies inside feature PRs.
 
@@ -54,13 +74,17 @@ Do not:
 
 Follow this pattern:
 
+```txt
 UI Page / Component
+↓
+API Route
 ↓
 Service Layer
 ↓
 Database Adapter
 ↓
 Mock / Google Sheets / PostgreSQL
+```
 
 Important:
 
@@ -68,56 +92,17 @@ Important:
 - Booking logic must live in `src/lib/services`.
 - Data access must live in `src/lib/adapters`.
 - Domain types must live in `src/lib/types`.
-- Validation schemas must live in `src/lib/validators`.
+- Validation schemas must live in `src/lib/validators` or close to API routes.
 - Public API routes must only expose data intended for public users.
 - Admin/customer API routes must stay protected by middleware and role checks.
 
-## Stage 12 Safety Rules
+## Local Runtime Rules
 
 - Keep `DATABASE_PROVIDER=mock` for normal local feature work.
 - Use `postgres` only when implementing PostgreSQL adapter/migrations.
-- Do not re-enable public `GET /api/bookings`.
-- Do not bypass `BookingService` when creating bookings.
-- Do not remove server-side double-booking checks.
-- Do not remove PostgreSQL overlap protection from `db/postgres/schema.sql`.
+- Do not remove Google Sheets demo support unless the task explicitly says so.
 - Do not weaken `JWT_SECRET` validation.
-- Do not store plaintext passwords.
-- Do not log full phone numbers, emails, or payment proof URLs unless needed for admin debugging.
 - If changing auth/booking/payment/database, update `docs/SYSTEM_TRUTH.md`.
-
-## Required Modules
-
-Build incrementally:
-
-1. App shell and layout.
-2. Public homepage.
-3. Court listing.
-4. Court detail.
-5. Booking flow.
-6. Booking success.
-7. Admin dashboard.
-8. Admin booking management.
-9. Court management.
-10. Pricing management.
-11. Settings.
-12. Google Sheets adapter.
-13. PWA setup.
-14. Notification foundation.
-15. PostgreSQL adapter stub.
-16. Stage 12 hardening and production readiness.
-
-## Coding Style
-
-- Use clear names.
-- Use small functions.
-- Use TypeScript interfaces/types.
-- Use async/await.
-- Handle empty data.
-- Handle failed requests.
-- Validate user input server-side.
-- Keep UI components simple.
-- Avoid premature overengineering.
-- Make the smallest useful change.
 
 ## Booking Rules
 
@@ -138,6 +123,7 @@ A booking must have:
 - totalPrice
 - paymentStatus
 - bookingStatus
+- expiresAt optional
 - createdAt
 - updatedAt
 
@@ -145,10 +131,12 @@ Booking status:
 
 - pending
 - waiting_payment
+- waiting_verification
 - paid
 - confirmed
 - rejected
 - cancelled
+- expired
 - completed
 - no_show
 
@@ -158,14 +146,65 @@ Payment status:
 - waiting_confirmation
 - dp_paid
 - paid
+- rejected
 - refunded
 
 Prevent double booking:
 
 - Check courtId + bookingDate + startTime + endTime.
-- Active blocking statuses: pending, waiting_payment, paid, confirmed.
+- Active blocking statuses include temporary holds that are not expired and confirmed/paid bookings.
 - Validate again on the server before saving.
 - PostgreSQL production path must enforce overlap prevention at database level.
+- Expired temporary holds must not block availability.
+
+## Payment Proof Rules
+
+- Prefer `bookingCode + phone + proofUrl` for public payment proof submission.
+- `bookingId` is temporary compatibility only.
+- Base64 proof upload is MVP only; production must use object storage.
+- Do not expose internal booking IDs as the primary public lookup mechanism.
+
+## Privacy and Public API Rules
+
+Never expose these fields in public APIs:
+
+- customer phone
+- customer email
+- full customer address
+- payment proof
+- internal booking ID as primary lookup
+- private owner/admin data
+
+Public schedule/session data must use safe fields only, such as:
+
+- venue
+- court
+- sport
+- date/time
+- team name
+- host alias
+- player count
+- open slots
+- skill level
+
+Public roster/open-play visibility must be opt-in.
+
+## Loyalty and Referral Rules
+
+- Points are awarded only after booking confirmation.
+- Keep loyalty awarding idempotent.
+- Prevent duplicate points for the same booking.
+- Referral rewards require verified/meaningful user activity.
+- Do not create large referral bonuses on registration alone.
+- Move loyalty logic into `LoyaltyService` before advanced referral/team features.
+
+## Owner/Admin Rules
+
+- `super_admin` may access platform-wide data.
+- `admin`/owner access must be scoped to owned venue data.
+- `staff` access should be scoped to assigned operational data.
+- Do not hardcode `role === "admin"` as the only accepted admin role.
+- Use helper authorization for venue/booking access checks.
 
 ## Development Workflow
 
@@ -175,7 +214,7 @@ For every task:
 2. Read docs when touching core modules.
 3. Make the smallest useful change.
 4. Explain what changed.
-5. Run or suggest relevant checks.
+5. Run or state relevant checks.
 6. Do not rewrite unrelated files.
 7. Keep MVP working at every step.
 
@@ -188,6 +227,7 @@ For every task:
 - Admin table must be readable.
 - Use status badges.
 - Use empty states.
+- Avoid hiding critical booking/payment status.
 
 ## Environment Variables
 
@@ -217,6 +257,8 @@ Or:
 ```bash
 npm run check
 ```
+
+If a check cannot be run, state clearly which check was not run and why.
 
 ## Impeccable Design Skills
 
@@ -252,9 +294,13 @@ Test:
 
 - Available slots display.
 - Booking creation.
+- Temporary hold expiry.
 - Double booking prevention.
+- Payment proof submission.
 - Admin confirmation.
 - Admin rejection.
+- Loyalty point awarding.
 - Auth redirects and protected routes.
+- Owner-scoped access.
 - Mobile responsive pages.
 - Vercel deployment.
