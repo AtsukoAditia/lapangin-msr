@@ -3,14 +3,15 @@
  *
  * Works independently of the database adapter.
  * Uses in-memory stores for demo/development.
- * In production, this would be replaced by PostgreSQL/Supabase auth.
+ * In production, this must be replaced by persistent database-backed auth.
  *
- * Admin accounts (synced with PostgreSQL/Supabase/Spreadsheet):
+ * Demo admin accounts:
  *   - admin@lapangin.id / Admin123!@# (Super Admin)
  *   - owner@lapangin.id / Owner123!@# (Owner/Venue Admin)
  */
 
 import type { AdminUser, Customer, CustomerPublic } from "@/lib/types/domain";
+import { hashPassword, verifyPassword } from "@/lib/auth/jwt";
 
 // ─── In-Memory Stores ────────────────────────────────────────────────────────
 
@@ -19,7 +20,7 @@ interface StoredAdmin {
   username: string;
   name: string;
   email: string;
-  password: string;
+  passwordHash: string;
   role: "super_admin" | "admin" | "staff";
   isActive: boolean;
   createdAt: string;
@@ -31,7 +32,7 @@ interface StoredCustomer {
   name: string;
   email: string;
   phone: string;
-  password: string;
+  passwordHash: string;
   avatar?: string;
   isVerified: boolean;
   isActive: boolean;
@@ -57,7 +58,7 @@ function seedAdmins() {
       username: "superadmin",
       name: "Super Admin",
       email: "admin@lapangin.id",
-      password: "Admin123!@#",
+      passwordHash: hashPassword("Admin123!@#"),
       role: "super_admin",
       isActive: true,
       createdAt: new Date().toISOString(),
@@ -67,7 +68,7 @@ function seedAdmins() {
       username: "venueowner",
       name: "Venue Owner",
       email: "owner@lapangin.id",
-      password: "Owner123!@#",
+      passwordHash: hashPassword("Owner123!@#"),
       role: "admin",
       isActive: true,
       createdAt: new Date().toISOString(),
@@ -89,7 +90,7 @@ export async function authenticateAdmin(
 ): Promise<AdminUser | null> {
   const admin = adminStore.get(email);
   if (!admin || !admin.isActive) return null;
-  if (admin.password !== password) return null;
+  if (!verifyPassword(password, admin.passwordHash)) return null;
 
   admin.lastLoginAt = new Date().toISOString();
 
@@ -159,7 +160,7 @@ export async function registerCustomer(data: {
     name: data.name,
     email: data.email,
     phone: data.phone,
-    password: data.password,
+    passwordHash: hashPassword(data.password),
     isVerified: false,
     isActive: true,
     loyaltyPoints: 0,
@@ -180,7 +181,7 @@ export async function authenticateCustomer(
 ): Promise<CustomerPublic | null> {
   const customer = customerStore.get(email);
   if (!customer || !customer.isActive) return null;
-  if (customer.password !== password) return null;
+  if (!verifyPassword(password, customer.passwordHash)) return null;
 
   customer.lastLoginAt = new Date().toISOString();
 
@@ -204,7 +205,7 @@ export async function getCustomerByEmail(email: string): Promise<Customer | null
     name: customer.name,
     email: customer.email,
     phone: customer.phone,
-    passwordHash: customer.password,
+    passwordHash: customer.passwordHash,
     avatar: customer.avatar,
     isVerified: customer.isVerified,
     isActive: customer.isActive,
