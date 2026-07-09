@@ -6,18 +6,36 @@ import type { Booking } from "@/lib/types/domain";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { bookingId, proofUrl } = body;
+    const { bookingCode, bookingId, phone, proofUrl } = body;
 
-    if (!bookingId || !proofUrl) {
+    if (!proofUrl) {
       return NextResponse.json(
-        { error: "bookingId and proofUrl are required" },
+        { error: "proofUrl is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!bookingCode && !bookingId) {
+      return NextResponse.json(
+        { error: "bookingCode is required" },
         { status: 400 },
       );
     }
 
     const adapter = getDatabaseAdapter();
     const service = new BookingService(adapter);
-    const booking = await service.submitPaymentProof(bookingId, proofUrl);
+
+    // Prefer public-safe lookup by booking code. `bookingId` is kept only as a
+    // temporary compatibility path for the current success page and should be
+    // removed after the UI sends bookingCode + phone verification consistently.
+    const booking = bookingCode
+      ? await service.submitPaymentProofByCode({
+          bookingCode,
+          phone,
+          proofUrl,
+        })
+      : await service.submitPaymentProof(bookingId, proofUrl);
+
     return NextResponse.json({ success: true, booking: toPublicPaymentBooking(booking) });
   } catch (error) {
     const message =
