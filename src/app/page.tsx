@@ -106,7 +106,7 @@ export default function HomePage() {
           {mockSports.map((sport) => (
             <Link
               key={sport.id}
-              href={`/booking/${sport.slug}`}
+              href={`/cari/${sport.slug}`}
               className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm transition-all hover:border-emerald-400 hover:shadow-xl hover:-translate-y-2 hover:shadow-emerald-100"
             >
               <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500 opacity-0 transition group-hover:opacity-100" />

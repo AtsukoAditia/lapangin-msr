@@ -11,10 +11,10 @@ services:
     environment:
       POSTGRES_DB: lapangin
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"  # Tidak expose ke publik — app akses via internal network
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
