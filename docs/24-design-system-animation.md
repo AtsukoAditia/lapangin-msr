@@ -155,3 +155,32 @@ Deterministic anti-pattern detector (no LLM). Scans for AI-generated UI tells:
 - Add animations to venue detail pages (`/cari/[sport]/[courtId]`)
 - Dark mode support (Tailwind `dark:` prefix + `next-themes`)
 - Consider font swap to DM Sans variable for better weight loading
+
+---
+
+## Post-Launch Fixes (22:12)
+
+### Admin Dashboard Invisible Cards
+**Root cause:** `reveal-item` CSS class starts at `opacity: 0`. IntersectionObserver fired during skeleton loading phase, observed the container, and disconnected. When real stats loaded, cards stayed invisible.
+
+**Fix:** Replaced `useStaggerReveal` with `page-enter-slide-up` on the data block. Skeleton uses `.skeleton` shimmer class instead of `animate-pulse`.
+
+### Notification Bell Popup
+**Before:** Notifications was a full page at `/admin/notifications` in sidebar nav.
+**After:** Bell icon with unread count badge in admin navbar header.
+
+**Features:**
+- Red badge with count (9+ cap)
+- Dropdown with notification list (max 20)
+- Blue dot for unread items
+- Click to mark read
+- "Tandai Semua Dibaca" button
+- 30s auto-poll for new notifications
+- Skeleton loading state
+- Close on outside click
+- "Lihat Semua" link to full page (kept as fallback)
+
+**Files:**
+- `src/components/admin/NotificationBell.tsx` (new)
+- `src/components/admin/AdminLayout.tsx` (bell in header, removed from sidebar)
+- `src/app/admin/page.tsx` (dashboard fix)
