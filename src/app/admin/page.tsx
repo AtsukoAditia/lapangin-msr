@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { useStaggerReveal } from "@/lib/animations";
 
 interface DashboardStats {
   totalBookings: number;
@@ -16,10 +15,6 @@ interface DashboardStats {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const statsGridRef = useRef<HTMLDivElement>(null);
-  const actionsGridRef = useRef<HTMLDivElement>(null);
-  useStaggerReveal(statsGridRef, { count: 6, delay: 80 });
-  useStaggerReveal(actionsGridRef, { count: 4, delay: 100 });
 
   useEffect(() => {
     let cancelled = false;
@@ -88,7 +83,7 @@ export default function AdminDashboard() {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200" />
+            <div key={i} className="h-32 skeleton rounded-2xl" />
           ))}
         </div>
       ) : !stats ? (
@@ -98,9 +93,9 @@ export default function AdminDashboard() {
           <p className="text-sm text-red-500">Coba refresh halaman</p>
         </div>
       ) : (
-        <>
+        <div className="page-enter page-enter-slide-up">
           {/* Main Stats */}
-          <div ref={statsGridRef} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard
               icon="📋"
               label="Total Booking"
@@ -153,14 +148,13 @@ export default function AdminDashboard() {
           {/* Quick Actions */}
           <div className="mt-8">
             <h2 className="mb-4 text-lg font-bold text-slate-800">⚡ Aksi Cepat</h2>
-            <div ref={actionsGridRef} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <QuickAction href="/admin/bookings" icon="📋" label="Kelola Booking" color="from-blue-500 to-indigo-500" />
               <QuickAction href="/admin/courts" icon="🏟️" label="Kelola Lapangan" color="from-emerald-500 to-teal-500" />
               <QuickAction href="/admin/pricing" icon="💰" label="Atur Harga" color="from-amber-500 to-orange-500" />
-              <QuickAction href="/admin/notifications" icon="🔔" label="Notifikasi" color="from-primary-500 to-accent-500" />
             </div>
           </div>
-        </>
+        </div>
       )}
     </AdminLayout>
   );
@@ -184,8 +178,7 @@ function StatCard({
   highlight?: boolean;
 }) {
   const card = (
-    <div className={`reveal-item group relative overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${highlight ? "border-amber-300 ring-2 ring-amber-200" : "border-slate-200"}`}>
-      {/* Top gradient bar */}
+    <div className={`group relative overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${highlight ? "border-amber-300 ring-2 ring-amber-200" : "border-slate-200"}`}>
       <div className={`h-1.5 bg-gradient-to-r ${gradient}`} />
       <div className="p-5">
         <div className="flex items-start justify-between">
@@ -212,7 +205,7 @@ function QuickAction({ href, icon, label, color }: { href: string; icon: string;
   return (
     <a
       href={href}
-      className={`reveal-item group flex items-center gap-3 rounded-xl bg-gradient-to-r ${color} p-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg`}
+      className={`group flex items-center gap-3 rounded-xl bg-gradient-to-r ${color} p-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg`}
     >
       <span className="text-2xl transition group-hover:scale-110">{icon}</span>
       <span className="text-sm font-bold">{label}</span>
