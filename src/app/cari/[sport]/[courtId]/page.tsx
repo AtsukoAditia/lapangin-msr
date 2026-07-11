@@ -172,8 +172,49 @@ export default function CourtDetailPage({ params }: { params: Promise<{ sport: s
               <div className="flex justify-between"><dt className="text-slate-500">Venue</dt><dd className="font-medium text-slate-900">{venue.name}</dd></div>
               {venue.address && <div className="flex justify-between"><dt className="text-slate-500">Alamat</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{venue.address}</dd></div>}
               {venue.phone && <div className="flex justify-between"><dt className="text-slate-500">Telepon</dt><dd className="font-medium text-slate-900">{venue.phone}</dd></div>}
-              {venue.mapsUrl && <div><a href={venue.mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-sm">📍 Lihat di Maps →</a></div>}
             </dl>
+          </div>
+        </div>
+
+        {/* Google Maps */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-slate-900 mb-3">📍 Lokasi</h2>
+          <div className="rounded-xl overflow-hidden border border-slate-100">
+            <iframe
+              title="Lokasi Venue"
+              width="100%"
+              height="280"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              src={venue.mapsUrl
+                ? venue.mapsUrl.includes("/maps/embed")
+                  ? venue.mapsUrl
+                  : `https://maps.google.com/maps?q=${encodeURIComponent(venue.mapsUrl)}&output=embed`
+                : `https://maps.google.com/maps?q=${encodeURIComponent(venue.name + ", " + (venue.address || "") + (area ? ", " + area.city : ""))}&output=embed`
+              }
+            />
+          </div>
+          <div className="mt-3 flex gap-3">
+            <a
+              href={venue.mapsUrl && venue.mapsUrl.includes("/maps/")
+                ? venue.mapsUrl
+                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.name + ", " + (venue.address || "") + (area ? ", " + area.city : ""))}`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition"
+            >
+              📱 Buka di Google Maps
+            </a>
+            {venue.phone && (
+              <a
+                href={`tel:${venue.phone}`}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition"
+              >
+                📞 Hubungi
+              </a>
+            )}
           </div>
         </div>
 
