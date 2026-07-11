@@ -23,6 +23,13 @@ export async function GET(request: NextRequest) {
       adapter.getAllPricingRules(),
     ]);
 
+    // Batch fetch venue ratings for all active venues
+    const activeVenuesEarly = venues.filter((v) => v.isActive && v.approvalStatus === "active");
+    const ratingEntries = await Promise.all(
+      activeVenuesEarly.map((v) => adapter.getVenueRating(v.id).catch(() => ({ avgRating: 0, reviewCount: 0 })))
+    );
+    const venueRatingMap = new Map(activeVenuesEarly.map((v, i) => [v.id, ratingEntries[i]]));
+
     // Find sport by slug
     const sport = sports.find((s) => s.slug === sportSlug && s.isActive);
     if (!sport) {
@@ -49,6 +56,8 @@ export async function GET(request: NextRequest) {
           ? Math.max(...courtPricing.map((p) => p.pricePerHour))
           : court.basePrice;
 
+        const venueRating = venueRatingMap.get(venue.id) || { avgRating: 0, reviewCount: 0 };
+
         return {
           courtId: court.id,
           courtName: court.name,
@@ -70,6 +79,8 @@ export async function GET(request: NextRequest) {
           areaLabel: area?.label || "",
           areaCity: area?.city || "",
           areaProvince: area?.province || "",
+          avgRating: venueRating.avgRating,
+          reviewCount: venueRating.reviewCount,
         };
       });
 

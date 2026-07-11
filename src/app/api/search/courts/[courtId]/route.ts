@@ -87,6 +87,12 @@ export async function GET(
         }));
     }
 
+    // Fetch venue rating + court reviews
+    const [venueRating, courtReviews] = await Promise.all([
+      adapter.getVenueRating(venue.id).catch(() => ({ avgRating: 0, reviewCount: 0 })),
+      adapter.getReviewsByCourt(courtId).catch(() => []),
+    ]);
+
     return NextResponse.json({
       court: {
         id: court.id,
@@ -120,6 +126,11 @@ export async function GET(
       pricing,
       siblingCourts,
       bookingsByDate,
+      rating: {
+        avgRating: venueRating.avgRating,
+        reviewCount: venueRating.reviewCount,
+      },
+      reviews: courtReviews.slice(0, 5),
     });
   } catch (error) {
     console.error("Error fetching court detail:", error);
