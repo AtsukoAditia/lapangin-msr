@@ -190,7 +190,7 @@ function BookingFormContent() {
         subtitle="Lengkapi data diri Anda untuk melanjutkan pemesanan"
       />
 
-      <div className="mx-auto max-w-2xl px-4 py-6">
+      <div className="page-enter page-enter-slide-up mx-auto max-w-2xl px-4 py-6">
         {/* Booking Summary Card */}
         <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm">
           <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3">

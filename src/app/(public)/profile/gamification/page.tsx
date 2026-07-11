@@ -17,14 +17,14 @@ const TIER_COLORS: Record<string, string> = {
   bronze: "from-amber-600 to-amber-700",
   silver: "from-gray-400 to-gray-500",
   gold: "from-yellow-400 to-yellow-600",
-  platinum: "from-indigo-400 to-purple-600",
+  platinum: "from-primary-400 to-primary-600",
 };
 
 const TIER_BADGE: Record<string, string> = {
   bronze: "bg-amber-100 text-amber-800",
   silver: "bg-gray-100 text-gray-800",
   gold: "bg-yellow-100 text-yellow-800",
-  platinum: "bg-indigo-100 text-indigo-800",
+  platinum: "bg-primary-100 text-primary-800",
 };
 
 export default function GamificationPage() {
@@ -55,9 +55,9 @@ export default function GamificationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="page-enter page-enter-slide-up min-h-screen bg-slate-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 px-4 py-8 text-center">
+      <div className="bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 px-4 py-8 text-center">
         <p className="text-4xl mb-2">🏆</p>
         <h1 className="text-2xl font-black text-white">Achievements</h1>
         <p className="text-purple-100 text-sm mt-1">

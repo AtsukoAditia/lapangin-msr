@@ -7,6 +7,7 @@ import Link from "next/link";
 import BookingSteps from "@/components/booking/BookingSteps";
 import AreaSelect from "@/components/booking/AreaSelect";
 import type { Area, Sport } from "@/lib/types/domain";
+import { useScrollReveal, useStaggerReveal } from "@/lib/animations";
 
 function BookingContent() {
   const router = useRouter();
@@ -93,6 +94,10 @@ function BookingContent() {
   );
 
   const activeAreas = areas.filter((a) => a.isActive);
+  const areaRef = useScrollReveal<HTMLDivElement>();
+  const sportsRef = useScrollReveal<HTMLDivElement>();
+  const sportGridRef = useRef<HTMLDivElement>(null);
+  useStaggerReveal(sportGridRef, { count: 8, delay: 60 });
 
   // Filter sports based on search query
   const filteredSports = availableSports.filter((sport) =>
@@ -109,7 +114,7 @@ function BookingContent() {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-12">
         {/* Area Selection */}
-        <section className="mb-5">
+        <section ref={areaRef} className="reveal mb-5">
           <h2 className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wide">
             Lokasi
           </h2>

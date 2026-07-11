@@ -50,7 +50,7 @@ const TIER_CONFIG: Record<string, { label: string; color: string; icon: string; 
   bronze: { label: "Bronze", color: "from-amber-700 to-amber-500", icon: "🥉", next: "Silver", minPoints: 0 },
   silver: { label: "Silver", color: "from-gray-400 to-gray-300", icon: "🥈", next: "Gold", minPoints: 500 },
   gold: { label: "Gold", color: "from-yellow-500 to-yellow-300", icon: "🥇", next: "Platinum", minPoints: 2000 },
-  platinum: { label: "Platinum", color: "from-purple-500 to-purple-300", icon: "💎", minPoints: 5000 },
+  platinum: { label: "Platinum", color: "from-primary-500 to-primary-300", icon: "💎", minPoints: 5000 },
 };
 
 function getTier(points: number) {
@@ -173,7 +173,7 @@ export default function ProfilePage() {
   const progress = tierConfig.next ? Math.min(100, ((points - tierConfig.minPoints) / (nextTierPoints - tierConfig.minPoints)) * 100) : 100;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="page-enter page-enter-slide-up min-h-screen bg-gray-50 pb-24">
       {/* Profile Header */}
       <div className={`bg-gradient-to-br ${tierConfig.color} text-white`}>
         <div className="max-w-lg mx-auto px-4 py-8 text-center">

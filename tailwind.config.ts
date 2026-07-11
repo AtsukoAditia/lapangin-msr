@@ -55,8 +55,8 @@ const config: Config = {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        display: ['DM Sans', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
         'gradient-sport': 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #f97316 100%)',
@@ -77,6 +77,7 @@ const config: Config = {
         'slide-down': 'slideDown 0.3s ease-out',
         'scale-in': 'scaleIn 0.3s ease-out',
         'bounce-subtle': 'bounceSubtle 2s infinite',
+        'float': 'float 2s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -98,6 +99,10 @@ const config: Config = {
         bounceSubtle: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-6px)' },
         },
       },
     },
