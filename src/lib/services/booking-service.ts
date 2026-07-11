@@ -1,6 +1,6 @@
 import type { CreateBookingInput, DatabaseAdapter } from "@/lib/adapters/database-adapter";
 import type { Booking, AuditLogAction } from "@/lib/types/domain";
-import { calculatePrice } from "./pricing-service";
+import { calculatePrice, calculateDynamicPrice } from "./pricing-service";
 import { hasBlockedSlotConflict, hasBookingConflict } from "./availability-service";
 import {
   sendBookingCreated,
@@ -77,11 +77,15 @@ export class BookingService {
     }
 
     const basePrice = courtData.basePrice ?? 0;
-    const baseTotalPrice = calculatePrice({
+    const baseTotalPrice = await calculateDynamicPrice({
       durationMinutes: input.durationMinutes,
       basePrice,
       pricingRules,
-    });
+      bookingDate: input.bookingDate,
+      startTime: input.startTime,
+      courtId: input.courtId,
+      adapter: this.adapter,
+    }, this.adapter);
 
     // Generate unique 3-digit code for transfer identification
     const uniqueCode = generateUniqueCode();

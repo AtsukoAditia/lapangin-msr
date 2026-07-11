@@ -48,6 +48,34 @@ function BookingFormContent() {
     loadCourt();
   }, [courtId]);
 
+  const [pricingInfo, setPricingInfo] = useState<{
+    basePricePerHour: number;
+    baseTotal: number;
+    finalTotal: number;
+    finalMultiplier: number;
+    savings: number;
+    multipliers: { name: string; factor: number; reason: string }[];
+  } | null>(null);
+  const [pricingLoading, setPricingLoading] = useState(false);
+
+  // Fetch dynamic pricing when all params available
+  useEffect(() => {
+    if (!courtId || !date || !startTime || !endTime) return;
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading state before async fetch
+    setPricingLoading(true);
+    fetch(`/api/pricing/calculate?courtId=${courtId}&date=${date}&startTime=${startTime}&endTime=${endTime}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data.finalTotal) {
+          setPricingInfo(data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setPricingLoading(false); });
+    return () => { cancelled = true; };
+  }, [courtId, date, startTime, endTime]);
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -58,9 +86,12 @@ function BookingFormContent() {
 
   const durationMinutes =
     startTime && endTime ? getDurationMinutes(startTime, endTime) : 60;
-  const totalPrice = court
+
+  // Fallback total from court base price
+  const fallbackTotal = court
     ? Math.round((durationMinutes / 60) * court.basePrice)
     : 0;
+  const totalPrice = pricingInfo?.finalTotal ?? fallbackTotal;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -198,9 +229,29 @@ function BookingFormContent() {
               <div className="border-t border-slate-100 pt-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-600">💰 Total Harga</span>
-                  <span className="text-xl font-extrabold text-emerald-600">
-                    {formatPrice(totalPrice)}
-                  </span>
+                  <div className="text-right">
+                    {pricingInfo && pricingInfo.finalMultiplier !== 1 && (
+                      <p className="text-xs text-slate-400 line-through">{formatPrice(pricingInfo.baseTotal)}</p>
+                    )}
+                    <span className={`text-xl font-extrabold ${pricingInfo && pricingInfo.savings < 0 ? 'text-amber-600' : pricingInfo && pricingInfo.savings > 0 ? 'text-blue-600' : 'text-emerald-600'}`}>
+                      {pricingLoading ? '...' : formatPrice(totalPrice)}
+                    </span>
+                    {pricingInfo && pricingInfo.multipliers.length > 0 && (
+                      <div className="mt-1 space-y-0.5">
+                        {pricingInfo.multipliers.map((m, i) => (
+                          <p key={i} className="text-[10px] text-slate-500">
+                            {m.factor > 1 ? '📈' : '📉'} {m.reason}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    {pricingInfo && pricingInfo.savings > 0 && (
+                      <p className="text-xs font-medium text-blue-600">Hemat {formatPrice(pricingInfo.savings)}</p>
+                    )}
+                    {pricingInfo && pricingInfo.savings < 0 && (
+                      <p className="text-xs font-medium text-amber-600">+{formatPrice(Math.abs(pricingInfo.savings))} surcharge</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
