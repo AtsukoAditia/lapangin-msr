@@ -27,6 +27,8 @@ import type {
   RewardRedemption,
   Area,
   VenueOwner,
+  Review,
+  ReviewWithDetails,
 } from "@/lib/types/domain";
 
 // ── Singleton Pool ──
@@ -514,5 +516,145 @@ export class PostgresAdapter implements DatabaseAdapter {
 
   async updateCustomerSpent(customerId: string, amount: number): Promise<void> {
     await pool.query("UPDATE customers SET total_spent = total_spent + $1, updated_at = NOW() WHERE id = $2", [amount, customerId]);
+  }
+
+  // ── Reviews ──
+
+  async createReview(data: {
+    bookingId: string;
+    customerId: string;
+    venueId: string;
+    courtId?: string;
+    rating: number;
+    comment: string;
+    photos?: string[];
+  }): Promise<Review> {
+    const id = `review-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const { rows } = await pool.query(
+      `INSERT INTO reviews (id, booking_id, customer_id, venue_id, court_id, rating, comment)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [id, data.bookingId, data.customerId, data.venueId, data.courtId || null, data.rating, data.comment]
+    );
+
+    // Insert photos if provided
+    if (data.photos && data.photos.length > 0) {
+      for (const photoUrl of data.photos) {
+        const photoId = `rphoto-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        await pool.query(
+          `INSERT INTO review_photos (id, review_id, photo_url) VALUES ($1, $2, $3)`,
+          [photoId, id, photoUrl]
+        );
+      }
+    }
+
+    // Update venue aggregate rating
+    await this.updateVenueRating(data.venueId);
+
+    return this.mapReview(rows[0]);
+  }
+
+  async getReviewsByVenue(venueId: string): Promise<ReviewWithDetails[]> {
+    const { rows } = await pool.query(
+      `SELECT r.*, c.name as customer_name, c.avatar as customer_avatar
+       FROM reviews r
+       LEFT JOIN customers c ON r.customer_id = c.id
+       WHERE r.venue_id = $1 AND r.is_visible = true
+       ORDER BY r.created_at DESC`,
+      [venueId]
+    );
+
+    const reviews: ReviewWithDetails[] = [];
+    for (const row of rows) {
+      const review = this.mapReview(row) as ReviewWithDetails;
+      review.customerName = row.customer_name;
+      review.customerAvatar = row.customer_avatar;
+      // Fetch photos
+      const { rows: photoRows } = await pool.query(
+        `SELECT * FROM review_photos WHERE review_id = $1 ORDER BY created_at`,
+        [review.id]
+      );
+      review.photos = photoRows.map((p) => ({
+        id: p.id,
+        reviewId: p.review_id,
+        photoUrl: p.photo_url,
+        createdAt: p.created_at,
+      }));
+      reviews.push(review);
+    }
+    return reviews;
+  }
+
+  async getReviewsByCourt(courtId: string): Promise<ReviewWithDetails[]> {
+    const { rows } = await pool.query(
+      `SELECT r.*, c.name as customer_name, c.avatar as customer_avatar
+       FROM reviews r
+       LEFT JOIN customers c ON r.customer_id = c.id
+       WHERE r.court_id = $1 AND r.is_visible = true
+       ORDER BY r.created_at DESC`,
+      [courtId]
+    );
+
+    const reviews: ReviewWithDetails[] = [];
+    for (const row of rows) {
+      const review = this.mapReview(row) as ReviewWithDetails;
+      review.customerName = row.customer_name;
+      review.customerAvatar = row.customer_avatar;
+      const { rows: photoRows } = await pool.query(
+        `SELECT * FROM review_photos WHERE review_id = $1 ORDER BY created_at`,
+        [review.id]
+      );
+      review.photos = photoRows.map((p) => ({
+        id: p.id,
+        reviewId: p.review_id,
+        photoUrl: p.photo_url,
+        createdAt: p.created_at,
+      }));
+      reviews.push(review);
+    }
+    return reviews;
+  }
+
+  async getReviewByBooking(bookingId: string): Promise<Review | null> {
+    const { rows } = await pool.query(
+      `SELECT * FROM reviews WHERE booking_id = $1`,
+      [bookingId]
+    );
+    return rows[0] ? this.mapReview(rows[0]) : null;
+  }
+
+  async getVenueRating(venueId: string): Promise<{ avgRating: number; reviewCount: number }> {
+    const { rows } = await pool.query(
+      `SELECT COALESCE(AVG(rating), 0) as avg_rating, COUNT(*) as review_count
+       FROM reviews WHERE venue_id = $1 AND is_visible = true`,
+      [venueId]
+    );
+    return {
+      avgRating: parseFloat(rows[0].avg_rating) || 0,
+      reviewCount: parseInt(rows[0].review_count) || 0,
+    };
+  }
+
+  async updateVenueRating(venueId: string): Promise<void> {
+    const { avgRating, reviewCount } = await this.getVenueRating(venueId);
+    await pool.query(
+      `UPDATE venues SET avg_rating = $1, review_count = $2, updated_at = NOW() WHERE id = $3`,
+      [avgRating, reviewCount, venueId]
+    );
+  }
+
+  private mapReview(row: Record<string, unknown>): Review {
+    return {
+      id: row.id as string,
+      bookingId: row.booking_id as string,
+      customerId: row.customer_id as string,
+      venueId: row.venue_id as string,
+      courtId: row.court_id as string | undefined,
+      rating: row.rating as number,
+      comment: row.comment as string,
+      isVisible: row.is_visible as boolean,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    };
   }
 }

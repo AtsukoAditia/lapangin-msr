@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import BookingSteps from "@/components/booking/BookingSteps";
+import { ReviewForm } from "@/components/reviews";
 import type { Booking, PaymentMethod } from "@/lib/types/domain";
 
 const POLL_INTERVAL_MS = 5000;
@@ -628,6 +629,17 @@ function SuccessContent() {
             </a>
           </div>
         </section>
+
+        {/* Review Section - only for confirmed bookings */}
+        {booking.bookingStatus === "confirmed" && (
+          <section className="mb-6">
+            <ReviewForm
+              bookingId={booking.id}
+              venueId={booking.venueId}
+              courtId={booking.courtId}
+            />
+          </section>
+        )}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link

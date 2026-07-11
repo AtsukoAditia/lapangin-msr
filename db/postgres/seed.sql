@@ -146,3 +146,30 @@ INSERT INTO payment_methods (id, name, label, type, account_name, account_number
   ('pm-2', 'Mandiri Transfer', 'Mandiri Transfer', 'bank_transfer', 'PT Lapangin Indonesia', '0987654321', 'Mandiri', true, 'Transfer ke rekening Mandiri atas nama PT Lapangin Indonesia. Setelah transfer, kirim bukti pembayaran.', NOW(), NOW()),
   ('pm-3', 'QRIS', 'QRIS', 'qris', 'PT Lapangin Indonesia', 'QRIS-LAPANGIN', NULL, true, 'Scan QR code yang diberikan. Setelah transfer, kirim bukti pembayaran.', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
+-- ── Customers ──
+INSERT INTO customers (name, email, phone, password_hash, is_verified, is_active, loyalty_points, total_spent, member_since) VALUES
+  ('John Doe', 'john@example.com', '081234567890', '$2b$12$LJ3m4ys3Lz0wqV9rK5e5xuQpR1FnVZxYf8K7yC3T9hG2kM4nO6pQi', true, true, 250, 750000, '2026-06-01T00:00:00Z'),
+  ('Jane Smith', 'jane@example.com', '081234567891', '$2b$12$LJ3m4ys3Lz0wqV9rK5e5xuQpR1FnVZxYf8K7yC3T9hG2kM4nO6pQi', true, true, 180, 540000, '2026-06-15T00:00:00Z'),
+  ('Bob Wilson', 'bob@example.com', '081234567892', '$2b$12$LJ3m4ys3Lz0wqV9rK5e5xuQpR1FnVZxYf8K7yC3T9hG2kM4nO6pQi', true, true, 120, 360000, '2026-06-20T00:00:00Z')
+ON CONFLICT (email) DO NOTHING;
+
+-- ── Link bookings to customers ──
+UPDATE bookings SET user_id = (SELECT id FROM customers WHERE email = 'john@example.com') WHERE id = 'booking-001';
+UPDATE bookings SET user_id = (SELECT id FROM customers WHERE email = 'jane@example.com') WHERE id = 'booking-002';
+UPDATE bookings SET user_id = (SELECT id FROM customers WHERE email = 'bob@example.com') WHERE id = 'booking-003';
+UPDATE bookings SET user_id = (SELECT id FROM customers WHERE email = 'jane@example.com') WHERE id = 'booking-004';
+UPDATE bookings SET user_id = (SELECT id FROM customers WHERE email = 'bob@example.com') WHERE id = 'booking-005';
+
+-- ── Reviews ──
+INSERT INTO reviews (id, booking_id, customer_id, venue_id, court_id, rating, comment, is_visible, created_at, updated_at) VALUES
+  ('review-001', 'booking-001', (SELECT id FROM customers WHERE email = 'john@example.com'), 'venue-greenfield', 'court-f1', 5, 'Lapangan bersih, fasilitas lengkap! Staff ramah banget. Pasti balik lagi.', true, '2026-07-01T10:00:00Z', '2026-07-01T10:00:00Z'),
+  ('review-002', 'booking-002', (SELECT id FROM customers WHERE email = 'jane@example.com'), 'venue-greenfield', 'court-f1', 4, 'Lapangan bagus, cuma parkir agak sempit. Overall recommended!', true, '2026-07-02T14:00:00Z', '2026-07-02T14:00:00Z'),
+  ('review-003', 'booking-003', (SELECT id FROM customers WHERE email = 'bob@example.com'), 'venue-greenfield', 'court-b1', 5, 'Court bulu tangkis terbaik di Jakarta Selatan! Lantai tidak licin, pencahayaan bagus.', true, '2026-07-03T18:00:00Z', '2026-07-03T18:00:00Z'),
+  ('review-004', 'booking-004', (SELECT id FROM customers WHERE email = 'jane@example.com'), 'venue-greenfield', 'court-f2', 4, 'Standar FIFA beneran! Net dan tiang bagus. Recommended buat latihan serius.', true, '2026-07-05T09:00:00Z', '2026-07-05T09:00:00Z'),
+  ('review-005', 'booking-005', (SELECT id FROM customers WHERE email = 'bob@example.com'), 'venue-rahasian', 'court-b4', 3, 'Lapangan cukup bagus tapi harga agak mahal untuk area sini. AC kurang dingin.', true, '2026-07-06T20:00:00Z', '2026-07-06T20:00:00Z')
+ON CONFLICT (id) DO NOTHING;
+
+-- Update venue aggregate ratings
+UPDATE venues SET
+  avg_rating = COALESCE((SELECT AVG(rating) FROM reviews WHERE venue_id = venues.id AND is_visible = true), 0),
+  review_count = (SELECT COUNT(*) FROM reviews WHERE venue_id = venues.id AND is_visible = true);

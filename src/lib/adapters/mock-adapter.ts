@@ -26,6 +26,9 @@ import type {
   RewardRedemption,
   Area,
   VenueOwner,
+  Review,
+  ReviewWithDetails,
+  ReviewPhoto,
 } from "@/lib/types/domain";
 import {
   mockSports,
@@ -612,5 +615,81 @@ export class MockAdapter implements DatabaseAdapter {
       customer.totalSpent += amount;
       customer.updatedAt = new Date().toISOString();
     }
+  }
+
+  // ── Reviews ──
+  private reviewStore: Review[] = [];
+  private reviewPhotoStore: ReviewPhoto[] = [];
+
+  async createReview(data: { bookingId: string; customerId: string; venueId: string; courtId?: string; rating: number; comment: string; photos?: string[] }): Promise<Review> {
+    const review: Review = {
+      id: `review-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      bookingId: data.bookingId,
+      customerId: data.customerId,
+      venueId: data.venueId,
+      courtId: data.courtId,
+      rating: data.rating,
+      comment: data.comment,
+      isVisible: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.reviewStore.push(review);
+
+    if (data.photos) {
+      for (const url of data.photos) {
+        this.reviewPhotoStore.push({
+          id: `rphoto-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          reviewId: review.id,
+          photoUrl: url,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    }
+    return review;
+  }
+
+  async getReviewsByVenue(venueId: string): Promise<ReviewWithDetails[]> {
+    const customers = getCustomers();
+    return this.reviewStore
+      .filter((r) => r.venueId === venueId && r.isVisible)
+      .map((r) => {
+        const customer = customers.find((c) => c.id === r.customerId);
+        return {
+          ...r,
+          customerName: customer?.name,
+          customerAvatar: customer?.avatar,
+          photos: this.reviewPhotoStore.filter((p) => p.reviewId === r.id),
+        };
+      });
+  }
+
+  async getReviewsByCourt(courtId: string): Promise<ReviewWithDetails[]> {
+    const customers = getCustomers();
+    return this.reviewStore
+      .filter((r) => r.courtId === courtId && r.isVisible)
+      .map((r) => {
+        const customer = customers.find((c) => c.id === r.customerId);
+        return {
+          ...r,
+          customerName: customer?.name,
+          customerAvatar: customer?.avatar,
+          photos: this.reviewPhotoStore.filter((p) => p.reviewId === r.id),
+        };
+      });
+  }
+
+  async getReviewByBooking(bookingId: string): Promise<Review | null> {
+    return this.reviewStore.find((r) => r.bookingId === bookingId) || null;
+  }
+
+  async getVenueRating(venueId: string): Promise<{ avgRating: number; reviewCount: number }> {
+    const reviews = this.reviewStore.filter((r) => r.venueId === venueId && r.isVisible);
+    const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+    return { avgRating: Math.round(avgRating * 100) / 100, reviewCount: reviews.length };
+  }
+
+  async updateVenueRating(venueId: string): Promise<void> {
+    // No-op for mock — ratings are computed on the fly
   }
 }
