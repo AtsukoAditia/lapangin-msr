@@ -2,11 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { BookingService } from "@/lib/services/booking-service";
 import { getDatabaseAdapter } from "@/lib/adapters";
 import type { Booking } from "@/lib/types/domain";
+import { bookingLimiter, getClientIP, checkRateLimit, sanitizeHTML } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIP(request);
+
+    // Rate limit
+    const rateLimited = await checkRateLimit(bookingLimiter, ip);
+    if (rateLimited) {
+      return NextResponse.json(
+        { error: `Terlalu banyak request. Coba lagi dalam ${rateLimited.retryAfter} detik.` },
+        { status: 429 },
+      );
+    }
+
     const body = await request.json();
-    const { bookingCode, bookingId, phone, proofUrl } = body;
+    const bookingCode = sanitizeHTML(String(body.bookingCode || "")).slice(0, 20);
+    const bookingId = sanitizeHTML(String(body.bookingId || "")).slice(0, 50);
+    const phone = String(body.phone || "").replace(/[^0-9+]/g, "").slice(0, 20);
+    const proofUrl = sanitizeHTML(String(body.proofUrl || "")).slice(0, 2000);
 
     if (!proofUrl) {
       return NextResponse.json(

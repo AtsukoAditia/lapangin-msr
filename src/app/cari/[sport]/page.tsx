@@ -74,9 +74,9 @@ export default function SearchPage({
       .catch(() => {});
   }, []);
 
-  // Fetch courts
-  const fetchCourts = useCallback(() => {
-    setLoading(true);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    const controller = new AbortController();
     const params = new URLSearchParams();
     params.set("sport", sportSlug);
     if (search) params.set("q", search);
@@ -87,7 +87,7 @@ export default function SearchPage({
     params.set("page", String(page));
     params.set("limit", "12");
 
-    fetch(`/api/search/courts?${params}`)
+    fetch(`/api/search/courts?${params}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((d) => {
         setCourts(d.courts || []);
@@ -99,11 +99,9 @@ export default function SearchPage({
         setTotal(0);
       })
       .finally(() => setLoading(false));
-  }, [sportSlug, search, areaId, minPrice, maxPrice, sort, page]);
 
-  useEffect(() => {
-    fetchCourts();
-  }, [fetchCourts]);
+    return () => controller.abort();
+  }, [sportSlug, search, areaId, minPrice, maxPrice, sort, page]);
 
   // Update URL
   const updateUrl = useCallback(() => {

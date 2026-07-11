@@ -1,14 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { registerCustomer } from "@/lib/auth/service";
 import { createToken, CUSTOMER_TOKEN_NAME } from "@/lib/auth/jwt";
+import { apiLimiter, getClientIP, checkRateLimit, sanitizeHTML, isValidEmail, isValidPhone } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, phone, password } = await request.json();
+    const ip = getClientIP(request);
+
+    // Rate limit
+    const rateLimited = await checkRateLimit(apiLimiter, ip);
+    if (rateLimited) {
+      return NextResponse.json(
+        { success: false, error: `Terlalu banyak request. Coba lagi dalam ${rateLimited.retryAfter} detik.` },
+        { status: 429 },
+      );
+    }
+
+    const raw = await request.json();
+    const name = sanitizeHTML(String(raw.name || "")).trim().slice(0, 100);
+    const email = sanitizeHTML(String(raw.email || "")).trim().toLowerCase().slice(0, 200);
+    const phone = String(raw.phone || "").replace(/[^0-9+]/g, "").slice(0, 20);
+    const password = String(raw.password || "");
 
     if (!name || !email || !phone || !password) {
       return NextResponse.json(
         { success: false, error: "Nama, email, telepon, dan password wajib diisi" },
+        { status: 400 },
+      );
+    }
+
+    if (!isValidEmail(email)) {
+      return NextResponse.json(
+        { success: false, error: "Format email tidak valid" },
+        { status: 400 },
+      );
+    }
+
+    if (!isValidPhone(phone)) {
+      return NextResponse.json(
+        { success: false, error: "Format nomor telepon tidak valid" },
         { status: 400 },
       );
     }

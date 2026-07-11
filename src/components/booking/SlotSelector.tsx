@@ -91,10 +91,14 @@ export default function SlotSelector({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotError, setSlotError] = useState<string | null>(null);
 
+  // Track selected date to clear slots on change
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     let active = true;
 
     async function loadSlots() {
+      // Clear selected slots when date changes
+      setSelectedSlots([]);
       setLoadingSlots(true);
       setSlotError(null);
 
@@ -136,10 +140,6 @@ export default function SlotSelector({
     };
   }, [courtId, selectedDate, openTime, closeTime]);
 
-  // Clear selected slots when date changes
-  useEffect(() => {
-    setSelectedSlots([]);
-  }, [selectedDate]);
 
   function handleSlotClick(slot: Slot) {
     const isSelected = selectedSlots.some(
