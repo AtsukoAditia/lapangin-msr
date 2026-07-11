@@ -184,3 +184,41 @@ Deterministic anti-pattern detector (no LLM). Scans for AI-generated UI tells:
 - `src/components/admin/NotificationBell.tsx` (new)
 - `src/components/admin/AdminLayout.tsx` (bell in header, removed from sidebar)
 - `src/app/admin/page.tsx` (dashboard fix)
+
+---
+
+## Auth Data Source Unification Fix (00:44)
+
+### Problem
+Auth service used in-memory `Map` stores (`auth/service.ts`) while booking/loyalty APIs used PostgreSQL. This caused:
+1. **Customer IDs:** `cust-xxx` (in-memory) vs UUID (Postgres) → booking creation failed with UUID constraint error
+2. **Loyalty API → 500:** Tried to look up customer by `cust-xxx` in PostgreSQL, UUID parse error
+3. **Data loss:** All customer data wiped on dev server restart
+
+### Solution
+Rewrote `auth/service.ts` to use `getDatabaseAdapter()` instead of in-memory stores.
+
+| Function | Before (in-memory) | After (PostgreSQL) |
+|----------|-------------------|-------------------|
+| `registerCustomer()` | `customerStore.set()` → `cust-xxx` | `adapter.registerCustomer()` → UUID |
+| `authenticateCustomer()` | `customerStore.get()` | `adapter.getCustomerByEmail()` + bcrypt |
+| `getCustomerById()` | loop over Map | `adapter.getCustomerById()` |
+| `addLoyaltyPoints()` | mutate in-memory | `adapter.addLoyaltyPoints()` |
+| `getAllCustomers()` | Array.from(Map) | `adapter.getAllCustomers()` |
+
+Admin auth unchanged — still delegates to adapter with bcrypt verification.
+
+### Testing Results
+| Test | Before | After |
+|------|--------|-------|
+| Customer register | ✅ (in-memory UUID) | ✅ (PostgreSQL UUID) |
+| Customer login | ✅ | ✅ |
+| Session check | ✅ | ✅ |
+| **Booking creation** | ❌ UUID constraint | ✅ Works |
+| **Loyalty API** | ❌ 500 | ✅ 200 |
+| Pricing API | ✅ 404 (no court) | ✅ 200 |
+| Admin auth + pages | ✅ | ✅ |
+| Owner auth + pages | ✅ | ✅ |
+| Notifications | ✅ | ✅ |
+| Availability | ✅ | ✅ |
+| All public APIs | ✅ | ✅ |
