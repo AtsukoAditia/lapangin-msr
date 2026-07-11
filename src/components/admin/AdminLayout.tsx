@@ -20,6 +20,7 @@ const navItems = [
   { href: "/admin/courts", label: "Lapangan", icon: "🏟️" },
   { href: "/admin/pricing", label: "Harga", icon: "💰" },
   { href: "/admin/analytics", label: "Analytics", icon: "📈" },
+  { href: "/admin/customers", label: "Pelanggan", icon: "👥" },
   { href: "/admin/notifications", label: "Notifikasi", icon: "🔔" },
   { href: "/admin/settings", label: "Pengaturan", icon: "⚙️" },
 ];
