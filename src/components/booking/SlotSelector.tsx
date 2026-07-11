@@ -92,7 +92,7 @@ export default function SlotSelector({
   const [slotError, setSlotError] = useState<string | null>(null);
 
   // Track selected date to clear slots on change
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+   
   useEffect(() => {
     let active = true;
 
