@@ -36,7 +36,7 @@ export default function AdminCustomersPage() {
 
   return (
     <AdminLayout>
-      <div className="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-6 shadow-xl sm:p-8">
+      <div className="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-primary-700 to-blue-600 p-6 shadow-xl sm:p-8">
         <h1 className="text-2xl font-black text-white sm:text-3xl">👥 Pelanggan</h1>
         <p className="mt-1 text-sm text-purple-100">{customers.length} total pelanggan terdaftar</p>
       </div>
@@ -75,7 +75,7 @@ export default function AdminCustomersPage() {
                 <div className="p-4 sm:p-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-lg font-bold text-white">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-lg font-bold text-white">
                         {customer.name.charAt(0).toUpperCase()}
                       </div>
                       <div>

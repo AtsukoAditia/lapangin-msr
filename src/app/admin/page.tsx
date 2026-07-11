@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { useStaggerReveal } from "@/lib/animations";
 
 interface DashboardStats {
   totalBookings: number;
@@ -15,6 +16,10 @@ interface DashboardStats {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const statsGridRef = useRef<HTMLDivElement>(null);
+  const actionsGridRef = useRef<HTMLDivElement>(null);
+  useStaggerReveal(statsGridRef, { count: 6, delay: 80 });
+  useStaggerReveal(actionsGridRef, { count: 4, delay: 100 });
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +70,7 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       {/* Welcome Banner */}
-      <div className="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-6 shadow-xl sm:p-8">
+      <div className="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-primary-700 to-blue-500 p-6 shadow-xl sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-black text-white sm:text-3xl">🏟️ Dashboard</h1>
@@ -95,7 +100,7 @@ export default function AdminDashboard() {
       ) : (
         <>
           {/* Main Stats */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div ref={statsGridRef} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard
               icon="📋"
               label="Total Booking"
@@ -124,8 +129,8 @@ export default function AdminDashboard() {
               icon="💰"
               label="Total Pendapatan"
               value={`Rp ${stats.totalRevenue.toLocaleString("id-ID")}`}
-              gradient="from-purple-500 to-indigo-500"
-              light="bg-purple-50 text-purple-700"
+              gradient="from-primary-500 to-primary-600"
+              light="bg-primary-50 text-primary-700"
             />
             <StatCard
               icon="🏟️"
@@ -148,11 +153,11 @@ export default function AdminDashboard() {
           {/* Quick Actions */}
           <div className="mt-8">
             <h2 className="mb-4 text-lg font-bold text-slate-800">⚡ Aksi Cepat</h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div ref={actionsGridRef} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <QuickAction href="/admin/bookings" icon="📋" label="Kelola Booking" color="from-blue-500 to-indigo-500" />
               <QuickAction href="/admin/courts" icon="🏟️" label="Kelola Lapangan" color="from-emerald-500 to-teal-500" />
               <QuickAction href="/admin/pricing" icon="💰" label="Atur Harga" color="from-amber-500 to-orange-500" />
-              <QuickAction href="/admin/notifications" icon="🔔" label="Notifikasi" color="from-purple-500 to-pink-500" />
+              <QuickAction href="/admin/notifications" icon="🔔" label="Notifikasi" color="from-primary-500 to-accent-500" />
             </div>
           </div>
         </>
@@ -179,7 +184,7 @@ function StatCard({
   highlight?: boolean;
 }) {
   const card = (
-    <div className={`group relative overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${highlight ? "border-amber-300 ring-2 ring-amber-200" : "border-slate-200"}`}>
+    <div className={`reveal-item group relative overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${highlight ? "border-amber-300 ring-2 ring-amber-200" : "border-slate-200"}`}>
       {/* Top gradient bar */}
       <div className={`h-1.5 bg-gradient-to-r ${gradient}`} />
       <div className="p-5">
@@ -207,7 +212,7 @@ function QuickAction({ href, icon, label, color }: { href: string; icon: string;
   return (
     <a
       href={href}
-      className={`group flex items-center gap-3 rounded-xl bg-gradient-to-r ${color} p-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg`}
+      className={`reveal-item group flex items-center gap-3 rounded-xl bg-gradient-to-r ${color} p-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg`}
     >
       <span className="text-2xl transition group-hover:scale-110">{icon}</span>
       <span className="text-sm font-bold">{label}</span>

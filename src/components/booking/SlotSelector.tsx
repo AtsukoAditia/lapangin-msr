@@ -301,7 +301,7 @@ export default function SlotSelector({
                   ? "cursor-not-allowed bg-slate-100 text-slate-400 line-through"
                   : isSelected
                     ? "bg-emerald-600 text-white shadow ring-2 ring-emerald-600 ring-offset-2"
-                    : "border border-slate-200 bg-white text-slate-700 hover:border-emerald-400 hover:bg-emerald-50"
+                    : "border border-slate-200 bg-white text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50"
               }`}
             >
               {label}

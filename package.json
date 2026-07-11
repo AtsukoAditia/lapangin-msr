@@ -39,6 +39,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "impeccable": "3.2.1",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.22.4",

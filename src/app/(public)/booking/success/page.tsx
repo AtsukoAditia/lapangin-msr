@@ -433,7 +433,7 @@ function SuccessContent() {
         subtitle={header.subtitle}
       />
 
-      <main className="mx-auto max-w-lg px-4 pt-6 pb-10">
+      <main className="page-enter page-enter-slide-up mx-auto max-w-lg px-4 pt-6 pb-10">
         <section className={`mb-6 rounded-2xl border p-5 text-center ${statusCard.className}`}>
           <p className="text-3xl">{statusCard.icon}</p>
           <h2 className="mt-2 text-lg font-bold">{statusCard.title}</h2>

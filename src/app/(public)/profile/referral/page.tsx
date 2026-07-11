@@ -92,7 +92,7 @@ export default function ReferralPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="page-enter page-enter-slide-up min-h-screen bg-slate-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-4 py-8 text-center">
         <p className="text-4xl mb-2">🤝</p>
@@ -166,11 +166,11 @@ export default function ReferralPage() {
             <p className="text-xs text-gray-500">Poin dari Referral</p>
           </div>
           <div className="rounded-xl bg-white border p-4 text-center">
-            <p className="text-2xl font-bold text-indigo-600">{(data?.stats.currentBalance || 0).toLocaleString("id-ID")}</p>
+            <p className="text-2xl font-bold text-primary-500">{(data?.stats.currentBalance || 0).toLocaleString("id-ID")}</p>
             <p className="text-xs text-gray-500">Poin Saat Ini</p>
           </div>
           <div className="rounded-xl bg-white border p-4 text-center">
-            <p className="text-2xl font-bold text-indigo-600">Rp {(data?.stats.totalSpent || 0).toLocaleString("id-ID")}</p>
+            <p className="text-2xl font-bold text-primary-500">Rp {(data?.stats.totalSpent || 0).toLocaleString("id-ID")}</p>
             <p className="text-xs text-gray-500">Total Transaksi</p>
           </div>
         </div>
