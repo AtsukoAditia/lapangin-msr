@@ -18,6 +18,8 @@ import type {
   RewardRedemption,
   Area,
   VenueOwner,
+  Review,
+  ReviewWithDetails,
 } from "@/lib/types/domain";
 
 export interface CreateBookingInput {
@@ -159,4 +161,12 @@ export interface DatabaseAdapter {
   getActiveRewards(): Promise<Reward[]>;
   getCustomerRedemptions(customerId: string): Promise<RewardRedemption[]>;
   updateCustomerSpent(customerId: string, amount: number): Promise<void>;
+
+  // Reviews
+  createReview(data: { bookingId: string; customerId: string; venueId: string; courtId?: string; rating: number; comment: string; photos?: string[] }): Promise<Review>;
+  getReviewsByVenue(venueId: string): Promise<ReviewWithDetails[]>;
+  getReviewsByCourt(courtId: string): Promise<ReviewWithDetails[]>;
+  getReviewByBooking(bookingId: string): Promise<Review | null>;
+  getVenueRating(venueId: string): Promise<{ avgRating: number; reviewCount: number }>;
+  updateVenueRating(venueId: string): Promise<void>;
 }

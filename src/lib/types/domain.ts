@@ -49,6 +49,8 @@ export interface Venue {
   ownerId?: string;
   areaId?: string;
   approvalStatus: VenueApprovalStatus;
+  avgRating?: number;
+  reviewCount?: number;
 }
 
 export interface Court {
@@ -330,4 +332,32 @@ export interface BookingWithCustomer extends Booking {
   pointsEarned?: number;
   pointsRedeemed?: number;
   discountAmount?: number;
+}
+
+// ── Review ──
+
+export interface Review {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  venueId: string;
+  courtId?: string;
+  rating: number;
+  comment: string;
+  isVisible: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReviewPhoto {
+  id: string;
+  reviewId: string;
+  photoUrl: string;
+  createdAt: string;
+}
+
+export interface ReviewWithDetails extends Review {
+  customerName?: string;
+  customerAvatar?: string;
+  photos?: ReviewPhoto[];
 }

@@ -110,6 +110,11 @@ export default async function SportPage({ params, searchParams }: Props) {
                           {venue.address}
                         </span>
                       )}
+                      {venue.avgRating && venue.avgRating > 0 && (
+                        <span className="before:content-['·'] before:mx-1 text-yellow-600">
+                          ★ {venue.avgRating.toFixed(1)} ({venue.reviewCount} review)
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">

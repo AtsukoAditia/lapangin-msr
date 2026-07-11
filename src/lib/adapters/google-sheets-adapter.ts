@@ -825,6 +825,14 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
 
   async updateCustomerSpent(_customerId: string, _amount: number): Promise<void> {}
 
+  // Reviews (stubs — Google Sheets not supported for reviews)
+  async createReview(): Promise<never> { throw new Error("Reviews not supported with Google Sheets adapter"); }
+  async getReviewsByVenue(): Promise<never[]> { return []; }
+  async getReviewsByCourt(): Promise<never[]> { return []; }
+  async getReviewByBooking(): Promise<null> { return null; }
+  async getVenueRating(): Promise<{ avgRating: number; reviewCount: number }> { return { avgRating: 0, reviewCount: 0 }; }
+  async updateVenueRating(): Promise<void> {}
+
   // Area methods
   async getAreas(): Promise<Area[]> { return []; }
   async getAreaById(_id: string): Promise<Area | null> { return null; }
