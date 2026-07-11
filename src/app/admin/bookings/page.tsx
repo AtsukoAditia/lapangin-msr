@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
+import WhatsAppButton from "@/components/notifications/WhatsAppButton";
 import type { Booking } from "@/lib/types/domain";
 
 const STATUS_CONFIG: Record<
@@ -335,13 +336,29 @@ export default function AdminBookingsPage() {
                         </>
                       )}
                       {booking.bookingStatus === "confirmed" && (
-                        <button
-                          disabled={updatingId === booking.id}
-                          onClick={() => updateStatus(booking.id, "completed")}
-                          className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50"
-                        >
-                          ✔️ Selesai
-                        </button>
+                        <>
+                          <button
+                            disabled={updatingId === booking.id}
+                            onClick={() => updateStatus(booking.id, "completed")}
+                            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50"
+                          >
+                            ✔️ Selesai
+                          </button>
+                          <WhatsAppButton
+                            bookingId={booking.id}
+                            phone={booking.customerPhone}
+                            type="confirm"
+                            label="📱 WA Konfirmasi"
+                          />
+                        </>
+                      )}
+                      {booking.bookingStatus === "completed" && (
+                        <WhatsAppButton
+                          bookingId={booking.id}
+                          phone={booking.customerPhone}
+                          type="rating"
+                          label="⭐ WA Minta Review"
+                        />
                       )}
                       {(booking.bookingStatus === "pending" ||
                         booking.bookingStatus === "waiting_payment") && (

@@ -8,8 +8,8 @@ export async function GET() {
     // Get all bookings for revenue calculation
     const bookings = await adapter.getBookings();
 
-    // Only confirmed bookings for revenue
-    const confirmed = bookings.filter((b) => b.bookingStatus === "confirmed");
+    // Only confirmed/completed bookings for revenue
+    const confirmed = bookings.filter((b) => b.bookingStatus === "confirmed" || b.bookingStatus === "completed");
 
     // Revenue by date (last 30 days)
     const revenueByDate: Record<string, number> = {};
