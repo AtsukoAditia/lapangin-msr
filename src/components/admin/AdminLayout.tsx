@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import NotificationBell from "@/components/admin/NotificationBell";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -21,7 +22,6 @@ const navItems = [
   { href: "/admin/pricing", label: "Harga", icon: "💰" },
   { href: "/admin/analytics", label: "Analytics", icon: "📈" },
   { href: "/admin/customers", label: "Pelanggan", icon: "👥" },
-  { href: "/admin/notifications", label: "Notifikasi", icon: "🔔" },
   { href: "/admin/settings", label: "Pengaturan", icon: "⚙️" },
 ];
 
@@ -117,6 +117,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             >
               🏠 Situs
             </Link>
+            <NotificationBell />
             <button
               onClick={handleLogout}
               className="text-sm text-gray-400 hover:text-red-400 transition-colors"
