@@ -171,7 +171,7 @@ export default function CourtDetailPage({ params }: { params: Promise<{ sport: s
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between"><dt className="text-slate-500">Venue</dt><dd className="font-medium text-slate-900">{venue.name}</dd></div>
               {venue.address && <div className="flex justify-between"><dt className="text-slate-500">Alamat</dt><dd className="font-medium text-slate-900 text-right max-w-[60%]">{venue.address}</dd></div>}
-              {venue.phone && <div className="flex justify-between"><dt className="text-slate-500">Telepon</dt><dd className="font-medium text-slate-900">{venue.phone}</dd></div>}
+
             </dl>
           </div>
         </div>
@@ -207,14 +207,7 @@ export default function CourtDetailPage({ params }: { params: Promise<{ sport: s
             >
               📱 Buka di Google Maps
             </a>
-            {venue.phone && (
-              <a
-                href={`tel:${venue.phone}`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition"
-              >
-                📞 Hubungi
-              </a>
-            )}
+
           </div>
         </div>
 
