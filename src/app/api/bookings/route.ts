@@ -4,6 +4,7 @@ import { verifyToken, CUSTOMER_TOKEN_NAME } from "@/lib/auth/jwt";
 import { getDatabaseAdapter } from "@/lib/adapters";
 import { BookingService } from "@/lib/services/booking-service";
 import { validateBookingInput } from "@/lib/validators/booking-validator";
+import { sanitizeBookingInput, bookingLimiter, getClientIP, checkRateLimit } from "@/lib/security";
 
 export async function GET() {
   return NextResponse.json(
@@ -17,20 +18,19 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const {
-      customerName,
-      customerPhone,
-      customerEmail,
-      courtId,
-      venueId,
-      sportId,
-      bookingDate,
-      startTime,
-      endTime,
-      durationMinutes,
-      notes,
-    } = body;
+    const ip = getClientIP(request);
+
+    // Rate limit
+    const rateLimited = await checkRateLimit(bookingLimiter, ip);
+    if (rateLimited) {
+      return NextResponse.json(
+        { error: `Terlalu banyak booking. Coba lagi dalam ${rateLimited.retryAfter} detik.` },
+        { status: 429 },
+      );
+    }
+
+    const rawBody = await request.json();
+    const { customerName, customerPhone, customerEmail, courtId, venueId, sportId, bookingDate, startTime, endTime, durationMinutes, notes } = sanitizeBookingInput(rawBody);
 
     let userId: string | undefined;
     try {

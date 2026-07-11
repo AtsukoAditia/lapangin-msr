@@ -25,6 +25,7 @@
     "lucide-react": "latest",
     "next": "latest",
     "pg": "8.22.0",
+    "rate-limiter-flexible": "11.2.0",
     "react": "latest",
     "react-dom": "latest",
     "zod": "latest"

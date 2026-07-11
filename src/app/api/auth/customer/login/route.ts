@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateCustomer } from "@/lib/auth/service";
 import { createToken, CUSTOMER_TOKEN_NAME } from "@/lib/auth/jwt";
+import { loginLimiter, getClientIP, checkRateLimit } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIP(request);
+
+    // Rate limit
+    const rateLimited = await checkRateLimit(loginLimiter, ip);
+    if (rateLimited) {
+      return NextResponse.json(
+        { success: false, error: `Terlalu banyak percobaan. Coba lagi dalam ${rateLimited.retryAfter} detik.` },
+        { status: 429 },
+      );
+    }
+
     const { email, password } = await request.json();
 
     if (!email || !password) {
@@ -21,6 +33,9 @@ export async function POST(request: NextRequest) {
         { status: 401 },
       );
     }
+
+    // Reset rate limit on successful login
+    await loginLimiter.delete(ip);
 
     const token = await createToken({
       userId: customer.id,
