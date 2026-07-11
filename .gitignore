@@ -48,3 +48,8 @@ Thumbs.db
 # caches
 .cache
 tmp
+# Playwright
+/test-results/
+/e2e/screenshots/
+playwright-report/
+blob-report/
