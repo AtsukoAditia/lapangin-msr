@@ -1,9 +1,8 @@
 /**
- * Standalone Auth Service
+ * Auth Service — backed by DatabaseAdapter (PostgreSQL or Mock)
  *
- * Works independently of the database adapter.
- * Uses in-memory stores for demo/development.
- * In production, this must be replaced by persistent database-backed auth.
+ * Admin accounts are seeded in the database.
+ * Customer accounts persist in the database.
  *
  * Demo admin accounts:
  *   - admin@lapangin.id / Admin123!@# (Super Admin)
@@ -12,75 +11,7 @@
 
 import type { AdminUser, Customer, CustomerPublic } from "@/lib/types/domain";
 import { hashPassword, verifyPassword } from "@/lib/auth/jwt";
-
-// ─── In-Memory Stores ────────────────────────────────────────────────────────
-
-interface StoredAdmin {
-  id: string;
-  username: string;
-  name: string;
-  email: string;
-  passwordHash: string;
-  role: "super_admin" | "admin" | "staff";
-  isActive: boolean;
-  createdAt: string;
-  lastLoginAt?: string;
-}
-
-interface StoredCustomer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  passwordHash: string;
-  avatar?: string;
-  isVerified: boolean;
-  isActive: boolean;
-  loyaltyPoints: number;
-  totalSpent: number;
-  memberSince: string;
-  lastLoginAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const adminStore: Map<string, StoredAdmin> = new Map();
-const customerStore: Map<string, StoredCustomer> = new Map();
-
-// ─── Seed Admin Accounts ─────────────────────────────────────────────────────
-
-function seedAdmins() {
-  if (adminStore.size > 0) return;
-
-  const defaultAdmins: StoredAdmin[] = [
-    {
-      id: "admin-1",
-      username: "superadmin",
-      name: "Super Admin",
-      email: "admin@lapangin.id",
-      passwordHash: hashPassword("Admin123!@#"),
-      role: "super_admin",
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: "owner-1",
-      username: "venueowner",
-      name: "Venue Owner",
-      email: "owner@lapangin.id",
-      passwordHash: hashPassword("Owner123!@#"),
-      role: "admin",
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    },
-  ];
-
-  for (const admin of defaultAdmins) {
-    adminStore.set(admin.email, admin);
-  }
-}
-
-seedAdmins();
+import { getDatabaseAdapter } from "@/lib/adapters";
 
 // ─── Admin Auth ──────────────────────────────────────────────────────────────
 
@@ -88,56 +19,32 @@ export async function authenticateAdmin(
   email: string,
   password: string
 ): Promise<AdminUser | null> {
-  const admin = adminStore.get(email);
-  if (!admin || !admin.isActive) return null;
+  const adapter = getDatabaseAdapter();
+  const admin = await adapter.authenticateAdmin(email, password);
+  if (!admin) return null;
   if (!verifyPassword(password, admin.passwordHash)) return null;
-
-  admin.lastLoginAt = new Date().toISOString();
-
-  return {
-    id: admin.id,
-    username: admin.username,
-    name: admin.name,
-    email: admin.email,
-    passwordHash: "", // Not exposed
-    role: admin.role,
-    isActive: admin.isActive,
-    createdAt: admin.createdAt,
-    lastLoginAt: admin.lastLoginAt,
-  };
+  return admin;
 }
 
 export async function getAdminById(id: string): Promise<AdminUser | null> {
-  for (const admin of adminStore.values()) {
-    if (admin.id === id) {
-      return {
-        id: admin.id,
-        username: admin.username,
-        name: admin.name,
-        email: admin.email,
-        passwordHash: "",
-        role: admin.role,
-        isActive: admin.isActive,
-        createdAt: admin.createdAt,
-        lastLoginAt: admin.lastLoginAt,
-      };
-    }
-  }
-  return null;
+  const adapter = getDatabaseAdapter();
+  return adapter.getAdminById(id);
 }
 
 export async function getAllAdmins(): Promise<AdminUser[]> {
-  return Array.from(adminStore.values()).map((admin) => ({
-    id: admin.id,
-    username: admin.username,
-    name: admin.name,
-    email: admin.email,
-    passwordHash: "",
-    role: admin.role,
-    isActive: admin.isActive,
-    createdAt: admin.createdAt,
-    lastLoginAt: admin.lastLoginAt,
-  }));
+  const adapter = getDatabaseAdapter();
+  // If adapter has getAllAdmins, use it; otherwise fall back to getAdminById for known IDs
+  if ("getAllAdmins" in adapter && typeof adapter.getAllAdmins === "function") {
+    return (adapter as { getAllAdmins: () => Promise<AdminUser[]> }).getAllAdmins();
+  }
+  // Fallback: return seeded admins
+  const knownIds = ["admin-1", "owner-1"];
+  const admins: AdminUser[] = [];
+  for (const id of knownIds) {
+    const admin = await adapter.getAdminById(id);
+    if (admin) admins.push(admin);
+  }
+  return admins;
 }
 
 // ─── Customer Auth ───────────────────────────────────────────────────────────
@@ -148,96 +55,56 @@ export async function registerCustomer(data: {
   phone: string;
   password: string;
 }): Promise<CustomerPublic> {
-  if (customerStore.has(data.email)) {
-    throw new Error("Email sudah terdaftar");
-  }
+  const adapter = getDatabaseAdapter();
+  // Check if email already exists
+  const existing = await adapter.getCustomerByEmail(data.email);
+  if (existing) throw new Error("Email sudah terdaftar");
 
-  const id = `cust-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-  const now = new Date().toISOString();
-
-  const customer: StoredCustomer = {
-    id,
+  const passwordHash = hashPassword(data.password);
+  return adapter.registerCustomer({
     name: data.name,
     email: data.email,
     phone: data.phone,
-    passwordHash: hashPassword(data.password),
-    isVerified: false,
-    isActive: true,
-    loyaltyPoints: 0,
-    totalSpent: 0,
-    memberSince: now,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  customerStore.set(data.email, customer);
-
-  return toCustomerPublic(customer);
+    passwordHash,
+  });
 }
 
 export async function authenticateCustomer(
   email: string,
   password: string
 ): Promise<CustomerPublic | null> {
-  const customer = customerStore.get(email);
+  const adapter = getDatabaseAdapter();
+  // Get full customer with passwordHash for verification
+  const customer = await adapter.getCustomerByEmail(email);
   if (!customer || !customer.isActive) return null;
   if (!verifyPassword(password, customer.passwordHash)) return null;
 
-  customer.lastLoginAt = new Date().toISOString();
-
-  return toCustomerPublic(customer);
-}
-
-export async function getCustomerById(id: string): Promise<CustomerPublic | null> {
-  for (const customer of customerStore.values()) {
-    if (customer.id === id) {
-      return toCustomerPublic(customer);
-    }
+  // Update last login
+  if ("updateCustomerLastLogin" in adapter && typeof adapter.updateCustomerLastLogin === "function") {
+    await (adapter as { updateCustomerLastLogin: (id: string) => Promise<void> }).updateCustomerLastLogin(customer.id);
   }
-  return null;
-}
 
-export async function getCustomerByEmail(email: string): Promise<Customer | null> {
-  const customer = customerStore.get(email);
-  if (!customer) return null;
   return {
     id: customer.id,
     name: customer.name,
     email: customer.email,
     phone: customer.phone,
-    passwordHash: customer.passwordHash,
     avatar: customer.avatar,
-    isVerified: customer.isVerified,
-    isActive: customer.isActive,
     loyaltyPoints: customer.loyaltyPoints,
+    loyaltyTier: getLoyaltyTier(customer.loyaltyPoints),
     totalSpent: customer.totalSpent,
     memberSince: customer.memberSince,
-    lastLoginAt: customer.lastLoginAt,
-    createdAt: customer.createdAt,
-    updatedAt: customer.updatedAt,
   };
 }
 
-function toCustomerPublic(c: StoredCustomer): CustomerPublic {
-  const tier = getLoyaltyTier(c.loyaltyPoints);
-  return {
-    id: c.id,
-    name: c.name,
-    email: c.email,
-    phone: c.phone,
-    avatar: c.avatar,
-    loyaltyPoints: c.loyaltyPoints,
-    loyaltyTier: tier,
-    totalSpent: c.totalSpent,
-    memberSince: c.memberSince,
-  };
+export async function getCustomerById(id: string): Promise<CustomerPublic | null> {
+  const adapter = getDatabaseAdapter();
+  return adapter.getCustomerById(id);
 }
 
-function getLoyaltyTier(points: number): string {
-  if (points >= 10000) return "platinum";
-  if (points >= 5000) return "gold";
-  if (points >= 2000) return "silver";
-  return "bronze";
+export async function getCustomerByEmail(email: string): Promise<Customer | null> {
+  const adapter = getDatabaseAdapter();
+  return adapter.getCustomerByEmail(email);
 }
 
 // ─── Loyalty Points ──────────────────────────────────────────────────────────
@@ -248,26 +115,16 @@ export async function addLoyaltyPoints(
   bookingId: string | undefined,
   description: string
 ): Promise<{ id: string; newBalance: number }> {
-  for (const customer of customerStore.values()) {
-    if (customer.id === customerId) {
-      customer.loyaltyPoints += points;
-      customer.updatedAt = new Date().toISOString();
-      return {
-        id: `loyalty-${Date.now()}`,
-        newBalance: customer.loyaltyPoints,
-      };
-    }
-  }
-  throw new Error("Customer not found");
+  const adapter = getDatabaseAdapter();
+  const tx = await adapter.addLoyaltyPoints(customerId, points, bookingId, description, "earned");
+  const customer = await adapter.getCustomerById(customerId);
+  return { id: tx.id, newBalance: customer?.loyaltyPoints ?? 0 };
 }
 
 export async function getCustomerLoyaltyBalance(customerId: string): Promise<number> {
-  for (const customer of customerStore.values()) {
-    if (customer.id === customerId) {
-      return customer.loyaltyPoints;
-    }
-  }
-  return 0;
+  const adapter = getDatabaseAdapter();
+  const customer = await adapter.getCustomerById(customerId);
+  return customer?.loyaltyPoints ?? 0;
 }
 
 export async function deductLoyaltyPoints(
@@ -275,26 +132,24 @@ export async function deductLoyaltyPoints(
   points: number,
   description: string
 ): Promise<{ id: string; newBalance: number }> {
-  for (const customer of customerStore.values()) {
-    if (customer.id === customerId) {
-      if (customer.loyaltyPoints < points) {
-        throw new Error("Poin tidak mencukupi");
-      }
-      customer.loyaltyPoints -= points;
-      customer.updatedAt = new Date().toISOString();
-      return {
-        id: `loyalty-${Date.now()}`,
-        newBalance: customer.loyaltyPoints,
-      };
-    }
-  }
-  throw new Error("Customer not found");
+  const adapter = getDatabaseAdapter();
+  const customer = await adapter.getCustomerById(customerId);
+  if (!customer) throw new Error("Customer not found");
+  if (customer.loyaltyPoints < points) throw new Error("Poin tidak mencukupi");
+
+  const tx = await adapter.addLoyaltyPoints(customerId, -points, undefined, description, "redeemed");
+  const updated = await adapter.getCustomerById(customerId);
+  return { id: tx.id, newBalance: updated?.loyaltyPoints ?? 0 };
 }
 
 // ─── Customer Management ─────────────────────────────────────────────────────
 
 export async function getAllCustomers(): Promise<CustomerPublic[]> {
-  return Array.from(customerStore.values()).map(toCustomerPublic);
+  const adapter = getDatabaseAdapter();
+  if ("getAllCustomers" in adapter && typeof adapter.getAllCustomers === "function") {
+    return (adapter as { getAllCustomers: () => Promise<CustomerPublic[]> }).getAllCustomers();
+  }
+  return [];
 }
 
 export async function getCustomerStats(): Promise<{
@@ -302,7 +157,7 @@ export async function getCustomerStats(): Promise<{
   totalLoyaltyPointsIssued: number;
   tierBreakdown: Record<string, number>;
 }> {
-  const customers = Array.from(customerStore.values());
+  const customers = await getAllCustomers();
   const tierBreakdown: Record<string, number> = { bronze: 0, silver: 0, gold: 0, platinum: 0 };
 
   for (const c of customers) {
@@ -315,4 +170,13 @@ export async function getCustomerStats(): Promise<{
     totalLoyaltyPointsIssued: customers.reduce((sum, c) => sum + c.loyaltyPoints, 0),
     tierBreakdown,
   };
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getLoyaltyTier(points: number): string {
+  if (points >= 10000) return "platinum";
+  if (points >= 5000) return "gold";
+  if (points >= 2000) return "silver";
+  return "bronze";
 }
