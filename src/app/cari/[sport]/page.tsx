@@ -74,7 +74,7 @@ export default function SearchPage({
       .catch(() => {});
   }, []);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+   
   useEffect(() => {
     const controller = new AbortController();
     const params = new URLSearchParams();
