@@ -21,6 +21,7 @@ import type {
   VenueOwnerStatus,
   Review,
   ReviewWithDetails,
+  Holiday,
 } from "@/lib/types/domain";
 
 export interface CreateBookingInput {
@@ -96,6 +97,10 @@ export interface DatabaseAdapter {
 
   // Courts
   getCourts(): Promise<Court[]>;
+  getCourtsByVenue(venueId: string): Promise<Court[]>;
+
+  // Holidays
+  getHolidays(): Promise<Holiday[]>;
   getAllCourts(): Promise<Court[]>;
   getCourtById(id: string): Promise<Court | null>;
   updateCourt(id: string, input: UpdateCourtInput): Promise<Court>;

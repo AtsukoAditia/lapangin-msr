@@ -225,6 +225,19 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
     return rows.map((row) => rowToCourt(row.toObject())).filter((c) => c.isActive);
   }
 
+  async getCourtsByVenue(venueId: string): Promise<Court[]> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["courts"];
+    if (!sheet) return [];
+
+    const rows = await sheet.getRows();
+    return rows.map((row) => rowToCourt(row.toObject())).filter((c) => c.venueId === venueId);
+  }
+
+  async getHolidays(): Promise<never[]> {
+    return []; // Holidays come from DB in production
+  }
+
   async getBookings(): Promise<Booking[]> {
     const doc = await getSpreadsheet();
     const sheet = doc.sheetsByTitle["bookings"];

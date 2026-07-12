@@ -299,6 +299,10 @@ export class MockAdapter implements DatabaseAdapter {
     return mockCourts.filter((c) => c.isActive);
   }
 
+  async getCourtsByVenue(venueId: string): Promise<Court[]> {
+    return mockCourts.filter((c) => c.venueId === venueId);
+  }
+
   async getAllCourts(): Promise<Court[]> {
     return [...mockCourts];
   }
@@ -730,5 +734,9 @@ export class MockAdapter implements DatabaseAdapter {
       ...((venue as unknown as Record<string, unknown>).rainDiscountConfig as Record<string, unknown> || {}),
       ...config,
     };
+  }
+
+  async getHolidays(): Promise<never[]> {
+    return []; // Mock — holidays come from DB seed
   }
 }

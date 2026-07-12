@@ -417,3 +417,20 @@ CREATE TABLE IF NOT EXISTS referrals (
 
 CREATE INDEX IF NOT EXISTS referrals_referrer_idx ON referrals (referrer_id);
 CREATE INDEX IF NOT EXISTS referrals_code_idx ON referrals (referral_code);
+
+-- ============================================================
+-- Indonesian Public Holidays (Tanggal Merah)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS holidays (
+  id VARCHAR(50) PRIMARY KEY,
+  date DATE NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('national', 'religious', 'joint_leave')),
+  description TEXT DEFAULT '',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS holidays_date_idx ON holidays (date);
+CREATE INDEX IF NOT EXISTS holidays_active_idx ON holidays (is_active) WHERE is_active = true;

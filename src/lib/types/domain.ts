@@ -45,6 +45,15 @@ export interface VenueRainConfig {
   };
 }
 
+export interface Holiday {
+  id: string;
+  date: string;
+  name: string;
+  type: "national" | "religious" | "joint_leave";
+  description: string;
+  isActive: boolean;
+}
+
 export interface Venue {
   id: string;
   name: string;

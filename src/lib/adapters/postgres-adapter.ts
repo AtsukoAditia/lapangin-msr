@@ -30,6 +30,7 @@ import type {
   VenueOwnerStatus,
   Review,
   ReviewWithDetails,
+  Holiday,
 } from "@/lib/types/domain";
 
 // ── Singleton Pool ──
@@ -211,6 +212,11 @@ export class PostgresAdapter implements DatabaseAdapter {
   // ── Courts ──
   async getCourts(): Promise<Court[]> {
     const rows = await query<Record<string, unknown>>("SELECT * FROM courts WHERE is_active = true");
+    return rows.map(mapCourt);
+  }
+
+  async getCourtsByVenue(venueId: string): Promise<Court[]> {
+    const rows = await query<Record<string, unknown>>("SELECT * FROM courts WHERE venue_id = $1 AND is_active = true", [venueId]);
     return rows.map(mapCourt);
   }
 
@@ -700,6 +706,18 @@ export class PostgresAdapter implements DatabaseAdapter {
       `UPDATE venues SET rain_discount_config = $1, updated_at = NOW() WHERE id = $2`,
       [JSON.stringify(merged), venueId]
     );
+  }
+
+  async getHolidays(): Promise<Holiday[]> {
+    const rows = await query<Record<string, unknown>>("SELECT * FROM holidays WHERE is_active = true ORDER BY date");
+    return rows.map((r) => ({
+      id: r.id as string,
+      date: r.date as string,
+      name: r.name as string,
+      type: r.type as Holiday["type"],
+      description: (r.description as string) || "",
+      isActive: r.is_active as boolean,
+    }));
   }
 
   private mapReview(row: Record<string, unknown>): Review {
