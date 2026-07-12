@@ -23,7 +23,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status } = body as { status?: string };
+    const { status, paymentStatus } = body as { status?: string; paymentStatus?: string };
 
     if (!status || !VALID_STATUSES.includes(status as Booking["bookingStatus"])) {
       return NextResponse.json(
@@ -36,6 +36,7 @@ export async function PATCH(
     const booking = await adapter.updateBookingStatus(
       id,
       status as Booking["bookingStatus"],
+      paymentStatus as Booking["paymentStatus"] | undefined,
     );
 
     // Add loyalty points when booking is confirmed or completed
