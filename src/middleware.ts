@@ -2,33 +2,23 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
   ADMIN_TOKEN_NAME,
+  OWNER_TOKEN_NAME,
   CUSTOMER_TOKEN_NAME,
   verifyToken,
 } from "@/lib/auth/jwt";
 
 const ADMIN_ROUTES = ["/admin"];
 const ADMIN_API_ROUTES = ["/api/admin"];
+const OWNER_ROUTES = ["/dashboard"];
+const OWNER_API_ROUTES = ["/api/owner"];
 const CUSTOMER_ROUTES = ["/profile"];
 const CUSTOMER_API_ROUTES = ["/api/customer"];
 
-function isAdminRoute(pathname: string): boolean {
-  if (pathname === "/admin/login") return false;
-  return ADMIN_ROUTES.some((route) => pathname.startsWith(route));
+function matchRoute(pathname: string, routes: string[]): boolean {
+  return routes.some((r) => pathname === r || pathname.startsWith(r + "/"));
 }
 
-function isAdminApiRoute(pathname: string): boolean {
-  return ADMIN_API_ROUTES.some((route) => pathname.startsWith(route));
-}
-
-function isCustomerRoute(pathname: string): boolean {
-  return CUSTOMER_ROUTES.some((route) => pathname.startsWith(route));
-}
-
-function isCustomerApiRoute(pathname: string): boolean {
-  return CUSTOMER_API_ROUTES.some((route) => pathname.startsWith(route));
-}
-
-async function hasRole(token: string | undefined, role: "admin" | "super_admin" | "staff" | "customer") {
+async function hasRole(token: string | undefined, role: string): Promise<boolean> {
   if (!token) return false;
   const session = await verifyToken(token);
   if (!session?.role) return false;
@@ -41,42 +31,67 @@ async function hasRole(token: string | undefined, role: "admin" | "super_admin" 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (isAdminRoute(pathname)) {
+  // Admin routes - require admin token
+  if (matchRoute(pathname, ADMIN_ROUTES)) {
+    if (pathname === "/admin/login") {
+      const res = NextResponse.next();
+      res.headers.set("X-Robots-Tag", "noindex, nofollow");
+      return res;
+    }
     const token = request.cookies.get(ADMIN_TOKEN_NAME)?.value;
     if (!(await hasRole(token, "admin"))) {
-      const loginUrl = new URL("/admin/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL("/", request.url));
     }
+    const res = NextResponse.next();
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return res;
   }
 
-  if (isAdminApiRoute(pathname)) {
+  // Admin API - require admin token
+  if (matchRoute(pathname, ADMIN_API_ROUTES)) {
     const token = request.cookies.get(ADMIN_TOKEN_NAME)?.value;
     if (!(await hasRole(token, "admin"))) {
-      return NextResponse.json(
-        { error: "Unauthorized. Admin login required." },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    return NextResponse.next();
   }
 
-  if (isCustomerRoute(pathname)) {
-    const token = request.cookies.get(CUSTOMER_TOKEN_NAME)?.value;
-    if (!(await hasRole(token, "customer"))) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
+  // Owner dashboard - require owner token
+  if (matchRoute(pathname, OWNER_ROUTES)) {
+    if (pathname === "/dashboard/login" || pathname === "/dashboard/register") {
+      return NextResponse.next();
     }
+    const token = request.cookies.get(OWNER_TOKEN_NAME)?.value;
+    if (!(await hasRole(token, "owner"))) {
+      return NextResponse.redirect(new URL("/dashboard/login", request.url));
+    }
+    return NextResponse.next();
   }
 
-  if (isCustomerApiRoute(pathname)) {
+  // Owner API - require owner token
+  if (matchRoute(pathname, OWNER_API_ROUTES)) {
+    const token = request.cookies.get(OWNER_TOKEN_NAME)?.value;
+    if (!(await hasRole(token, "owner"))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
+  // Customer routes
+  if (matchRoute(pathname, CUSTOMER_ROUTES)) {
     const token = request.cookies.get(CUSTOMER_TOKEN_NAME)?.value;
     if (!(await hasRole(token, "customer"))) {
-      return NextResponse.json(
-        { error: "Unauthorized. Please login first." },
-        { status: 401 },
-      );
+      return NextResponse.redirect(new URL("/login", request.url));
     }
+    return NextResponse.next();
+  }
+
+  if (matchRoute(pathname, CUSTOMER_API_ROUTES)) {
+    const token = request.cookies.get(CUSTOMER_TOKEN_NAME)?.value;
+    if (!(await hasRole(token, "customer"))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.next();
   }
 
   return NextResponse.next();
@@ -86,6 +101,8 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/api/admin/:path*",
+    "/dashboard/:path*",
+    "/api/owner/:path*",
     "/profile/:path*",
     "/api/customer/:path*",
   ],

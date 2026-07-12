@@ -44,8 +44,12 @@ export async function POST(request: NextRequest) {
       email: admin.email,
     });
 
+    const adminSecret = process.env.ADMIN_SECRET_PATH || "";
+    const dashboardUrl = adminSecret ? `/${adminSecret}` : "/admin";
+
     const response = NextResponse.json({
       success: true,
+      dashboardUrl,
       user: {
         id: admin.id,
         name: admin.name,

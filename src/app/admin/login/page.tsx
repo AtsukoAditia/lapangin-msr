@@ -48,7 +48,8 @@ export default function AdminLoginPage() {
         return;
       }
 
-      window.location.href = "/admin";
+      const redirectParam = new URLSearchParams(window.location.search).get("redirect");
+      window.location.href = redirectParam || data.dashboardUrl || "/";
     } catch {
       setError("Terjadi kesalahan. Coba lagi.");
     } finally {
