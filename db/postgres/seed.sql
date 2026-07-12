@@ -200,14 +200,6 @@ UPDATE venues SET
   review_count = (SELECT COUNT(*) FROM reviews WHERE venue_id = venues.id AND is_visible = true);
 
 -- ==================== HOLIDAYS ====================
-  id VARCHAR(50) PRIMARY KEY,
-  date DATE NOT NULL UNIQUE,
-  name TEXT NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('national', 'religious', 'joint_leave')),
-  description TEXT DEFAULT '',
-  is_active BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
 INSERT INTO holidays (id, date, name, type, description, created_at) VALUES
   -- 2025
   ('h-2025-01-01', '2025-01-01', 'Tahun Baru 2025', 'national', '', NOW()),

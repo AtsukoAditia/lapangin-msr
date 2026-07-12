@@ -153,7 +153,7 @@ Known cleanup needed:
 
 PostgreSQL must be the source of truth for real usage. Schema: `db/postgres/schema.sql`, seed: `db/postgres/seed.sql`.
 
-### Current tables (20)
+### Current tables (21)
 
 | Table | Description |
 |-------|-------------|
@@ -177,6 +177,7 @@ PostgreSQL must be the source of truth for real usage. Schema: `db/postgres/sche
 | `rewards` | Reward yang bisa ditukar dengan points |
 | `reward_redemptions` | Penukaran reward oleh customer |
 | `referrals` | Referral code + tracking (referrer → referee) |
+| `holidays` | Tanggal merah Indonesia 2025-2027 (national/religious/joint_leave) |
 
 ### Critical production requirements
 
