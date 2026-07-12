@@ -42,7 +42,7 @@ export default function InstallPrompt() {
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
     };
-  }, []);
+  }, [isInstalled]);
 
   const handleInstall = useCallback(async () => {
     if (!deferredPrompt) return;

@@ -689,7 +689,7 @@ export class MockAdapter implements DatabaseAdapter {
     return { avgRating: Math.round(avgRating * 100) / 100, reviewCount: reviews.length };
   }
 
-  async updateVenueRating(venueId: string): Promise<void> {
+  async updateVenueRating(_venueId: string): Promise<void> {
     // No-op for mock — ratings are computed on the fly
   }
 }

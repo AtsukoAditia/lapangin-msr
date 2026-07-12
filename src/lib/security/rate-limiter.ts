@@ -35,7 +35,7 @@ export async function checkRateLimit(
   key: string
 ): Promise<{ limited: true; retryAfter: number } | null> {
   try {
-    const result = await limiter.consume(key);
+    await limiter.consume(key);
     return null; // allowed
   } catch (rateLimiterRes) {
     const retryAfter = Math.ceil(

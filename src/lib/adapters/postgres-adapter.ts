@@ -509,7 +509,7 @@ export class PostgresAdapter implements DatabaseAdapter {
     return [];
   }
 
-  async getCustomerRedemptions(customerId: string): Promise<RewardRedemption[]> {
+  async getCustomerRedemptions(_customerId: string): Promise<RewardRedemption[]> {
     // ponytail: reward_redemptions table not in schema — return empty. add when schema updated.
     return [];
   }

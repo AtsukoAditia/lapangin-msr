@@ -1,6 +1,6 @@
 import type { CreateBookingInput, DatabaseAdapter } from "@/lib/adapters/database-adapter";
 import type { Booking, AuditLogAction } from "@/lib/types/domain";
-import { calculatePrice, calculateDynamicPrice } from "./pricing-service";
+import { calculateDynamicPrice } from "./pricing-service";
 import { hasBlockedSlotConflict, hasBookingConflict } from "./availability-service";
 import {
   sendBookingCreated,

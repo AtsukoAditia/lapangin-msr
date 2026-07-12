@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDatabaseAdapter } from "@/lib/adapters";
 import { sanitizeHTML, bookingLimiter, getClientIP, checkRateLimit } from "@/lib/security";
 import { Pool } from "pg";
 

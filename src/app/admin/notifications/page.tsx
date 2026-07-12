@@ -8,23 +8,6 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchNotifications() {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/admin/notifications");
-      const data = await res.json();
-      if (data.success) {
-        setNotifications(data.data);
-      } else {
-        setError(data.error || "Gagal memuat notifikasi");
-      }
-    } catch {
-      setError("Gagal memuat notifikasi");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
     let cancelled = false;
     async function load() {

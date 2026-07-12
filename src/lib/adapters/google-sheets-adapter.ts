@@ -629,7 +629,7 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
     return rowToBooking(targetRow.toObject());
   }
 
-  async confirmPayment(bookingId: string, actorId?: string): Promise<Booking> {
+  async confirmPayment(bookingId: string, _actorId?: string): Promise<Booking> {
     const doc = await getSpreadsheet();
     const sheet = doc.sheetsByTitle["bookings"];
     if (!sheet) throw new Error("Bookings sheet not found");
@@ -647,7 +647,7 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
     return rowToBooking(targetRow.toObject());
   }
 
-  async rejectPayment(bookingId: string, actorId?: string): Promise<Booking> {
+  async rejectPayment(bookingId: string, _actorId?: string): Promise<Booking> {
     const doc = await getSpreadsheet();
     const sheet = doc.sheetsByTitle["bookings"];
     if (!sheet) throw new Error("Bookings sheet not found");

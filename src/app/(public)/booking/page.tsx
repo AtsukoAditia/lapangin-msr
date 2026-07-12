@@ -95,7 +95,6 @@ function BookingContent() {
 
   const activeAreas = areas.filter((a) => a.isActive);
   const areaRef = useScrollReveal<HTMLDivElement>();
-  const sportsRef = useScrollReveal<HTMLDivElement>();
   const sportGridRef = useRef<HTMLDivElement>(null);
   useStaggerReveal(sportGridRef, { count: 8, delay: 60 });
 

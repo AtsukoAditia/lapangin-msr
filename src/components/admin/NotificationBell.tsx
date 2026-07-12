@@ -27,16 +27,15 @@ export default function NotificationBell() {
   // Fetch on open
   useEffect(() => {
     if (!open || notifications.length > 0) return;
-    let cancelled = false;
+    const ac = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading state for async fetch
     setLoading(true);
-    fetch("/api/admin/notifications")
+    fetch("/api/admin/notifications", { signal: ac.signal })
       .then((r) => r.json())
-      .then((d) => {
-        if (!cancelled && d.success) setNotifications(d.data);
-      })
+      .then((d) => { if (d.success) setNotifications(d.data); })
       .catch(() => {})
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .finally(() => setLoading(false));
+    return () => ac.abort();
   }, [open, notifications.length]);
 
   // Poll unread count every 30s
@@ -97,8 +96,9 @@ export default function NotificationBell() {
     return labels[type] || type;
   }
 
-  function timeAgo(dateStr: string) {
-    const diff = Date.now() - new Date(dateStr).getTime();
+  // eslint-disable-next-line react-hooks/purity -- display-only timestamp
+  function timeAgo(dateStr: string, now = Date.now()) {
+    const diff = now - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
     if (mins < 1) return "Baru";
     if (mins < 60) return `${mins}m`;

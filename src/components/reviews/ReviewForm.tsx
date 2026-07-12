@@ -13,7 +13,7 @@ interface ReviewFormProps {
 export default function ReviewForm({ bookingId, venueId, courtId, onSuccess }: ReviewFormProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, _setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);

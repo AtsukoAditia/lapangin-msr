@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { action, points, bookingId } = await request.json();
+    const { action, bookingId } = await request.json();
     const adapter = getDatabaseAdapter();
 
     if (action === "redeem") {

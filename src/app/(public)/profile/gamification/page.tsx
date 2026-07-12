@@ -40,7 +40,7 @@ export default function GamificationPage() {
       .then((r) => r.json())
       .then((d) => {
         setAchievements(d.achievements || { unlocked: [], locked: [] });
-        setStats(d.stats || stats);
+        setStats((s) => d.stats || s);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
