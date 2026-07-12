@@ -3,6 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const SCREENSHOTS = "e2e/screenshots";
+const SECRET = "5b08d37a8d376d3f97ec3972";
 
 async function shot(page: Page, name: string) {
   await page.screenshot({ path: `${SCREENSHOTS}/${name}.png`, fullPage: true });
@@ -13,7 +14,6 @@ async function loginCustomer(page: Page, email: string, password: string) {
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
-  // Customer login redirects to "/" via router.push
   await page.waitForURL((url) => !url.pathname.includes("/login"), { timeout: 15_000 });
   await page.waitForTimeout(1_000);
 }
@@ -23,15 +23,25 @@ async function loginAdmin(page: Page, email: string, password: string) {
   await page.locator('input[name="admin-email"]').fill(email);
   await page.locator('input[name="admin-password"]').fill(password);
   await page.locator('button[type="submit"]').click();
-  // Admin login uses window.location.href = "/admin" → full reload
-  // Wait for navigation to complete
-  await page.waitForURL("**/admin", { timeout: 15_000 });
+  // Admin login API returns dashboardUrl = /<SECRET>
+  // Browser navigates to /<SECRET> → middleware rewrites to /admin
+  await page.waitForURL(`**/${SECRET}**`, { timeout: 15_000 });
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(2_000);
 }
 
-// Navigate admin pages via sidebar links (avoids extra page.goto issues)
-async function adminNav(page: Page, label: string, path: string) {
+async function loginOwner(page: Page, email: string, password: string) {
+  await page.goto("/dashboard/login", { waitUntil: "networkidle" });
+  await page.locator('input[type="email"]').fill(email);
+  await page.locator('input[type="password"]').fill(password);
+  await page.locator('button[type="submit"]').click();
+  await page.waitForURL("**/dashboard", { timeout: 15_000 });
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(1_000);
+}
+
+// Navigate admin pages via sidebar links
+async function adminNav(page: Page, path: string) {
   const link = page.locator(`a[href="/admin/${path}"]`).first();
   if (await link.isVisible({ timeout: 5_000 }).catch(() => false)) {
     await link.click();
@@ -40,6 +50,18 @@ async function adminNav(page: Page, label: string, path: string) {
     await page.goto(`/admin/${path}`, { waitUntil: "networkidle" });
   }
   await page.waitForTimeout(2_000);
+}
+
+// Navigate owner dashboard via sidebar links
+async function ownerNav(page: Page, path: string) {
+  const link = page.locator(`a[href="/dashboard/${path}"]`).first();
+  if (await link.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    await link.click();
+    await page.waitForLoadState("networkidle");
+  } else {
+    await page.goto(`/dashboard/${path}`, { waitUntil: "networkidle" });
+  }
+  await page.waitForTimeout(1_500);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -77,6 +99,12 @@ test.describe("Public Pages", () => {
     await expect(page.locator("body")).toBeVisible();
     await shot(page, "05-search");
   });
+
+  test("/admin redirects to homepage", async ({ page }) => {
+    await page.goto("/admin");
+    await page.waitForURL((url) => url.pathname === "/" || url.pathname.includes("/login"), { timeout: 10_000 });
+    await shot(page, "05b-admin-redirect-blocked");
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -89,23 +117,14 @@ test.describe("Customer Flow", () => {
 
   test("register new customer", async ({ page }) => {
     await page.goto("/register", { waitUntil: "networkidle" });
-
-    // Fill name (first text input)
     await page.locator('input[type="text"]').first().fill("E2E Customer");
     await page.locator('input[type="email"]').fill(email);
     await page.locator('input[type="tel"]').fill("08123456789");
-
-    // Both password fields
     const pwFields = page.locator('input[type="password"]');
     await pwFields.nth(0).fill(password);
-    if ((await pwFields.count()) > 1) {
-      await pwFields.nth(1).fill(password);
-    }
-
+    if ((await pwFields.count()) > 1) await pwFields.nth(1).fill(password);
     await shot(page, "06-register-filled");
     await page.locator('button[type="submit"]').click();
-
-    // Register redirects to /login
     await page.waitForURL("**/login**", { timeout: 15_000 });
     await shot(page, "07-register-done");
   });
@@ -113,7 +132,6 @@ test.describe("Customer Flow", () => {
   test("login", async ({ page }) => {
     await loginCustomer(page, email, password);
     await shot(page, "08-customer-logged-in");
-    // Customer login redirects to "/"
     expect(page.url()).toContain("/");
   });
 
@@ -147,61 +165,72 @@ test.describe("Customer Flow", () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SUPER ADMIN FLOW
+// SUPER ADMIN FLOW (via secret path)
 // ═══════════════════════════════════════════════════════════════════════════
 
 test.describe("Super Admin Flow", () => {
-  test("login", async ({ page }) => {
+  test("login via admin/login", async ({ page }) => {
     await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
     await shot(page, "13-admin-logged-in");
-    expect(page.url()).toContain("/admin");
+    // Should be on /<SECRET> which middleware rewrites to /admin
+    expect(page.url()).toContain(SECRET);
   });
 
   test("dashboard", async ({ page }) => {
     await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
-    // Already on /admin after login
     await shot(page, "14-admin-dashboard");
   });
 
   test("bookings management", async ({ page }) => {
     await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
-    await adminNav(page, "Bookings", "bookings");
+    await adminNav(page, "bookings");
     await shot(page, "15-admin-bookings");
   });
 
   test("courts management", async ({ page }) => {
     await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
-    await adminNav(page, "Courts", "courts");
+    await adminNav(page, "courts");
     await shot(page, "16-admin-courts");
   });
 
   test("pricing management", async ({ page }) => {
     await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
-    await adminNav(page, "Pricing", "pricing");
+    await adminNav(page, "pricing");
     await shot(page, "17-admin-pricing");
+  });
+
+  test("SEO management", async ({ page }) => {
+    await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
+    await adminNav(page, "seo");
+    await shot(page, "17b-admin-seo");
   });
 
   test("analytics", async ({ page }) => {
     await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
-    await adminNav(page, "Analytics", "analytics");
+    await adminNav(page, "analytics");
     await shot(page, "18-admin-analytics");
   });
 
   test("customers", async ({ page }) => {
     await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
-    await adminNav(page, "Customers", "customers");
+    await adminNav(page, "customers");
     await shot(page, "19-admin-customers");
+  });
+
+  test("owners management", async ({ page }) => {
+    await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
+    await adminNav(page, "owners");
+    await shot(page, "19b-admin-owners");
   });
 
   test("settings", async ({ page }) => {
     await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
-    await adminNav(page, "Settings", "settings");
+    await adminNav(page, "settings");
     await shot(page, "20-admin-settings");
   });
 
   test("notification bell", async ({ page }) => {
     await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
-    // Click the last button with SVG (notification bell is in header)
     const buttons = page.locator("header button, [data-testid='notification-bell']");
     const count = await buttons.count();
     if (count > 0) {
@@ -213,25 +242,33 @@ test.describe("Super Admin Flow", () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// OWNER FLOW
+// OWNER FLOW (via /dashboard)
 // ═══════════════════════════════════════════════════════════════════════════
 
 test.describe("Owner Flow", () => {
-  test("login + dashboard", async ({ page }) => {
-    await loginAdmin(page, "owner@lapangin.id", "Owner123!@#");
+  test("login via /dashboard/login", async ({ page }) => {
+    await loginOwner(page, "owner@lapangin.id", "Owner123!@#");
     await shot(page, "22-owner-dashboard");
-    expect(page.url()).toContain("/admin");
+    expect(page.url()).toContain("/dashboard");
   });
 
-  test("owner bookings", async ({ page }) => {
-    await loginAdmin(page, "owner@lapangin.id", "Owner123!@#");
-    await adminNav(page, "Bookings", "bookings");
+  test("owner dashboard stats", async ({ page }) => {
+    await loginOwner(page, "owner@lapangin.id", "Owner123!@#");
+    await page.waitForTimeout(1_000);
+    await shot(page, "22b-owner-stats");
+  });
+
+  test("owner bookings page", async ({ page }) => {
+    await loginOwner(page, "owner@lapangin.id", "Owner123!@#");
+    await page.goto("/dashboard/bookings", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1_000);
     await shot(page, "23-owner-bookings");
   });
 
-  test("owner courts", async ({ page }) => {
-    await loginAdmin(page, "owner@lapangin.id", "Owner123!@#");
-    await adminNav(page, "Courts", "courts");
+  test("owner courts page", async ({ page }) => {
+    await loginOwner(page, "owner@lapangin.id", "Owner123!@#");
+    await page.goto("/dashboard/courts", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1_000);
     await shot(page, "24-owner-courts");
   });
 });
@@ -258,5 +295,10 @@ test.describe("Mobile Responsive", () => {
   test("admin dashboard mobile", async ({ page }) => {
     await loginAdmin(page, "admin@lapangin.id", "Admin123!@#");
     await shot(page, "27-mobile-admin-dashboard");
+  });
+
+  test("owner dashboard mobile", async ({ page }) => {
+    await loginOwner(page, "owner@lapangin.id", "Owner123!@#");
+    await shot(page, "27b-mobile-owner-dashboard");
   });
 });
