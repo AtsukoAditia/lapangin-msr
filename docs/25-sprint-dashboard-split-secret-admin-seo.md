@@ -364,3 +364,43 @@ venues.review_count  INTEGER DEFAULT 0
 
 ### Commit
 `4f29ec7`
+
+---
+
+## 11. Weather Integration + Static Pages + CMS + T&C
+
+### Weather Integration (WeatherAPI.com)
+- `src/lib/weather/client.ts` — fetch rainfall forecast (30min cache)
+- `src/lib/weather/rain-factor.ts` — pricing factor for outdoor courts:
+  - Cerah (0mm, <30% chance) → 100%
+  - Hujan Ringan (1-5mm) → 90% (diskon 10%)
+  - Hujan Sedang (5-15mm) → 80% (diskon 20%)
+  - Hujan Deras (>15mm) → 70% (diskon 30%)
+  - Indoor courts → always 100% (skip rain check)
+- `src/components/weather/RainIndicator.tsx` — UI component with discount badge
+- `src/app/api/weather/rain-check/route.ts` — API endpoint
+- `WEATHER_API_KEY` in `.env.local`
+
+### Static Pages
+- `/tentang` — About Lapangin (mission, features, tech stack)
+- `/kebijakan` — Privacy Policy (9 sections: data collection, usage, sharing, security, rights, retention, cookies, contact, changes)
+- `/syarat` — Terms & Conditions (customer: registration, booking, payment, loyalty, referral, obligations; owner: registration, venue management, booking, data; general: prohibitions, rights, liability, law)
+- `/kontak` — Contact info (email, social media, WhatsApp, address, hours, FAQ)
+- All pages have SEO meta tags (title, description, OG) from CMS
+- All pages fallback to default content when CMS is empty
+
+### CMS Management (Super Admin)
+- `/admin/cms` — Edit static page content and SEO meta
+- `/api/admin/cms` — GET/PUT pages (stored in `data/cms-pages.json`)
+- Edit: content (markdown), meta title/desc, OG title/desc/image
+- Shows custom/default status per page
+- Added CMS to admin sidebar (📝 icon)
+
+### T&C Registration
+- Player register (`/register`): checkbox + link to /syarat & /kebijakan
+- Owner register (`/dashboard/register`): checkbox + link to /syarat & /kebijakan
+- Submit blocked without T&C agreement
+- Error message: "Anda harus menyetujui Syarat & Ketentuan untuk mendaftar"
+
+### Commit
+`7643807`
