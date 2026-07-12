@@ -123,6 +123,10 @@ test.describe("Customer Flow", () => {
     const pwFields = page.locator('input[type="password"]');
     await pwFields.nth(0).fill(password);
     if ((await pwFields.count()) > 1) await pwFields.nth(1).fill(password);
+    
+    // Check T&C checkbox
+    await page.locator('input[type="checkbox"]').check();
+    
     await shot(page, "06-register-filled");
     await page.locator('button[type="submit"]').click();
     await page.waitForURL("**/login**", { timeout: 15_000 });
