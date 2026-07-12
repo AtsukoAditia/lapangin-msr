@@ -20,6 +20,8 @@ export default defineConfig([
     "build/**",
     "next-env.d.ts",
     ".github/**",
+    "test-results/**",
+    "e2e/**",
     "public/sw.js",
   ]),
 ]);
