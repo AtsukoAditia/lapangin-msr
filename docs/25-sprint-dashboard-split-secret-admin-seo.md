@@ -333,3 +333,34 @@ Rewrite auth service untuk delegate ke `getDatabaseAdapter()`. Semua customer op
 - Admin middleware rejects unauthenticated access to `/admin` with redirect to `/`
 - Secret path middleware rejects unauthenticated access with redirect to `/admin/login`
 - Owner middleware rejects unauthenticated access with redirect to `/dashboard/login`
+
+---
+
+## 10. Database Schema Sync
+
+### Problem
+Schema.sql missing tables that app code uses: `reviews`, `review_photos`, `rewards`, `reward_redemptions`, `referrals`. Seed referenced `reviews` table that didn't exist in schema. `venues` table missing `avg_rating`/`review_count` columns.
+
+### Schema Additions
+```sql
+-- New tables
+reviews              -- rating (1-5), comment, is_visible, unique per booking
+review_photos        -- photo_url, linked to reviews
+rewards              -- discount/free types, points_cost, value
+reward_redemptions   -- customer↔reward tracking, pending/applied/expired
+referrals            -- referrer→referral code, pending/completed/expired
+
+-- New columns on venues
+venues.avg_rating    NUMERIC(3,2) DEFAULT 0
+venues.review_count  INTEGER DEFAULT 0
+```
+
+### Seed Additions
+- 4 rewards: Diskon 10% (100pts), Diskon Rp25rb (200pts), Gratis 1 Jam (500pts), Gratis Sesi (800pts)
+- 2 referrals: john→jane (completed), jane (pending)
+
+### Current DB Tables (20)
+`areas`, `sports`, `admins`, `venue_owners`, `venues`, `courts`, `customers`, `bookings`, `blocked_slots`, `pricing_rules`, `operating_hours`, `payment_methods`, `audit_logs`, `notification_logs`, `loyalty_transactions`, `reviews`, `review_photos`, `rewards`, `reward_redemptions`, `referrals`
+
+### Commit
+`4f29ec7`

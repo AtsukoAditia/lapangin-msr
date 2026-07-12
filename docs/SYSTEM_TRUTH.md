@@ -149,13 +149,40 @@ Known cleanup needed:
 
 ## Production database target
 
-PostgreSQL must be the source of truth for real usage. The recommended schema is documented in `db/postgres/schema.sql`.
+PostgreSQL must be the source of truth for real usage. Schema: `db/postgres/schema.sql`, seed: `db/postgres/seed.sql`.
 
-Critical production requirement:
+### Current tables (20)
 
-- Prevent overlapping bookings at database level, not only service level.
-- Add or confirm support for `expires_at` and active-booking filtering so expired temporary holds do not block future bookings.
-- Review booking/payment status enums before production migration so temporary booking, payment proof verification, rejection, and expiry are represented clearly.
+| Table | Description |
+|-------|-------------|
+| `areas` | Wilayah (provinsi, kota, kecamatan, kelurahan) |
+| `sports` | Jenis olahraga (futsal, bulu tangkis, dll) |
+| `admins` | Admin accounts (super_admin, admin, staff, owner) |
+| `venue_owners` | Bisnis owner (linked to admins, status: pending_review/active/suspended/rejected) |
+| `venues` | Venue/gedung olahraga (linked to owner + area) |
+| `courts` | Lapangan per venue (linked to sport) |
+| `customers` | User/pemain (loyalty_points, total_spent) |
+| `bookings` | Booking records (status + payment status, overlap constraint) |
+| `blocked_slots` | Slot waktu yang diblokir per court |
+| `pricing_rules` | Aturan harga (weekday/weekend/holiday per jam) |
+| `operating_hours` | Jam operasional per court per hari |
+| `payment_methods` | Metode pembayaran (bank transfer, e-wallet, QRIS, cash) |
+| `audit_logs` | Log audit semua aksi |
+| `notification_logs` | Log notifikasi terkirim |
+| `loyalty_transactions` | Ledger loyalty points (earned/redeemed/bonus/expired) |
+| `reviews` | Review pelanggan per booking (1-5 rating) |
+| `review_photos` | Foto yang diupload di review |
+| `rewards` | Reward yang bisa ditukar dengan points |
+| `reward_redemptions` | Penukaran reward oleh customer |
+| `referrals` | Referral code + tracking (referrer → referee) |
+
+### Critical production requirements
+
+- Prevent overlapping bookings at database level (`bookings_no_active_overlap` constraint)
+- `expires_at` + active-booking filtering — expired holds don't block future bookings
+- Review booking/payment status enums before production migration
+- Move all loyalty awarding into one `LoyaltyService`
+- Prevent duplicate point awards (`loyalty_one_earned_tx_per_booking` unique index)
 
 ## Sprint 2 — Temporary booking hold
 
