@@ -7,6 +7,7 @@ import type {
   NotificationType,
 } from "@/lib/types/domain";
 import { getNotificationTemplate } from "@/lib/notification-templates";
+import { sendMessage, formatPhoneNumber, isWhatsAppReady } from "@/lib/whatsapp/client";
 
 export interface SendNotificationInput {
   type: NotificationType;
@@ -46,8 +47,26 @@ export async function sendNotification(
   };
 
   try {
-    // In MVP: log as "sent" (no actual delivery)
-    // Future: integrate with email/SMS providers here
+    // Try real WhatsApp delivery if channel is whatsapp and service is ready
+    if (input.channel === "whatsapp") {
+      const ready = await isWhatsAppReady();
+      if (ready) {
+        const phone = formatPhoneNumber(input.recipient);
+        const result = await sendMessage(phone, template.message);
+        const status = result.success ? "sent" : "failed";
+        const log = await adapter.createNotificationLog(
+          payload,
+          status,
+          result.error,
+        );
+        console.log(
+          `[WhatsApp] ${input.type} to ${phone} — ${result.success ? "sent" : "failed"}: ${result.error || log.id}`,
+        );
+        return log;
+      }
+    }
+
+    // Fallback: log as "sent" (no actual delivery)
     const log = await adapter.createNotificationLog(payload, "sent");
     console.log(
       `[Notification] ${input.type} via ${input.channel} to ${input.recipient} — ${log.id}`,
