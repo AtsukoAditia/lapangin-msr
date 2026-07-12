@@ -169,6 +169,25 @@ INSERT INTO reviews (id, booking_id, customer_id, venue_id, court_id, rating, co
   ('review-005', 'booking-005', (SELECT id FROM customers WHERE email = 'bob@example.com'), 'venue-rahasian', 'court-b4', 3, 'Lapangan cukup bagus tapi harga agak mahal untuk area sini. AC kurang dingin.', true, '2026-07-06T20:00:00Z', '2026-07-06T20:00:00Z')
 ON CONFLICT (id) DO NOTHING;
 
+-- ==================== REWARDS ====================
+INSERT INTO rewards (id, name, description, type, points_cost, value, is_active, created_at) VALUES
+  ('reward-disc-10', 'Diskon 10%', 'Diskon 10% untuk booking berikutnya (maks Rp 50.000)', 'discount_percentage', 100, 10, true, NOW()),
+  ('reward-disc-25k', 'Diskon Rp 25.000', 'Potongan langsung Rp 25.000 untuk booking berikutnya', 'discount_amount', 200, 25000, true, NOW()),
+  ('reward-free-1h', 'Gratis 1 Jam', 'Booking 1 jam gratis untuk lapangan mana saja', 'free_hour', 500, 1, true, NOW()),
+  ('reward-free-session', 'Gratis Sesi', 'Booking 1 sesi penuh gratis (2 jam)', 'free_session', 800, 2, true, NOW())
+ON CONFLICT (id) DO NOTHING;
+
+-- ==================== REFERRALS ====================
+INSERT INTO referrals (id, referrer_id, referral_code, status, created_at) VALUES
+  ('ref-john-001', (SELECT id FROM customers WHERE email = 'john@example.com'), 'JOHN-ABC123', 'completed', '2026-06-15T10:00:00Z'),
+  ('ref-jane-001', (SELECT id FROM customers WHERE email = 'jane@example.com'), 'JANE-XYZ789', 'pending', '2026-07-01T14:00:00Z')
+ON CONFLICT (id) DO NOTHING;
+
+-- Link referral to referee
+UPDATE referrals SET referee_id = (SELECT id FROM customers WHERE email = 'jane@example.com'),
+  points_awarded = 100, completed_at = '2026-07-02T10:00:00Z'
+  WHERE id = 'ref-john-001';
+
 -- Update venue aggregate ratings
 UPDATE venues SET
   avg_rating = COALESCE((SELECT AVG(rating) FROM reviews WHERE venue_id = venues.id AND is_visible = true), 0),

@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS venues (
 
 CREATE INDEX IF NOT EXISTS venues_owner_idx ON venues (owner_id);
 CREATE INDEX IF NOT EXISTS venues_area_idx ON venues (area_id);
+ALTER TABLE venues ADD COLUMN IF NOT EXISTS avg_rating NUMERIC(3,2) NOT NULL DEFAULT 0;
+ALTER TABLE venues ADD COLUMN IF NOT EXISTS review_count INTEGER NOT NULL DEFAULT 0;
 
 -- ============================================================
 -- Courts
@@ -329,3 +331,88 @@ CREATE TABLE IF NOT EXISTS loyalty_transactions (
 CREATE UNIQUE INDEX IF NOT EXISTS loyalty_one_earned_tx_per_booking
   ON loyalty_transactions (booking_id)
   WHERE type = 'earned' AND booking_id IS NOT NULL;
+
+-- ============================================================
+-- Reviews
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id VARCHAR(50) PRIMARY KEY,
+  booking_id VARCHAR(50) NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  venue_id VARCHAR(50) NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+  court_id VARCHAR(50) REFERENCES courts(id) ON DELETE SET NULL,
+  rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT NOT NULL DEFAULT '',
+  is_visible BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS reviews_venue_idx ON reviews (venue_id);
+CREATE INDEX IF NOT EXISTS reviews_customer_idx ON reviews (customer_id);
+CREATE UNIQUE INDEX IF NOT EXISTS reviews_one_per_booking ON reviews (booking_id);
+
+-- ============================================================
+-- Review Photos
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS review_photos (
+  id VARCHAR(50) PRIMARY KEY,
+  review_id VARCHAR(50) NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
+  photo_url TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS review_photos_review_idx ON review_photos (review_id);
+
+-- ============================================================
+-- Rewards
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS rewards (
+  id VARCHAR(50) PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  type TEXT NOT NULL CHECK (type IN ('discount_percentage', 'discount_amount', 'free_hour', 'free_session')),
+  points_cost INTEGER NOT NULL CHECK (points_cost > 0),
+  value INTEGER NOT NULL CHECK (value > 0),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- Reward Redemptions
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS reward_redemptions (
+  id VARCHAR(50) PRIMARY KEY,
+  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  reward_id VARCHAR(50) NOT NULL REFERENCES rewards(id) ON DELETE RESTRICT,
+  reward_name TEXT NOT NULL,
+  points_used INTEGER NOT NULL CHECK (points_used > 0),
+  booking_id VARCHAR(50) REFERENCES bookings(id) ON DELETE SET NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'applied', 'expired')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  used_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS reward_redemptions_customer_idx ON reward_redemptions (customer_id);
+
+-- ============================================================
+-- Referrals
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS referrals (
+  id VARCHAR(50) PRIMARY KEY,
+  referrer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  referee_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+  referral_code VARCHAR(20) NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'expired')),
+  points_awarded INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS referrals_referrer_idx ON referrals (referrer_id);
+CREATE INDEX IF NOT EXISTS referrals_code_idx ON referrals (referral_code);
