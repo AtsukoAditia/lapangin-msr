@@ -1,25 +1,8 @@
 import type { NextConfig } from "next";
 
-const adminSecret = process.env.ADMIN_SECRET_PATH || "5b08d37a8d376d3f97ec3972";
-
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   allowedDevOrigins: ['43.157.207.183'],
-  async rewrites() {
-    return [
-      // Secret admin path rewrites to /admin
-      // e.g. /5b08d37a8d376d3f97ec3972 → /admin
-      // e.g. /5b08d37a8d376d3f97ec3972/bookings → /admin/bookings
-      {
-        source: `/${adminSecret}`,
-        destination: '/admin',
-      },
-      {
-        source: `/${adminSecret}/:path*`,
-        destination: '/admin/:path*',
-      },
-    ];
-  },
   async headers() {
     return [
       {

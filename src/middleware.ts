@@ -30,6 +30,28 @@ async function hasRole(token: string | undefined, role: string): Promise<boolean
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const adminSecret = process.env.ADMIN_SECRET_PATH || "5b08d37a8d376d3f97ec3972";
+
+  // Secret admin path — require admin auth
+  // Pattern: /[24-char-hex]/...  OR  /<ADMIN_SECRET>/...
+  const isSecretPath = pathname === `/${adminSecret}` || pathname.startsWith(`/${adminSecret}/`);
+  const isHexSecret = /^\/[0-9a-f]{24}(\/|$)/.test(pathname);
+  if (isSecretPath || isHexSecret) {
+    const token = request.cookies.get(ADMIN_TOKEN_NAME)?.value;
+    if (!(await hasRole(token, "admin"))) {
+      // Not authenticated — redirect to admin login with secret path as redirect
+      const loginUrl = new URL("/admin/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    // Authenticated — rewrite to /admin and add noindex
+    const subPath = pathname.replace(/^\/[0-9a-f]{24}/, "") || "/";
+    const rewritten = request.nextUrl.clone();
+    rewritten.pathname = `/admin${subPath}`;
+    const res = NextResponse.rewrite(rewritten);
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return res;
+  }
 
   // Admin routes - require admin token
   if (matchRoute(pathname, ADMIN_ROUTES)) {
@@ -105,5 +127,8 @@ export const config = {
     "/api/owner/:path*",
     "/profile/:path*",
     "/api/customer/:path*",
+    // Secret admin path (24-char hex)
+    "/([0-9a-f]{24})",
+    "/([0-9a-f]{24})/:path*",
   ],
 };
