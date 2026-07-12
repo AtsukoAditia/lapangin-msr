@@ -36,6 +36,15 @@ export interface VenueOwner {
 
 export type VenueApprovalStatus = "draft" | "pending_review" | "active" | "rejected" | "suspended";
 
+export interface VenueRainConfig {
+  enabled: boolean;
+  levels?: {
+    light: { discountPercent: number };
+    moderate: { discountPercent: number };
+    heavy: { discountPercent: number };
+  };
+}
+
 export interface Venue {
   id: string;
   name: string;
@@ -51,6 +60,7 @@ export interface Venue {
   approvalStatus: VenueApprovalStatus;
   avgRating?: number;
   reviewCount?: number;
+  rainDiscountConfig?: VenueRainConfig;
 }
 
 export interface Court {

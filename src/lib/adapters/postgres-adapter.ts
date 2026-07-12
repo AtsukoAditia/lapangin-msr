@@ -203,6 +203,11 @@ export class PostgresAdapter implements DatabaseAdapter {
     return rows.map((r) => mapRow<Venue>(r));
   }
 
+  async getVenueById(id: string): Promise<Venue | null> {
+    const rows = await query<Record<string, unknown>>("SELECT * FROM venues WHERE id = $1", [id]);
+    return rows[0] ? mapRow<Venue>(rows[0]) : null;
+  }
+
   // ── Courts ──
   async getCourts(): Promise<Court[]> {
     const rows = await query<Record<string, unknown>>("SELECT * FROM courts WHERE is_active = true");
@@ -681,6 +686,19 @@ export class PostgresAdapter implements DatabaseAdapter {
     await pool.query(
       `UPDATE venues SET avg_rating = $1, review_count = $2, updated_at = NOW() WHERE id = $3`,
       [avgRating, reviewCount, venueId]
+    );
+  }
+
+  async updateVenueConfig(venueId: string, config: Record<string, unknown>): Promise<void> {
+    const entries = Object.entries(config);
+    if (entries.length === 0) return;
+    // Merge with existing config
+    const { rows } = await pool.query(`SELECT rain_discount_config FROM venues WHERE id = $1`, [venueId]);
+    const existing = rows[0]?.rain_discount_config || {};
+    const merged = { ...existing, ...config };
+    await pool.query(
+      `UPDATE venues SET rain_discount_config = $1, updated_at = NOW() WHERE id = $2`,
+      [JSON.stringify(merged), venueId]
     );
   }
 

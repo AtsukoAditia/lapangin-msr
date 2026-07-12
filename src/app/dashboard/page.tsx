@@ -107,6 +107,13 @@ export default function OwnerDashboard() {
               <p className="text-xs text-gray-500">Venue & akun</p>
             </div>
           </a>
+          <a href="/dashboard/settings/rain" className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-all">
+            <span className="text-2xl">🌧️</span>
+            <div>
+              <p className="font-medium text-gray-900 text-sm">Diskon Cuaca</p>
+              <p className="text-xs text-gray-500">Atur diskon hujan</p>
+            </div>
+          </a>
           <a href="/dashboard/bookings" className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-all">
             <span className="text-2xl">📊</span>
             <div>

@@ -286,6 +286,10 @@ export class MockAdapter implements DatabaseAdapter {
     return mockVenues.filter((v) => v.areaId === areaId && v.isActive && v.approvalStatus === "active");
   }
 
+  async getVenueById(id: string): Promise<Venue | null> {
+    return mockVenues.find((v) => v.id === id) ?? null;
+  }
+
   async getVenuesByOwner(ownerId: string): Promise<Venue[]> {
     return mockVenues.filter((v) => v.ownerId === ownerId);
   }
@@ -717,5 +721,14 @@ export class MockAdapter implements DatabaseAdapter {
 
   async updateVenueRating(_venueId: string): Promise<void> {
     // No-op for mock — ratings are computed on the fly
+  }
+
+  async updateVenueConfig(venueId: string, config: Record<string, unknown>): Promise<void> {
+    const venue = mockVenues.find((v) => v.id === venueId);
+    if (!venue) return;
+    (venue as unknown as Record<string, unknown>).rainDiscountConfig = {
+      ...((venue as unknown as Record<string, unknown>).rainDiscountConfig as Record<string, unknown> || {}),
+      ...config,
+    };
   }
 }

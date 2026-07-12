@@ -100,6 +100,7 @@ CREATE INDEX IF NOT EXISTS venues_owner_idx ON venues (owner_id);
 CREATE INDEX IF NOT EXISTS venues_area_idx ON venues (area_id);
 ALTER TABLE venues ADD COLUMN IF NOT EXISTS avg_rating NUMERIC(3,2) NOT NULL DEFAULT 0;
 ALTER TABLE venues ADD COLUMN IF NOT EXISTS review_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE venues ADD COLUMN IF NOT EXISTS rain_discount_config JSONB DEFAULT '{"enabled":false}';
 
 -- ============================================================
 -- Courts

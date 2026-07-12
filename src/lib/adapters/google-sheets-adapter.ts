@@ -204,6 +204,18 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
       .filter((v) => v.ownerId === ownerId);
   }
 
+  async getVenueById(id: string): Promise<Venue | null> {
+    const doc = await getSpreadsheet();
+    const sheet = doc.sheetsByTitle["venues"];
+    if (!sheet) return null;
+
+    const rows = await sheet.getRows();
+    const found = rows
+      .map((row) => rowToVenue(row.toObject()))
+      .find((v) => v.id === id);
+    return found ?? null;
+  }
+
   async getCourts(): Promise<Court[]> {
     const doc = await getSpreadsheet();
     const sheet = doc.sheetsByTitle["courts"];
@@ -841,6 +853,7 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
   async getReviewByBooking(): Promise<null> { return null; }
   async getVenueRating(): Promise<{ avgRating: number; reviewCount: number }> { return { avgRating: 0, reviewCount: 0 }; }
   async updateVenueRating(): Promise<void> {}
+  async updateVenueConfig(): Promise<void> {}
 
   // Area methods
   async getAreas(): Promise<Area[]> { return []; }

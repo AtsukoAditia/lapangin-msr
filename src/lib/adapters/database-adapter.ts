@@ -92,6 +92,7 @@ export interface DatabaseAdapter {
   getVenues(): Promise<Venue[]>;
   getVenuesByArea(areaId: string): Promise<Venue[]>;
   getVenuesByOwner(ownerId: string): Promise<Venue[]>;
+  getVenueById(id: string): Promise<Venue | null>;
 
   // Courts
   getCourts(): Promise<Court[]>;
@@ -176,4 +177,5 @@ export interface DatabaseAdapter {
   getReviewByBooking(bookingId: string): Promise<Review | null>;
   getVenueRating(venueId: string): Promise<{ avgRating: number; reviewCount: number }>;
   updateVenueRating(venueId: string): Promise<void>;
+  updateVenueConfig(venueId: string, config: Record<string, unknown>): Promise<void>;
 }
