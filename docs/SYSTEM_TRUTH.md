@@ -24,7 +24,9 @@ This document is the single reference for the current implementation state.
 | ----------------- | ------------- | ----------- | --------- |
 | admin@lapangin.id | Admin123!@#   | Super Admin | `/{SECRET_PATH}/` |
 | owner@lapangin.id | Owner123!@#   | Venue Owner | `/dashboard/` |
-| john@test.com     | password123   | Customer    | `/profile/` |
+| john@example.com  | password123   | Customer    | `/profile/` |
+| jane@example.com  | password123   | Customer    | `/profile/` |
+| bob@example.com   | password123   | Customer    | `/profile/` |
 
 Deprecated credentials such as `admin@lapangin.com / admin123` must not be reintroduced.
 
