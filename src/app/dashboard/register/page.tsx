@@ -13,6 +13,7 @@ export default function OwnerRegisterPage() {
     businessName: "",
     picName: "",
   });
+  const [agreedToTc, setAgreedToTc] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,6 +33,11 @@ export default function OwnerRegisterPage() {
 
     if (form.password.length < 8) {
       setError("Password minimal 8 karakter");
+      return;
+    }
+
+    if (!agreedToTc) {
+      setError("Anda harus menyetujui Syarat & Ketentuan untuk mendaftar");
       return;
     }
 
@@ -201,6 +207,27 @@ export default function OwnerRegisterPage() {
               </div>
             </div>
           </div>
+
+          <label className="flex items-start gap-3 cursor-pointer mt-4">
+            <input
+              type="checkbox"
+              checked={agreedToTc}
+              onChange={(e) => setAgreedToTc(e.target.checked)}
+              className="mt-1 w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+              required
+            />
+            <span className="text-sm text-emerald-200/70">
+              Saya menyetujui{" "}
+              <Link href="/syarat" target="_blank" className="text-emerald-300 hover:underline font-medium">
+                Syarat & Ketentuan
+              </Link>{" "}
+              dan{" "}
+              <Link href="/kebijakan" target="_blank" className="text-emerald-300 hover:underline font-medium">
+                Kebijakan Privasi
+              </Link>{" "}
+              Lapangin, termasuk ketentuan khusus untuk Pemilik Lapangan.
+            </span>
+          </label>
 
           <button
             type="submit"

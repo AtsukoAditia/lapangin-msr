@@ -13,6 +13,7 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
   });
+  const [agreedToTc, setAgreedToTc] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,6 +27,11 @@ export default function RegisterPage() {
 
     if (form.password !== form.confirmPassword) {
       setError("Password dan konfirmasi password tidak cocok");
+      return;
+    }
+
+    if (!agreedToTc) {
+      setError("Anda harus menyetujui Syarat & Ketentuan untuk mendaftar");
       return;
     }
 
@@ -94,6 +100,27 @@ export default function RegisterPage() {
           )}
 
           <div className="space-y-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedToTc}
+                onChange={(e) => setAgreedToTc(e.target.checked)}
+                className="mt-1 w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                required
+              />
+              <span className="text-sm text-gray-600">
+                Saya menyetujui{" "}
+                <Link href="/syarat" target="_blank" className="text-emerald-600 hover:underline font-medium">
+                  Syarat & Ketentuan
+                </Link>{" "}
+                dan{" "}
+                <Link href="/kebijakan" target="_blank" className="text-emerald-600 hover:underline font-medium">
+                  Kebijakan Privasi
+                </Link>{" "}
+                Lapangin.
+              </span>
+            </label>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap</label>
               <input
