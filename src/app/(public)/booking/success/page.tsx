@@ -306,37 +306,41 @@ function SuccessContent() {
     setError("");
 
     try {
-      // Convert file to base64
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
+      // Upload file to server
+      const formData = new FormData();
+      formData.append("file", proofFile);
 
-        try {
-          const res = await fetch("/api/payments/proof", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              bookingId: booking.id,
-              proofUrl: base64,
-            }),
-          });
+      const uploadRes = await fetch("/api/uploads/proof", {
+        method: "POST",
+        body: formData,
+      });
 
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.error ?? "Gagal mengirim bukti transfer.");
-          }
+      if (!uploadRes.ok) {
+        const uploadData = await uploadRes.json().catch(() => ({}));
+        throw new Error(uploadData.error ?? "Gagal mengupload file.");
+      }
 
-          setProofSubmitted(true);
-          await fetchBooking();
-        } catch (e) {
-          setError(e instanceof Error ? e.message : "Gagal mengirim bukti transfer.");
-        } finally {
-          setSubmittingProof(false);
-        }
-      };
-      reader.readAsDataURL(proofFile);
+      const { url: proofUrl } = await uploadRes.json();
+
+      const res = await fetch("/api/payments/proof", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingCode: booking.bookingCode,
+          proofUrl,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Gagal mengirim bukti transfer.");
+      }
+
+      setProofSubmitted(true);
+      await fetchBooking();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Gagal mengirim bukti transfer.");
+    } finally {
       setSubmittingProof(false);
     }
   }
