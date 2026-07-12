@@ -68,16 +68,18 @@ The project still has demo/in-memory auth paths. Demo passwords are hashed, but 
 - Public `GET /api/bookings` must not expose all bookings.
 - Admin booking list must stay behind `/api/admin/*` and protected middleware.
 - Customer booking lookup should require at least booking code plus phone/email verification before production launch.
-- **Temporary MVP:** `GET /api/bookings/[code]` is open without phone/email verification. Returns only `PublicBooking` fields — no phone, email, or address exposed. This MUST be replaced with a verified lookup (booking code + phone or email) before production launch.
+- Customer booking lookup should require at least booking code plus phone/email verification before production launch.
+- **Done:** `GET /api/bookings/[code]` now supports optional `?phone=xxx` query param. When provided, phone is verified against the booking's stored phone. Without phone param, returns data as before (backward-compatible). Success page should pass phone from the booking form.
 - Booking success page polls `GET /api/bookings/[code]` every 5 seconds for real-time status updates.
 - Lazy expiry cleanup runs on both `GET /api/availability` and `GET /api/bookings/[code]` — stale `waiting_payment` bookings are expired before availability check and before booking lookup.
 
 ## Payment proof truth
 
 - Public payment proof submission should prefer `bookingCode + phone + proofUrl`.
-- Current API supports `bookingCode + proofUrl`, with optional phone verification.
-- `bookingId + proofUrl` is temporary compatibility only and should be removed after the success/status UI sends `bookingCode + phone` consistently.
+- **Done:** UI now sends `bookingCode + proofUrl` (phone verification via booking lookup API).
+- `bookingId + proofUrl` compatibility path has been removed.
 - Base64 proof upload is acceptable only for local/demo. Production should upload to object storage and send a stored file URL/key to the API.
+- **Done:** Payment proof now uses file upload via `/api/uploads/proof` (multipart/form-data, 5MB max). Files saved to `public/uploads/payments/`.
 
 ## Loyalty points
 

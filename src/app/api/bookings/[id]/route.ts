@@ -9,11 +9,13 @@ import type { Booking } from "@/lib/types/domain";
  * Also runs expiry cleanup before responding.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: code } = await params;
+    const url = new URL(request.url);
+    const phone = url.searchParams.get("phone")?.replace(/[^0-9+]/g, "") || "";
     const adapter = getDatabaseAdapter();
     const service = new BookingService(adapter);
 
@@ -27,6 +29,24 @@ export async function GET(
         { error: "Booking tidak ditemukan." },
         { status: 404 },
       );
+    }
+
+    // Phone verification: if phone provided, verify it matches
+    if (phone && booking.customerPhone) {
+      const normalize = (p: string) => p.replace(/[^0-9]/g, "");
+      const inputPhone = normalize(phone);
+      const storedPhone = normalize(booking.customerPhone);
+      const match =
+        inputPhone === storedPhone ||
+        inputPhone === "62" + storedPhone.replace(/^0/, "") ||
+        "62" + inputPhone.replace(/^0/, "") === storedPhone;
+
+      if (!match) {
+        return NextResponse.json(
+          { error: "Nomor telepon tidak sesuai dengan booking." },
+          { status: 403 },
+        );
+      }
     }
 
     // Return only public-safe fields
