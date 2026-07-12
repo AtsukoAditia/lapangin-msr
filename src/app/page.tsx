@@ -229,6 +229,59 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Owner CTA Section */}
+      <section className="bg-slate-50 py-14 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="rounded-3xl bg-gradient-to-r from-emerald-500 to-teal-600 p-1">
+            <div className="rounded-3xl bg-white p-8 sm:p-12">
+              <div className="grid items-center gap-8 lg:grid-cols-2">
+                <div>
+                  <span className="inline-block rounded-full bg-emerald-100 px-4 py-1.5 text-xs font-bold text-emerald-700 tracking-wide uppercase mb-4">
+                    🏟️ Untuk Pemilik Lapangan
+                  </span>
+                  <h2 className="text-3xl font-black text-slate-900 sm:text-4xl mb-4">
+                    Daftarkan Venue Anda
+                  </h2>
+                  <p className="text-slate-600 mb-6 leading-relaxed">
+                    Punya lapangan futsal, badminton, basket, atau olahraga lainnya? 
+                    Daftarkan venue Anda di Lapangin dan dapatkan akses ke ribuan pemain potensial.
+                    Kelola booking, atur harga, dan lihat statistik venue Anda semuanya di satu tempat.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Link
+                      href="/dashboard/register"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3.5 text-base font-bold text-white shadow-lg transition-all hover:shadow-xl hover:scale-105"
+                    >
+                      ✨ Daftar Venue Sekarang
+                    </Link>
+                    <Link
+                      href="/dashboard/login"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-200 px-8 py-3.5 text-base font-semibold text-slate-700 transition-all hover:border-emerald-400 hover:text-emerald-700"
+                    >
+                      Masuk ke Dashboard →
+                    </Link>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { emoji: "📊", title: "Kelola Booking", desc: "Real-time & otomatis" },
+                    { emoji: "💰", title: "Atur Harga", desc: "Weekday/Weekend/Holiday" },
+                    { emoji: "📈", title: "Lihat Statistik", desc: "Pendapatan & pengunjung" },
+                    { emoji: "🌧️", title: "Diskon Cuaca", desc: "Otomatis saat hujan" },
+                  ].map((feature) => (
+                    <div key={feature.title} className="rounded-2xl border border-slate-100 p-4 text-center hover:shadow-md transition-all hover:-translate-y-1">
+                      <div className="text-3xl mb-2">{feature.emoji}</div>
+                      <div className="font-bold text-slate-900">{feature.title}</div>
+                      <div className="text-sm text-slate-500 mt-1">{feature.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section ref={ctaRef} className="reveal bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 relative overflow-hidden">
         <div className="absolute inset-0">

@@ -29,7 +29,11 @@ export default function Navbar() {
   }, [pathname]);
 
   const handleLogout = async () => {
-    const endpoint = user?.role === "admin" ? "/api/auth/admin/logout" : "/api/auth/customer/logout";
+    const endpoint = user?.role === "admin" 
+      ? "/api/auth/admin/logout"
+      : user?.role === "owner"
+      ? "/api/auth/owner/logout"
+      : "/api/auth/customer/logout";
     await fetch(endpoint, { method: "POST" });
     setUser(null);
     window.location.href = "/";
@@ -107,6 +111,16 @@ export default function Navbar() {
                     {user.role === "admin" && (
                       <Link href="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                         ⚙️ Dashboard Admin
+                      </Link>
+                    )}
+                    {user.role === "owner" && (
+                      <Link href="/owner" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        🏟️ Dashboard Owner
+                      </Link>
+                    )}
+                    {user.role === "owner" && (
+                      <Link href="/owner" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        🏟️ Dashboard Owner
                       </Link>
                     )}
                     <hr className="my-1 border-gray-100" />
@@ -193,6 +207,16 @@ export default function Navbar() {
                 {user.role === "admin" && (
                   <MobileNavLink href="/admin" onClick={() => setMobileOpen(false)}>
                     ⚙️ Dashboard Admin
+                  </MobileNavLink>
+                )}
+                {user.role === "owner" && (
+                  <MobileNavLink href="/owner" onClick={() => setMobileOpen(false)}>
+                    🏟️ Dashboard Owner
+                  </MobileNavLink>
+                )}
+                {user.role === "owner" && (
+                  <MobileNavLink href="/owner" onClick={() => setMobileOpen(false)}>
+                    🏟️ Dashboard Owner
                   </MobileNavLink>
                 )}
                 <button
