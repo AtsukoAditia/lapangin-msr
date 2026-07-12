@@ -4,11 +4,11 @@ This document is the single reference for the current implementation state.
 
 ## Current runtime status
 
-- Default demo runtime: `DATABASE_PROVIDER=mock`
-- Google Sheets support: available for demo data, not recommended for real concurrent production booking
-- PostgreSQL support: schema planned, adapter still not implemented
-- Notification delivery: log-only MVP, not real email/WhatsApp delivery yet
-- Payment proof upload: manual proof URL/base64 MVP, not production object storage yet
+- Default runtime: `DATABASE_PROVIDER=postgres`
+- PostgreSQL 16: fully implemented, primary database
+- Google Sheets support: available for demo data, not recommended for production
+- Notification delivery: log-only MVP + WhatsApp wwebjs prep (uncomment when service ready)
+- Payment proof upload: file upload via `/api/uploads/proof` (multipart/form-data, 5MB max)
 
 ## Product direction
 
@@ -20,12 +20,11 @@ This document is the single reference for the current implementation state.
 
 ## Canonical local demo credentials
 
-Use only these credentials in docs, tests, and local examples:
-
-| Email             | Password    | Role        |
-| ----------------- | ----------- | ----------- |
-| admin@lapangin.id | Admin123!@# | Super Admin |
-| owner@lapangin.id | Owner123!@# | Venue Owner |
+| Email             | Password      | Role        | Dashboard |
+| ----------------- | ------------- | ----------- | --------- |
+| admin@lapangin.id | Admin123!@#   | Super Admin | `/{SECRET_PATH}/` |
+| owner@lapangin.id | Owner123!@#   | Venue Owner | `/dashboard/` |
+| john@test.com     | password123   | Customer    | `/profile/` |
 
 Deprecated credentials such as `admin@lapangin.com / admin123` must not be reintroduced.
 
@@ -51,16 +50,71 @@ Detailed specification: `docs/13-marketplace-temporary-booking-payment-flow.md`.
 
 ### Cookie names
 
-- Admin: `admin_auth_token`
+- Admin (Super Admin): `admin_auth_token`
+- Owner (Venue Owner): `owner_auth_token`
 - Customer: `customer_token`
 
-### Admin roles
+### Roles & Dashboards
 
-JWT tokens store the actual admin role from DB (`super_admin`, `admin`, or `staff`). Middleware and AdminLayout client-side check both accept all three admin roles. Do not hardcode `role === "admin"` anywhere.
+| Role | Dashboard | Access |
+|------|-----------|--------|
+| `super_admin` | `/{SECRET_PATH}/` | Full platform: owners, CMS, SEO, ads, all data |
+| `admin` / `staff` | `/{SECRET_PATH}/` | Same as super_admin (middleware accepts all admin roles) |
+| `owner` | `/dashboard/` | Own venues, bookings, courts, stats only |
+| `customer` | `/profile/` | Booking history, achievements, referrals, leaderboard |
+
+### Secret Admin Path
+
+- Admin panel accessible only via secret 24-char hex path (e.g. `/5b08d37a8d376d3f97ec3972`)
+- `/admin` direct access blocked (redirects to homepage)
+- `ADMIN_SECRET_PATH` env var (server-only, not `NEXT_PUBLIC`)
+- Generate: `openssl rand -hex 12`
+
+### JWT Session structure
+
+```typescript
+interface AuthSession {
+  userId: string;
+  role: "admin" | "super_admin" | "staff" | "customer" | "owner";
+  name: string;
+  email: string;
+  phone?: string;
+  ownerId?: string;       // For owner role
+  impersonating?: {       // For admin viewing as owner
+    ownerId: string;
+    ownerName: string;
+  };
+}
+```
 
 ### Current limitation
 
-The project still has demo/in-memory auth paths. Demo passwords are hashed, but production must move admin and customer accounts to a persistent database and remove demo credential fallback.
+- Demo passwords are hashed, but production must remove demo credential fallback
+- Owner registration creates both `AdminUser` + `VenueOwner` records
+
+## Dashboard Architecture
+
+### Three Dashboards
+
+| URL | Role | Features |
+|-----|------|----------|
+| `/{SECRET}/` | Super Admin | Owner management, CMS, SEO, ads, all bookings, all venues, analytics, customers, settings |
+| `/dashboard/` | Owner Lapangan | Venue management, court management, booking management, stats, sub-admin accounts |
+| `/profile/` | Customer/Player | Booking history, achievements, referrals, leaderboard, loyalty |
+
+### Owner Registration Flow
+
+1. Owner daftar di `/dashboard/register` → creates `AdminUser` (role=owner) + `VenueOwner` (status=`pending_review`)
+2. Super admin review di `/{SECRET}/owners` → approve/reject/suspend
+3. Owner login di `/dashboard/login` → status must be `active`
+4. Owner redirected to `/dashboard/` with venue-scoped stats
+
+### VenueOwner Status
+
+- `pending_review` — baru daftar, nunggu approval
+- `active` — sudah di-approve, bisa login
+- `suspended` — di-suspend oleh super admin
+- `rejected` — ditolak oleh super admin
 
 ## Booking data privacy
 
