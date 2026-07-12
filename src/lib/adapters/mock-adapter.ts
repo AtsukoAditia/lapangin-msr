@@ -29,6 +29,7 @@ import type {
   Review,
   ReviewWithDetails,
   ReviewPhoto,
+  VenueOwnerStatus,
 } from "@/lib/types/domain";
 import {
   mockSports,
@@ -513,6 +514,31 @@ export class MockAdapter implements DatabaseAdapter {
 
   async getAdminById(id: string): Promise<AdminUser | null> {
     return getAdmins().find((a) => a.id === id) ?? null;
+  }
+
+  async createAdmin(data: Omit<AdminUser, "createdAt" | "lastLoginAt">): Promise<AdminUser> {
+    const admin: AdminUser = { ...data, createdAt: new Date().toISOString() };
+    getAdmins().push(admin);
+    return { ...admin };
+  }
+
+  async getAllAdmins(): Promise<AdminUser[]> {
+    return getAdmins().map(a => ({ ...a }));
+  }
+
+  // ── Venue Owner Management ──
+  async createVenueOwner(data: Omit<VenueOwner, "createdAt" | "updatedAt">): Promise<VenueOwner> {
+    const owner: VenueOwner = { ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    getVenueOwners().push(owner);
+    return { ...owner };
+  }
+
+  async updateVenueOwnerStatus(id: string, status: VenueOwnerStatus): Promise<VenueOwner> {
+    const owners = getVenueOwners();
+    const idx = owners.findIndex(o => o.id === id);
+    if (idx === -1) throw new Error(`Venue owner not found: ${id}`);
+    owners[idx] = { ...owners[idx], status, updatedAt: new Date().toISOString() };
+    return { ...owners[idx] };
   }
 
   // ── Auth - Customer ──

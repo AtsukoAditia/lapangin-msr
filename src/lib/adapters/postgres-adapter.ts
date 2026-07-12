@@ -27,6 +27,7 @@ import type {
   RewardRedemption,
   Area,
   VenueOwner,
+  VenueOwnerStatus,
   Review,
   ReviewWithDetails,
 } from "@/lib/types/domain";
@@ -440,6 +441,46 @@ export class PostgresAdapter implements DatabaseAdapter {
     if (!r) return null;
     const a = snakeToCamel(r);
     return { id: a.id as string, username: a.username as string, name: a.name as string, email: a.email as string, passwordHash: a.passwordHash as string, role: a.role as AdminUser["role"], isActive: a.isActive as boolean, createdAt: fmtTs(a.createdAt), lastLoginAt: a.lastLoginAt ? fmtTs(a.lastLoginAt) : undefined };
+  }
+
+  // ── Auth - Customer ──
+
+  async createAdmin(data: Omit<AdminUser, "createdAt" | "lastLoginAt">): Promise<AdminUser> {
+    const r = await queryOne<Record<string, unknown>>(
+      "INSERT INTO admins (id, username, name, email, password_hash, role, is_active) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+      [data.id, data.username, data.name, data.email, data.passwordHash, data.role, data.isActive],
+    );
+    if (!r) throw new Error("Failed to create admin");
+    const a = snakeToCamel(r);
+    return { id: a.id as string, username: a.username as string, name: a.name as string, email: a.email as string, passwordHash: a.passwordHash as string, role: a.role as AdminUser["role"], isActive: a.isActive as boolean, createdAt: fmtTs(a.createdAt) };
+  }
+
+  async getAllAdmins(): Promise<AdminUser[]> {
+    const rows = await query<Record<string, unknown>>("SELECT * FROM admins");
+    return rows.map(r => {
+      const a = snakeToCamel(r);
+      return { id: a.id as string, username: a.username as string, name: a.name as string, email: a.email as string, passwordHash: a.passwordHash as string, role: a.role as AdminUser["role"], isActive: a.isActive as boolean, createdAt: fmtTs(a.createdAt), lastLoginAt: a.lastLoginAt ? fmtTs(a.lastLoginAt) : undefined };
+    });
+  }
+
+  async createVenueOwner(data: Omit<VenueOwner, "createdAt" | "updatedAt">): Promise<VenueOwner> {
+    const r = await queryOne<Record<string, unknown>>(
+      "INSERT INTO venue_owners (id, admin_id, business_name, pic_name, phone, email, status) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+      [data.id, data.adminId, data.businessName, data.picName, data.phone, data.email, data.status],
+    );
+    if (!r) throw new Error("Failed to create venue owner");
+    const o = snakeToCamel(r);
+    return { id: o.id as string, adminId: o.adminId as string, businessName: o.businessName as string, picName: o.picName as string, phone: o.phone as string, email: o.email as string, status: o.status as VenueOwner["status"], createdAt: fmtTs(o.createdAt), updatedAt: fmtTs(o.updatedAt) };
+  }
+
+  async updateVenueOwnerStatus(id: string, status: VenueOwnerStatus): Promise<VenueOwner> {
+    const r = await queryOne<Record<string, unknown>>(
+      "UPDATE venue_owners SET status = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
+      [id, status],
+    );
+    if (!r) throw new Error(`Venue owner not found: ${id}`);
+    const o = snakeToCamel(r);
+    return { id: o.id as string, adminId: o.adminId as string, businessName: o.businessName as string, picName: o.picName as string, phone: o.phone as string, email: o.email as string, status: o.status as VenueOwner["status"], createdAt: fmtTs(o.createdAt), updatedAt: fmtTs(o.updatedAt) };
   }
 
   // ── Auth - Customer ──

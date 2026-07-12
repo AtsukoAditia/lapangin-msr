@@ -7,6 +7,11 @@
  * Demo admin accounts:
  *   - admin@lapangin.id / Admin123!@# (Super Admin)
  *   - owner@lapangin.id / Owner123!@# (Owner/Venue Admin)
+ *
+ * Owner registration flow:
+ *   1. Owner registers via /api/auth/owner/register → creates AdminUser + VenueOwner (pending_review)
+ *   2. Super admin approves via /api/admin/owners/[id]/approve
+ *   3. Owner logs in via /api/auth/owner/login → gets owner_auth_token cookie
  */
 
 import type { AdminUser, Customer, CustomerPublic } from "@/lib/types/domain";
@@ -179,4 +184,75 @@ function getLoyaltyTier(points: number): string {
   if (points >= 5000) return "gold";
   if (points >= 2000) return "silver";
   return "bronze";
+}
+
+// ─── Owner Auth ──────────────────────────────────────────────────────────────
+
+export async function registerOwner(data: {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  businessName: string;
+  picName: string;
+}): Promise<{ adminId: string; ownerId: string }> {
+  const adapter = getDatabaseAdapter();
+
+  // Check email uniqueness
+  const existingAdmin = await adapter.authenticateAdmin(data.email, "__check__").catch(() => null);
+  if (existingAdmin) throw new Error("Email sudah terdaftar");
+
+  const passwordHash = hashPassword(data.password);
+  const adminId = `owner-${Date.now()}`;
+  const ownerId = `vo-${Date.now()}`;
+
+  // Create admin user with owner role
+  await adapter.createAdmin({
+    id: adminId,
+    username: data.email.split("@")[0],
+    name: data.name,
+    email: data.email,
+    passwordHash,
+    role: "admin",
+    isActive: true,
+  });
+
+  // Create venue owner record
+  await adapter.createVenueOwner({
+    id: ownerId,
+    adminId,
+    businessName: data.businessName,
+    picName: data.picName,
+    phone: data.phone,
+    email: data.email,
+    status: "pending_review",
+  });
+
+  return { adminId, ownerId };
+}
+
+export async function authenticateOwner(
+  email: string,
+  password: string,
+): Promise<{ admin: AdminUser; ownerId: string } | null> {
+  const adapter = getDatabaseAdapter();
+  const admin = await adapter.authenticateAdmin(email, password);
+  if (!admin) return null;
+  if (!verifyPassword(password, admin.passwordHash)) return null;
+
+  // Check if this admin has a venue owner record
+  const owner = await adapter.getVenueOwnerByAdminId(admin.id);
+  if (!owner) return null;
+
+  // Only allow active owners
+  if (owner.status !== "active") {
+    throw new Error(`Akun owner belum aktif. Status: ${owner.status}`);
+  }
+
+  return { admin, ownerId: owner.id };
+}
+
+export async function getOwnerByAdminId(adminId: string) {
+  const adapter = getDatabaseAdapter();
+  return adapter.getVenueOwnerByAdminId(adminId);
 }

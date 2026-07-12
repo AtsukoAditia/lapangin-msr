@@ -269,10 +269,14 @@ export interface AdminUser {
 
 export interface AuthSession {
   userId: string;
-  role: "admin" | "super_admin" | "staff" | "customer";
+  role: "admin" | "super_admin" | "staff" | "customer" | "owner";
   name: string;
   email: string;
   expiresAt: string;
+  /** For owner sessions — which venue owner record */
+  ownerId?: string;
+  /** For admin sessions impersonating an owner */
+  impersonating?: string;
 }
 
 // ── Loyalty Points ──

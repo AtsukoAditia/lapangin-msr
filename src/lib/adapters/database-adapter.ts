@@ -18,6 +18,7 @@ import type {
   RewardRedemption,
   Area,
   VenueOwner,
+  VenueOwnerStatus,
   Review,
   ReviewWithDetails,
 } from "@/lib/types/domain";
@@ -146,6 +147,12 @@ export interface DatabaseAdapter {
   // Auth - Admin
   authenticateAdmin(email: string, password: string): Promise<AdminUser | null>;
   getAdminById(id: string): Promise<AdminUser | null>;
+  createAdmin(data: Omit<AdminUser, "createdAt" | "lastLoginAt">): Promise<AdminUser>;
+
+  // Venue Owner Management
+  createVenueOwner(data: Omit<VenueOwner, "createdAt" | "updatedAt">): Promise<VenueOwner>;
+  updateVenueOwnerStatus(id: string, status: VenueOwner["status"]): Promise<VenueOwner>;
+  getAllAdmins(): Promise<AdminUser[]>;
 
   // Auth - Customer
   registerCustomer(data: { name: string; email: string; phone: string; passwordHash: string }): Promise<CustomerPublic>;

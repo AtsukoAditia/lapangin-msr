@@ -6,6 +6,7 @@ import {
 } from "./password";
 
 const ADMIN_TOKEN_NAME = "admin_auth_token";
+const OWNER_TOKEN_NAME = "owner_auth_token";
 const CUSTOMER_TOKEN_NAME = "customer_token";
 const TOKEN_EXPIRY = "24h";
 const MIN_KEY_LENGTH = 32;
@@ -52,6 +53,10 @@ export function getAdminTokenName(): string {
   return ADMIN_TOKEN_NAME;
 }
 
+export function getOwnerTokenName(): string {
+  return OWNER_TOKEN_NAME;
+}
+
 export function getCustomerTokenName(): string {
   return CUSTOMER_TOKEN_NAME;
 }
@@ -64,4 +69,4 @@ export function verifyPassword(password: string, hash: string): boolean {
   return bcryptVerifyPassword(password, hash);
 }
 
-export { ADMIN_TOKEN_NAME, CUSTOMER_TOKEN_NAME };
+export { ADMIN_TOKEN_NAME, OWNER_TOKEN_NAME, CUSTOMER_TOKEN_NAME };

@@ -24,6 +24,7 @@ import type {
   CustomerPublic,
   Area,
   VenueOwner,
+  VenueOwnerStatus,
   LoyaltyTransaction,
   LoyaltyTransactionType,
   Reward,
@@ -781,6 +782,14 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
 
   async getAdminById(_id: string): Promise<AdminUser | null> {
     return null;
+  }
+
+  async createAdmin(data: Omit<AdminUser, "createdAt" | "lastLoginAt">): Promise<AdminUser> {
+    throw new Error("createAdmin not supported with Google Sheets adapter");
+  }
+
+  async getAllAdmins(): Promise<AdminUser[]> {
+    return [];
   }
 
   async registerCustomer(_data: { name: string; email: string; phone: string; passwordHash: string }): Promise<CustomerPublic> {
