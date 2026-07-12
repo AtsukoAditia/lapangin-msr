@@ -39,28 +39,34 @@ INSERT INTO sports (id, name, slug, icon, is_active, created_at, updated_at) VAL
 ON CONFLICT (id) DO NOTHING;
 
 -- ==================== VENUES ====================
-INSERT INTO venues (id, owner_id, area_id, name, slug, address, phone, email, description, open_time, close_time, facilities, images, is_active, approval_status, created_at, updated_at) VALUES
+INSERT INTO venues (id, owner_id, area_id, name, slug, address, phone, email, description, open_time, close_time, facilities, images, is_active, approval_status, rain_discount_config, created_at, updated_at) VALUES
   ('venue-greenfield', 'owner-greenfield', 'area-bdg-kota',
    'Greenfield Sports Club', 'greenfield-sports-club',
    'Jl. Golf No. 10, Bandung', '022-1234567', 'info@greenfield.id',
    'Venue olahraga lengkap di pusat kota Bandung.',
    '06:00', '23:00',
    '["Parkir","Toilet","Kantin","Ruang Ganti","WiFi"]'::jsonb,
-   NULL, true, 'active', NOW(), NOW()),
+   NULL, true, 'active',
+   '{"enabled":true,"levels":{"light":{"discountPercent":10},"moderate":{"discountPercent":20},"heavy":{"discountPercent":30}}}'::jsonb,
+   NOW(), NOW()),
   ('venue-rahasian', 'owner-rahasian', 'area-jkt-selatan',
    'Rahasia Badminton Arena', 'rahasian-badminton',
    'Jl. Kemang Raya No. 25, Jakarta Selatan', '021-9876543', 'info@rahasian.id',
    'Arena badminton premium ber-AC dengan 8 lapangan.',
    '07:00', '22:00',
    '["Parkir","Toilet","Kantin","Ruang Ganti","WiFi","AC"]'::jsonb,
-   NULL, true, 'active', NOW(), NOW()),
+   NULL, true, 'active',
+   '{"enabled":false}'::jsonb,
+   NOW(), NOW()),
   ('venue-arena-futsal', 'owner-arena-futsal', 'area-bdg-kota',
    'Arena Futsal Bandung', 'arena-futsal-bandung',
    'Jl. Setiabudhi No. 50, Bandung', '022-5551234', 'info@arenafutsal.id',
    'Lapangan futsal standar FIFA dengan rumput sintetis.',
    '06:00', '23:00',
    '["Parkir","Toilet","Kantin","Ruang Ganti"]'::jsonb,
-   NULL, true, 'active', NOW(), NOW())
+   NULL, true, 'active',
+   '{"enabled":false}'::jsonb,
+   NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- ==================== COURTS ====================
