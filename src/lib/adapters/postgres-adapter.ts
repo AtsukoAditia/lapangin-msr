@@ -109,6 +109,8 @@ function mapBooking(row: Record<string, unknown>): Booking {
     notes: (r.notes as string) || undefined,
     userId: (r.userId as string) || undefined,
     expiresAt: r.expiresAt ? fmtTs(r.expiresAt) : undefined,
+    commissionAmount: (r.commissionAmount as number) || 0,
+    ownerPayout: (r.ownerPayout as number) || 0,
     createdAt: fmtTs(r.createdAt),
     updatedAt: fmtTs(r.updatedAt),
   };
@@ -283,11 +285,23 @@ export class PostgresAdapter implements DatabaseAdapter {
       const r = crypto.randomUUID().slice(0, 4).toUpperCase();
       return `BK-${d}-${r}`;
     })();
+
+    // Calculate commission from venue settings
+    const venue = await queryOne<Record<string, unknown>>(
+      "SELECT commission_rate, platform_fee_type, platform_fee_value FROM venues WHERE id = $1",
+      [input.venueId]
+    );
+    const rate = (venue?.commission_rate as number) ?? 10;
+    const feeType = (venue?.platform_fee_type as string) ?? "percentage";
+    const feeValue = (venue?.platform_fee_value as number) ?? 0;
+    const commissionAmount = feeType === "fixed" ? feeValue : Math.round(input.totalPrice * (rate / 100));
+    const ownerPayout = input.totalPrice - commissionAmount;
+
     const { rows } = await pool.query(
-      `INSERT INTO bookings (id, booking_code, customer_name, customer_phone, customer_email, user_id, venue_id, court_id, sport_id, booking_date, start_time, end_time, duration_minutes, total_price, booking_status, payment_status, notes, expires_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'waiting_payment','unpaid',$15,(NOW() + INTERVAL '15 minutes'))
+      `INSERT INTO bookings (id, booking_code, customer_name, customer_phone, customer_email, user_id, venue_id, court_id, sport_id, booking_date, start_time, end_time, duration_minutes, total_price, booking_status, payment_status, notes, expires_at, commission_amount, owner_payout)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'waiting_payment','unpaid',$15,(NOW() + INTERVAL '15 minutes'),$16,$17)
        RETURNING *`,
-      [id, code, input.customerName, input.customerPhone, input.customerEmail || null, input.userId || null, input.venueId, input.courtId, input.sportId, input.bookingDate, input.startTime, input.endTime, input.durationMinutes, input.totalPrice, input.notes || null],
+      [id, code, input.customerName, input.customerPhone, input.customerEmail || null, input.userId || null, input.venueId, input.courtId, input.sportId, input.bookingDate, input.startTime, input.endTime, input.durationMinutes, input.totalPrice, input.notes || null, commissionAmount, ownerPayout],
     );
     return mapBooking(rows[0]);
   }
@@ -733,5 +747,66 @@ export class PostgresAdapter implements DatabaseAdapter {
       createdAt: row.created_at as string,
       updatedAt: row.updated_at as string,
     };
+  }
+
+  // ── Reviews - Moderation ──
+  async getPendingReviews(): Promise<ReviewWithDetails[]> {
+    const rows = await query<Record<string, unknown>>(
+      `SELECT r.*, c.name as customer_name, c.avatar as customer_avatar,
+              v.name as venue_name
+       FROM reviews r
+       LEFT JOIN customers c ON c.id = r.customer_id
+       LEFT JOIN venues v ON v.id = r.venue_id
+       ORDER BY r.created_at DESC`
+    );
+    return rows.map((row) => {
+      const review = this.mapReview(row) as ReviewWithDetails;
+      review.customerName = row.customer_name as string;
+      review.customerAvatar = row.customer_avatar as string | undefined;
+      return review;
+    });
+  }
+
+  async moderateReview(id: string, isVisible: boolean): Promise<Review> {
+    const r = await queryOne<Record<string, unknown>>(
+      "UPDATE reviews SET is_visible = $1, updated_at = NOW() WHERE id = $2 RETURNING *",
+      [isVisible, id]
+    );
+    return this.mapReview(r!);
+  }
+
+  // ── Favorites ──
+  async getCustomerFavorites(customerId: string): Promise<Venue[]> {
+    const rows = await query<Record<string, unknown>>(
+      `SELECT v.* FROM venues v
+       INNER JOIN customer_favorites f ON f.venue_id = v.id
+       WHERE f.customer_id = $1
+       ORDER BY f.created_at DESC`,
+      [customerId]
+    );
+    return rows.map((r) => mapRow<Venue>(r));
+  }
+
+  async addFavorite(customerId: string, venueId: string): Promise<void> {
+    const id = `fav-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await pool.query(
+      "INSERT INTO customer_favorites (id, customer_id, venue_id) VALUES ($1, $2, $3) ON CONFLICT (customer_id, venue_id) DO NOTHING",
+      [id, customerId, venueId]
+    );
+  }
+
+  async removeFavorite(customerId: string, venueId: string): Promise<void> {
+    await pool.query(
+      "DELETE FROM customer_favorites WHERE customer_id = $1 AND venue_id = $2",
+      [customerId, venueId]
+    );
+  }
+
+  async getFavoriteVenueIds(customerId: string): Promise<string[]> {
+    const rows = await query<Record<string, unknown>>(
+      "SELECT venue_id FROM customer_favorites WHERE customer_id = $1",
+      [customerId]
+    );
+    return rows.map((r) => r.venue_id as string);
   }
 }

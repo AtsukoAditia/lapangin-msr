@@ -70,6 +70,9 @@ export interface Venue {
   avgRating?: number;
   reviewCount?: number;
   rainDiscountConfig?: VenueRainConfig;
+  commissionRate?: number;
+  platformFeeType?: 'percentage' | 'fixed';
+  platformFeeValue?: number;
 }
 
 export interface Court {
@@ -122,6 +125,8 @@ export interface Booking {
   notes?: string;
   userId?: string;
   expiresAt?: string;
+  commissionAmount?: number;
+  ownerPayout?: number;
   createdAt: string;
   updatedAt: string;
 }

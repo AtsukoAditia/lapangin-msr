@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
     const slug = slugify(name);
 
     await pool.query(
-      `INSERT INTO venues (id, name, slug, address, area_id, phone, description, facilities, open_time, close_time, owner_id, status, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft', true)`,
+      `INSERT INTO venues (id, name, slug, address, area_id, phone, description, facilities, open_time, close_time, owner_id, approval_status, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', true)`,
       [id, name, slug, address, areaId || null, phone || null, description || null, facilities ? JSON.stringify(facilities) : null, openTime || null, closeTime || null, session.ownerId]
     );
 
