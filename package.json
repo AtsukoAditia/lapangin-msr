@@ -43,7 +43,7 @@
     "eslint": "latest",
     "eslint-config-next": "latest",
     "impeccable": "3.2.1",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.19",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.22.4",
     "typescript": "latest"
