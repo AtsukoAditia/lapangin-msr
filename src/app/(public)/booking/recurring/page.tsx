@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface Court { courtId: string; courtName: string; venueId: string; venueName: string; minPrice: number; maxPrice: number; }
@@ -40,8 +39,6 @@ function generateDates(startDate: string, type: string, count: number): PreviewD
 }
 
 export default function RecurringBookingPage() {
-  const router = useRouter();
-  const params = useSearchParams();
   const [sports, setSports] = useState<Sport[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
@@ -49,7 +46,7 @@ export default function RecurringBookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState("");
 
-  const [sportId, setSportId] = useState(params.get("sport") || "");
+  const [sportId, setSportId] = useState("");
   const [areaId, setAreaId] = useState("");
   const [courtId, setCourtId] = useState("");
   const [bookingDate, setBookingDate] = useState("");
