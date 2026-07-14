@@ -892,4 +892,14 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
   async updateBooking(_id: string, _updates: Partial<Booking>): Promise<Booking> {
     throw new Error("Update booking not supported with Google Sheets adapter");
   }
+
+  // Reviews - Moderation
+  async getPendingReviews(): Promise<never[]> { return []; }
+  async moderateReview(): Promise<never> { throw new Error("Review moderation not supported with Google Sheets adapter"); }
+
+  // Favorites
+  async getCustomerFavorites(): Promise<never[]> { return []; }
+  async addFavorite(): Promise<void> {}
+  async removeFavorite(): Promise<void> {}
+  async getFavoriteVenueIds(): Promise<never[]> { return []; }
 }

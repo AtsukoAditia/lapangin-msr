@@ -19,6 +19,8 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
   { href: "/dashboard/bookings", label: "Booking", icon: "📋" },
   { href: "/dashboard/courts", label: "Lapangan", icon: "🏟️" },
+  { href: "/dashboard/venues", label: "Venue Saya", icon: "🏢" },
+  { href: "/dashboard/analytics", label: "Analytics", icon: "📈" },
   { href: "/dashboard/settings", label: "Pengaturan", icon: "⚙️" },
 ];
 

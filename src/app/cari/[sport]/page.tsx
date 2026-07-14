@@ -77,6 +77,7 @@ export default function SearchPage({
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [favoriteVenueIds, setFavoriteVenueIds] = useState<Set<string>>(new Set());
 
   // Filter state from URL
   const [search, setSearch] = useState(searchParams.get("q") || "");
@@ -84,6 +85,7 @@ export default function SearchPage({
   const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") || "");
   const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "name");
+  const [minRating, setMinRating] = useState(searchParams.get("minRating") || "");
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
 
   // Fetch areas
@@ -94,6 +96,43 @@ export default function SearchPage({
       .catch(() => {});
   }, []);
 
+  // Fetch favorites
+  useEffect(() => {
+    fetch("/api/customer/favorites")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.data) {
+          setFavoriteVenueIds(new Set(d.data.map((v: { id: string }) => v.id)));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  async function toggleFavorite(venueId: string) {
+    const isFav = favoriteVenueIds.has(venueId);
+    setFavoriteVenueIds((prev) => {
+      const next = new Set(prev);
+      if (isFav) next.delete(venueId);
+      else next.add(venueId);
+      return next;
+    });
+    try {
+      await fetch("/api/customer/favorites", {
+        method: isFav ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venueId }),
+      });
+    } catch {
+      // Revert on error
+      setFavoriteVenueIds((prev) => {
+        const next = new Set(prev);
+        if (isFav) next.add(venueId);
+        else next.delete(venueId);
+        return next;
+      });
+    }
+  }
+
    
   useEffect(() => {
     const controller = new AbortController();
@@ -103,6 +142,7 @@ export default function SearchPage({
     if (areaId) params.set("areaId", areaId);
     if (minPrice) params.set("minPrice", minPrice);
     if (maxPrice) params.set("maxPrice", maxPrice);
+    if (minRating) params.set("minRating", minRating);
     params.set("sort", sort);
     params.set("page", String(page));
     params.set("limit", "12");
@@ -130,11 +170,12 @@ export default function SearchPage({
     if (areaId) p.set("areaId", areaId);
     if (minPrice) p.set("minPrice", minPrice);
     if (maxPrice) p.set("maxPrice", maxPrice);
+    if (minRating) p.set("minRating", minRating);
     if (sort !== "name") p.set("sort", sort);
     if (page > 1) p.set("page", String(page));
     const qs = p.toString();
     router.replace(`/cari/${sportSlug}${qs ? `?${qs}` : ""}`, { scroll: false });
-  }, [search, areaId, minPrice, maxPrice, sort, page, sportSlug, router]);
+  }, [search, areaId, minPrice, maxPrice, minRating, sort, page, sportSlug, router]);
 
   useEffect(() => {
     const timeout = setTimeout(updateUrl, 300);
@@ -151,6 +192,7 @@ export default function SearchPage({
     setAreaId("");
     setMinPrice("");
     setMaxPrice("");
+    setMinRating("");
     setSort("name");
     setPage(1);
   };
@@ -197,7 +239,7 @@ export default function SearchPage({
               </svg>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {/* Area filter */}
               <select
                 value={areaId}
@@ -239,6 +281,23 @@ export default function SearchPage({
                 <option value="name">Nama A-Z</option>
                 <option value="price_asc">Harga Terendah</option>
                 <option value="price_desc">Harga Tertinggi</option>
+                <option value="rating_desc">Rating Tertinggi</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {/* Rating filter */}
+              <select
+                value={minRating}
+                onChange={(e) => { setMinRating(e.target.value); setPage(1); }}
+                className="rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"
+              >
+                <option value="">Semua Rating</option>
+                <option value="1">⭐ 1+</option>
+                <option value="2">⭐ 2+</option>
+                <option value="3">⭐ 3+</option>
+                <option value="4">⭐ 4+</option>
+                <option value="5">⭐ 5</option>
               </select>
             </div>
 
@@ -247,7 +306,7 @@ export default function SearchPage({
               <p className="text-sm text-slate-500">
                 {loading ? "Mencari..." : `${total} lapangan ditemukan`}
               </p>
-              {(search || areaId || minPrice || maxPrice) && (
+              {(search || areaId || minPrice || maxPrice || minRating) && (
                 <button
                   type="button"
                   onClick={clearFilters}
@@ -309,6 +368,17 @@ export default function SearchPage({
                     }`}>
                       {court.indoorType === "indoor" ? "🏠 Indoor" : court.indoorType === "outdoor" ? "☀️ Outdoor" : "🏕️ Semi Outdoor"}
                     </span>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleFavorite(court.venueId);
+                      }}
+                      className="absolute top-3 left-3 rounded-full bg-white/90 p-1.5 shadow-sm hover:bg-white transition"
+                      aria-label={favoriteVenueIds.has(court.venueId) ? "Hapus dari favorit" : "Tambah ke favorit"}
+                    >
+                      <span className="text-lg">{favoriteVenueIds.has(court.venueId) ? "❤️" : "🤍"}</span>
+                    </button>
                   </div>
 
                   <div className="p-4">

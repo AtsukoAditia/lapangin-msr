@@ -214,6 +214,7 @@ export default function AdminDashboard() {
               <QuickAction href="/admin/bookings" icon="📋" label="Kelola Booking" color="from-blue-500 to-indigo-500" />
               <QuickAction href="/admin/courts" icon="🏟️" label="Kelola Lapangan" color="from-emerald-500 to-teal-500" />
               <QuickAction href="/admin/pricing" icon="💰" label="Atur Harga" color="from-amber-500 to-orange-500" />
+              <QuickAction href="/admin/commission" icon="🏦" label="Komisi" color="from-purple-500 to-indigo-500" />
             </div>
           </div>
         </div>

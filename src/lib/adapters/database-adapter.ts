@@ -183,4 +183,14 @@ export interface DatabaseAdapter {
   getVenueRating(venueId: string): Promise<{ avgRating: number; reviewCount: number }>;
   updateVenueRating(venueId: string): Promise<void>;
   updateVenueConfig(venueId: string, config: Record<string, unknown>): Promise<void>;
+
+  // Reviews - Moderation
+  getPendingReviews(): Promise<ReviewWithDetails[]>;
+  moderateReview(id: string, isVisible: boolean): Promise<Review>;
+
+  // Favorites
+  getCustomerFavorites(customerId: string): Promise<Venue[]>;
+  addFavorite(customerId: string, venueId: string): Promise<void>;
+  removeFavorite(customerId: string, venueId: string): Promise<void>;
+  getFavoriteVenueIds(customerId: string): Promise<string[]>;
 }

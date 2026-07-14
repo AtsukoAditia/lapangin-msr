@@ -739,4 +739,52 @@ export class MockAdapter implements DatabaseAdapter {
   async getHolidays(): Promise<never[]> {
     return []; // Mock — holidays come from DB seed
   }
+
+  // ── Reviews - Moderation ──
+  async getPendingReviews(): Promise<ReviewWithDetails[]> {
+    const customers = getCustomers();
+    return this.reviewStore.map((r) => {
+      const customer = customers.find((c) => c.id === r.customerId);
+      const venue = mockVenues.find((v) => v.id === r.venueId);
+      return {
+        ...r,
+        customerName: customer?.name,
+        customerAvatar: customer?.avatar,
+        photos: this.reviewPhotoStore.filter((p) => p.reviewId === r.id),
+        venueName: venue?.name,
+      };
+    });
+  }
+
+  async moderateReview(id: string, isVisible: boolean): Promise<Review> {
+    const review = this.reviewStore.find((r) => r.id === id);
+    if (!review) throw new Error(`Review not found: ${id}`);
+    review.isVisible = isVisible;
+    review.updatedAt = new Date().toISOString();
+    return { ...review };
+  }
+
+  // ── Favorites ──
+  private favoriteStore: Array<{ customerId: string; venueId: string }> = [];
+
+  async getCustomerFavorites(customerId: string): Promise<Venue[]> {
+    const venueIds = this.favoriteStore.filter((f) => f.customerId === customerId).map((f) => f.venueId);
+    return mockVenues.filter((v) => venueIds.includes(v.id));
+  }
+
+  async addFavorite(customerId: string, venueId: string): Promise<void> {
+    if (!this.favoriteStore.find((f) => f.customerId === customerId && f.venueId === venueId)) {
+      this.favoriteStore.push({ customerId, venueId });
+    }
+  }
+
+  async removeFavorite(customerId: string, venueId: string): Promise<void> {
+    this.favoriteStore = this.favoriteStore.filter(
+      (f) => !(f.customerId === customerId && f.venueId === venueId)
+    );
+  }
+
+  async getFavoriteVenueIds(customerId: string): Promise<string[]> {
+    return this.favoriteStore.filter((f) => f.customerId === customerId).map((f) => f.venueId);
+  }
 }

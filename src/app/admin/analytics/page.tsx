@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import BarChart from "@/components/charts/BarChart";
+import LineChart from "@/components/charts/LineChart";
+import PieChart from "@/components/charts/PieChart";
+import HeatMap from "@/components/charts/HeatMap";
 
 interface RevenueData {
   summary: {
@@ -16,6 +19,10 @@ interface RevenueData {
   revenueByDate: { date: string; revenue: number; bookings: number }[];
   revenueByHour: { hour: number; revenue: number; bookings: number }[];
   revenueByCourt: { name: string; venue: string; revenue: number; bookings: number }[];
+  revenueBySport: { name: string; revenue: number; bookings: number; color: string }[];
+  bookingsByDay: { name: string; count: number }[];
+  heatmapData: number[][];
+  monthlyTrend: { month: string; revenue: number; bookings: number }[];
 }
 
 function formatPrice(n: number): string {
@@ -57,7 +64,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const { summary, revenueByDate, revenueByHour, revenueByCourt } = data;
+  const { summary, revenueByDate, revenueByHour, revenueByCourt, revenueBySport, bookingsByDay, heatmapData, monthlyTrend } = data;
 
   return (
     <AdminLayout>
@@ -89,6 +96,17 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+        {/* Monthly Revenue Trend (Line Chart) */}
+        <div className="bg-white rounded-xl border p-5">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Tren Revenue Bulanan (12 Bulan)</h2>
+          <LineChart
+            data={monthlyTrend.map((m) => ({ label: m.month, value: m.revenue }))}
+            height={200}
+            color="#10b981"
+            formatValue={formatPrice}
+          />
+        </div>
+
         {/* Revenue by Date */}
         <div className="bg-white rounded-xl border p-5">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Revenue 30 Hari Terakhir</h2>
@@ -96,6 +114,42 @@ export default function AnalyticsPage() {
             data={revenueByDate.map((d) => ({ label: formatDate(d.date), value: d.revenue }))}
             height={180}
             formatValue={formatPrice}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Revenue by Sport (Pie Chart) */}
+          <div className="bg-white rounded-xl border p-5">
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Revenue per Olahraga</h2>
+            {revenueBySport.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Belum ada data</p>
+            ) : (
+              <PieChart
+                data={revenueBySport.map((s) => ({ label: s.name, value: s.revenue, color: s.color }))}
+                size={180}
+                centerLabel={formatPrice(summary.totalRevenue)}
+                formatValue={formatPrice}
+              />
+            )}
+          </div>
+
+          {/* Bookings by Day of Week */}
+          <div className="bg-white rounded-xl border p-5">
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Booking per Hari</h2>
+            <BarChart
+              data={bookingsByDay.map((d) => ({ label: d.name, value: d.count }))}
+              height={150}
+              color="#6366f1"
+            />
+          </div>
+        </div>
+
+        {/* Booking Heatmap */}
+        <div className="bg-white rounded-xl border p-5">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Booking Heatmap (Hari x Jam)</h2>
+          <HeatMap
+            data={heatmapData}
+            formatValue={(v) => `${v} booking`}
           />
         </div>
 

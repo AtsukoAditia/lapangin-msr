@@ -20,10 +20,12 @@ const navItems = [
   { href: "/admin/bookings", label: "Booking", icon: "📋" },
   { href: "/admin/courts", label: "Lapangan", icon: "🏟️" },
   { href: "/admin/owners", label: "Owner", icon: "👤" },
+  { href: "/admin/venues", label: "Venue Approval", icon: "🏢" },
   { href: "/admin/pricing", label: "Harga", icon: "💰" },
   { href: "/admin/seo", label: "SEO", icon: "🔍" },
   { href: "/admin/cms", label: "CMS", icon: "📝" },
   { href: "/admin/analytics", label: "Analytics", icon: "📈" },
+  { href: "/admin/commission", label: "Komisi", icon: "🏦" },
   { href: "/admin/customers", label: "Pelanggan", icon: "👥" },
   { href: "/admin/settings", label: "Pengaturan", icon: "⚙️" },
 ];
