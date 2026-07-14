@@ -98,6 +98,12 @@ export default function OwnerVenuesPage() {
                     <p className="text-sm text-gray-500">📍 {venue.address}</p>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
+                    <Link
+                      href={`/dashboard/venues/photos/${venue.id}`}
+                      className="px-4 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-200 transition-colors"
+                    >
+                      📸 Foto
+                    </Link>
                     {venue.approvalStatus === "draft" && (
                       <Link
                         href={`/dashboard/venues/new?edit=${venue.id}`}

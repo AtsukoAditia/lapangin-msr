@@ -28,6 +28,7 @@ import type {
   VenueOwner,
   Review,
   ReviewWithDetails,
+  CourtPhoto,
   ReviewPhoto,
   VenueOwnerStatus,
 } from "@/lib/types/domain";
@@ -392,6 +393,10 @@ export class MockAdapter implements DatabaseAdapter {
     store[index] = { ...store[index], ...update };
     return { ...store[index] };
   }
+
+  async updateBookingMidtransOrderId(_bookingId: string, _orderId: string): Promise<void> {}
+  async updateBookingMidtransTransactionId(_bookingId: string, _transactionId: string): Promise<void> {}
+  async updateBookingPaymentMethod(_bookingId: string, _method: "manual" | "midtrans"): Promise<void> {}
 
   // ── Pricing Rules ──
   async getPricingRules(courtId: string): Promise<PricingRule[]> {
@@ -787,4 +792,9 @@ export class MockAdapter implements DatabaseAdapter {
   async getFavoriteVenueIds(customerId: string): Promise<string[]> {
     return this.favoriteStore.filter((f) => f.customerId === customerId).map((f) => f.venueId);
   }
+
+  // ── Court Photos ──
+  async getCourtPhotos(_courtId: string): Promise<CourtPhoto[]> { return []; }
+  async createCourtPhoto(photo: CourtPhoto): Promise<CourtPhoto> { return photo; }
+  async deleteCourtPhoto(_id: string): Promise<void> {}
 }

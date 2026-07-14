@@ -149,7 +149,7 @@ export default function SupportPage() {
             <div className="text-center py-16 text-gray-500">
               <p className="text-4xl mb-3">💬</p>
               <p className="font-medium">Belum ada percakapan</p>
-              <p className="text-sm mt-1">Klik "+ Baru" untuk memulai chat dengan tim support</p>
+              <p className="text-sm mt-1">Klik &ldquo;+ Baru&rdquo; untuk memulai chat dengan tim support</p>
             </div>
           ) : conversations.map((conv) => (
             <div

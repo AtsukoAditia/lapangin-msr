@@ -30,6 +30,7 @@ import type {
   VenueOwnerStatus,
   Review,
   ReviewWithDetails,
+  CourtPhoto,
   Holiday,
 } from "@/lib/types/domain";
 
@@ -315,6 +316,18 @@ export class PostgresAdapter implements DatabaseAdapter {
     const { rows } = await pool.query("UPDATE bookings SET booking_status = $1, updated_at = NOW() WHERE id = $2 RETURNING *", [status, id]);
     if (!rows[0]) throw new Error(`Booking not found: ${id}`);
     return mapBooking(rows[0]);
+  }
+
+  async updateBookingMidtransOrderId(bookingId: string, orderId: string): Promise<void> {
+    await pool.query("UPDATE bookings SET midtrans_order_id = $1, updated_at = NOW() WHERE id = $2", [orderId, bookingId]);
+  }
+
+  async updateBookingMidtransTransactionId(bookingId: string, transactionId: string): Promise<void> {
+    await pool.query("UPDATE bookings SET midtrans_transaction_id = $1, updated_at = NOW() WHERE id = $2", [transactionId, bookingId]);
+  }
+
+  async updateBookingPaymentMethod(bookingId: string, method: "manual" | "midtrans"): Promise<void> {
+    await pool.query("UPDATE bookings SET payment_method = $1, updated_at = NOW() WHERE id = $2", [method, bookingId]);
   }
 
   // ── Pricing Rules ──
@@ -808,5 +821,36 @@ export class PostgresAdapter implements DatabaseAdapter {
       [customerId]
     );
     return rows.map((r) => r.venue_id as string);
+  }
+
+  // ── Court Photos ──
+  async getCourtPhotos(courtId: string): Promise<CourtPhoto[]> {
+    const rows = await query<Record<string, unknown>>(
+      "SELECT * FROM court_photos WHERE court_id = $1 ORDER BY sort_order, created_at",
+      [courtId]
+    );
+    return rows.map((r) => {
+      const c = snakeToCamel(r);
+      return {
+        id: c.id as string,
+        courtId: c.courtId as string,
+        url: c.url as string,
+        caption: (c.caption as string) || "",
+        sortOrder: (c.sortOrder as number) ?? 0,
+        createdAt: fmtTs(c.createdAt),
+      };
+    });
+  }
+
+  async createCourtPhoto(photo: CourtPhoto): Promise<CourtPhoto> {
+    await pool.query(
+      "INSERT INTO court_photos (id, court_id, url, caption, sort_order) VALUES ($1, $2, $3, $4, $5)",
+      [photo.id, photo.courtId, photo.url, photo.caption, photo.sortOrder]
+    );
+    return { ...photo, createdAt: new Date().toISOString() };
+  }
+
+  async deleteCourtPhoto(id: string): Promise<void> {
+    await pool.query("DELETE FROM court_photos WHERE id = $1", [id]);
   }
 }

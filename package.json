@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "latest",
+    "@sentry/nextjs": "10.65.0",
     "bcryptjs": "^3.0.3",
     "clsx": "latest",
     "date-fns": "latest",
@@ -23,6 +24,7 @@
     "googleapis": "latest",
     "jose": "^6.2.3",
     "lucide-react": "latest",
+    "midtrans-client": "1.4.3",
     "next": "latest",
     "pg": "8.22.0",
     "rate-limiter-flexible": "11.2.0",

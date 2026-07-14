@@ -1,0 +1,2117 @@
+openapi: 3.0.3
+info:
+  title: Lapangin API
+  version: 1.0.0
+  description: |
+    Backend API for Lapangin — Indonesian sports venue booking platform.
+    Base URL: /api
+  contact:
+    email: support@lapangin.id
+
+servers:
+  - url: /
+    description: Current host
+
+# ── Components ──────────────────────────────────────────────────────────────
+
+components:
+  securitySchemes:
+    customerToken:
+      type: apiKey
+      in: cookie
+      name: customer_token
+      description: JWT cookie set on customer login
+    adminToken:
+      type: apiKey
+      in: cookie
+      name: admin_token
+      description: JWT cookie set on admin login
+    ownerToken:
+      type: apiKey
+      in: cookie
+      name: owner_token
+      description: JWT cookie set on owner login
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "Email atau password salah"
+
+    Success:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+
+    TimeSlot:
+      type: object
+      properties:
+        startTime:
+          type: string
+          example: "09:00"
+        endTime:
+          type: string
+          example: "10:00"
+        isAvailable:
+          type: boolean
+
+    AvailabilityResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimeSlot"
+        total:
+          type: integer
+        available:
+          type: integer
+
+    Sport:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        isActive: { type: boolean }
+
+    Venue:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        address: { type: string }
+        mapsUrl: { type: string }
+        phone: { type: string }
+        openTime: { type: string }
+        closeTime: { type: string }
+        isActive: { type: boolean }
+        approvalStatus: { type: string }
+        avgRating: { type: number }
+        reviewCount: { type: integer }
+
+    Court:
+      type: object
+      properties:
+        id: { type: string }
+        venueId: { type: string }
+        sportId: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        surfaceType: { type: string }
+        indoorType: { type: string }
+        capacity: { type: integer }
+        basePrice: { type: number }
+        isActive: { type: boolean }
+
+    Booking:
+      type: object
+      properties:
+        id: { type: string }
+        bookingCode: { type: string }
+        customerName: { type: string }
+        customerPhone: { type: string }
+        customerEmail: { type: string }
+        venueId: { type: string }
+        courtId: { type: string }
+        sportId: { type: string }
+        bookingDate: { type: string }
+        startTime: { type: string }
+        endTime: { type: string }
+        durationMinutes: { type: integer }
+        totalPrice: { type: number }
+        bookingStatus: { type: string }
+        paymentStatus: { type: string }
+        paymentProofUrl: { type: string }
+        notes: { type: string }
+        expiresAt: { type: string }
+        createdAt: { type: string }
+
+    CustomerProfile:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        avatar: { type: string }
+        loyaltyPoints: { type: integer }
+        loyaltyTier: { type: string }
+        totalSpent: { type: number }
+        memberSince: { type: string }
+
+# ── Paths ──────────────────────────────────────────────────────────────────
+
+paths:
+
+  # ── Auth ──────────────────────────────────────────────────────────────
+
+  /api/auth/customer/register:
+    post:
+      tags: [Auth]
+      summary: Register customer
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, phone, password]
+              properties:
+                name: { type: string }
+                email: { type: string }
+                phone: { type: string }
+                password: { type: string }
+      responses:
+        "201":
+          description: Registration successful, token cookie set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  user: { $ref: "#/components/schemas/CustomerProfile" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/auth/customer/login:
+    post:
+      tags: [Auth]
+      summary: Customer login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Login successful, customer_token cookie set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  user:
+                    type: object
+                    properties:
+                      userId: { type: string }
+                      role: { type: string }
+                      name: { type: string }
+                      email: { type: string }
+                      loyaltyPoints: { type: integer }
+                      loyaltyTier: { type: string }
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/auth/customer/logout:
+    post:
+      tags: [Auth]
+      summary: Customer logout
+      security:
+        - customerToken: []
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Success" }
+
+  /api/auth/admin/login:
+    post:
+      tags: [Auth]
+      summary: Admin login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Login successful, admin_token cookie set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  dashboardUrl: { type: string }
+                  user:
+                    type: object
+                    properties:
+                      id: { type: string }
+                      name: { type: string }
+                      email: { type: string }
+                      role: { type: string }
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/auth/admin/logout:
+    post:
+      tags: [Auth]
+      summary: Admin logout
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Success" }
+
+  /api/auth/owner/login:
+    post:
+      tags: [Auth]
+      summary: Owner login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Login successful, owner_token cookie set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  user:
+                    type: object
+                    properties:
+                      id: { type: string }
+                      name: { type: string }
+                      email: { type: string }
+                      role: { type: string }
+                      ownerId: { type: string }
+        "401":
+          description: Invalid credentials or not an owner
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/auth/owner/logout:
+    post:
+      tags: [Auth]
+      summary: Owner logout
+      security:
+        - ownerToken: []
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Success" }
+
+  /api/auth/owner/register:
+    post:
+      tags: [Auth]
+      summary: Register owner
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, businessName, phone, adminId]
+              properties:
+                email: { type: string }
+                password: { type: string }
+                businessName: { type: string }
+                phone: { type: string }
+                adminId: { type: string }
+      responses:
+        "201":
+          description: Owner registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Success" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/auth/session:
+    get:
+      tags: [Auth]
+      summary: Get current session
+      security: []
+      responses:
+        "200":
+          description: Session data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId: { type: string }
+                  role: { type: string }
+                  name: { type: string }
+                  email: { type: string }
+
+  # ── Public ─────────────────────────────────────────────────────────────
+
+  /api/sports:
+    get:
+      tags: [Public]
+      summary: List sports
+      security: []
+      responses:
+        "200":
+          description: List of active sports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Sport" }
+
+  /api/sports/by-area/{areaId}:
+    get:
+      tags: [Public]
+      summary: List sports by area
+      security: []
+      parameters:
+        - in: path
+          name: areaId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Sports available in the area
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Sport" }
+
+  /api/venues:
+    get:
+      tags: [Public]
+      summary: List venues
+      security: []
+      parameters:
+        - in: query
+          name: sportId
+          schema: { type: string }
+        - in: query
+          name: areaId
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: offset
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List of active venues
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Venue" }
+
+  /api/courts:
+    get:
+      tags: [Public]
+      summary: List courts
+      security: []
+      parameters:
+        - in: query
+          name: venueId
+          schema: { type: string }
+        - in: query
+          name: sportId
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of active courts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Court" }
+
+  /api/search/courts:
+    get:
+      tags: [Public]
+      summary: Search courts
+      security: []
+      parameters:
+        - in: query
+          name: sport
+          schema: { type: string }
+        - in: query
+          name: area
+          schema: { type: string }
+        - in: query
+          name: date
+          schema: { type: string }
+        - in: query
+          name: startTime
+          schema: { type: string }
+        - in: query
+          name: endTime
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        court: { $ref: "#/components/schemas/Court" }
+                        venue: { $ref: "#/components/schemas/Venue" }
+                        availableSlots: { type: integer }
+
+  /api/search/courts/{courtId}:
+    get:
+      tags: [Public]
+      summary: Get court details
+      security: []
+      parameters:
+        - in: path
+          name: courtId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Court detail with availability
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  court: { $ref: "#/components/schemas/Court" }
+                  venue: { $ref: "#/components/schemas/Venue" }
+                  sport: { $ref: "#/components/schemas/Sport" }
+                  pricing: { type: array }
+
+  /api/areas:
+    get:
+      tags: [Public]
+      summary: List areas
+      security: []
+      responses:
+        "200":
+          description: List of areas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        province: { type: string }
+                        city: { type: string }
+                        district: { type: string }
+                        village: { type: string }
+                        slug: { type: string }
+                        label: { type: string }
+
+  /api/reviews:
+    get:
+      tags: [Public]
+      summary: List public reviews
+      security: []
+      parameters:
+        - in: query
+          name: venueId
+          schema: { type: string }
+        - in: query
+          name: courtId
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Public reviews (isVisible=true only)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        rating: { type: integer }
+                        comment: { type: string }
+                        customerName: { type: string }
+                        createdAt: { type: string }
+    post:
+      tags: [Public]
+      summary: Submit a review
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId, rating, comment]
+              properties:
+                bookingId: { type: string }
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                comment: { type: string }
+      responses:
+        "201":
+          description: Review submitted
+        "400":
+          description: Validation error
+
+  /api/weather:
+    get:
+      tags: [Public]
+      summary: Get weather for area
+      security: []
+      parameters:
+        - in: query
+          name: area
+          schema: { type: string }
+      responses:
+        "200":
+          description: Weather data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  area: { type: string }
+                  temperature: { type: number }
+                  humidity: { type: number }
+                  condition: { type: string }
+                  rainProbability: { type: number }
+                  rainFactor: { type: number }
+
+  /api/weather/rain-check:
+    get:
+      tags: [Public]
+      summary: Rain check for venue
+      security: []
+      parameters:
+        - in: query
+          name: venueId
+          schema: { type: string }
+        - in: query
+          name: date
+          schema: { type: string }
+      responses:
+        "200":
+          description: Rain discount info for venue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  venueId: { type: string }
+                  rainDiscountEnabled: { type: boolean }
+                  discountLevels:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        discountPercent: { type: number }
+
+  /api/pricing/calculate:
+    get:
+      tags: [Public]
+      summary: Calculate booking price
+      security: []
+      parameters:
+        - in: query
+          name: courtId
+          schema: { type: string }
+        - in: query
+          name: date
+          schema: { type: string }
+        - in: query
+          name: startTime
+          schema: { type: string }
+        - in: query
+          name: endTime
+          schema: { type: string }
+        - in: query
+          name: rainFactor
+          schema: { type: number }
+      responses:
+        "200":
+          description: Price calculation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  basePrice: { type: number }
+                  discount: { type: number }
+                  totalPrice: { type: number }
+                  currency: { type: string }
+                  breakdown: { type: array }
+
+  # ── Availability ────────────────────────────────────────────────────────
+
+  /api/availability:
+    get:
+      tags: [Public]
+      summary: Get court availability (REST)
+      security: []
+      parameters:
+        - in: query
+          name: courtId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: date
+          required: true
+          schema: { type: string }
+        - in: query
+          name: openTime
+          schema: { type: string }
+        - in: query
+          name: closeTime
+          schema: { type: string }
+        - in: query
+          name: slotDurationMinutes
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Availability slots
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AvailabilityResponse" }
+        "400":
+          description: Missing required params
+
+  /api/availability/stream:
+    get:
+      tags: [Public]
+      summary: SSE stream of availability updates
+      security: []
+      description: |
+        Server-Sent Events stream. Streams full slot list on first
+        connection (type=snapshot), then delta updates every 5s when
+        slots change (type=update), or heartbeat (type=heartbeat).
+      parameters:
+        - in: query
+          name: courtId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: date
+          required: true
+          schema: { type: string }
+        - in: query
+          name: openTime
+          schema: { type: string }
+        - in: query
+          name: closeTime
+          schema: { type: string }
+        - in: query
+          name: slotDurationMinutes
+          schema: { type: integer }
+      responses:
+        "200":
+          description: SSE stream (text/event-stream)
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  data: {"type":"snapshot","slots":[...],"timestamp":1710000000000}
+                  data: {"type":"heartbeat","timestamp":1710000005000}
+        "400":
+          description: Missing required params
+
+  # ── Bookings ────────────────────────────────────────────────────────────
+
+  /api/bookings:
+    get:
+      tags: [Public]
+      summary: (Disabled) List public bookings
+      security: []
+      responses:
+        "405":
+          description: Disabled
+    post:
+      tags: [Public]
+      summary: Create a booking (guest or customer)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerName, customerPhone, courtId, venueId, sportId, bookingDate, startTime, endTime]
+              properties:
+                customerName: { type: string }
+                customerPhone: { type: string }
+                customerEmail: { type: string }
+                courtId: { type: string }
+                venueId: { type: string }
+                sportId: { type: string }
+                bookingDate: { type: string }
+                startTime: { type: string }
+                endTime: { type: string }
+                durationMinutes: { type: integer }
+                notes: { type: string }
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Booking" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: Slot conflict
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/bookings/recurring:
+    post:
+      tags: [Public]
+      summary: Create recurring booking
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [courtId, venueId, sportId, startTime, endTime, recurrence]
+              properties:
+                courtId: { type: string }
+                venueId: { type: string }
+                sportId: { type: string }
+                startTime: { type: string }
+                endTime: { type: string }
+                durationMinutes: { type: integer }
+                recurrence:
+                  type: object
+                  properties:
+                    pattern: { type: string }
+                    startDate: { type: string }
+                    endDate: { type: string }
+                    daysOfWeek: { type: array, items: { type: integer } }
+                customerName: { type: string }
+                customerPhone: { type: string }
+                customerEmail: { type: string }
+      responses:
+        "201":
+          description: Recurring bookings created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookings: { type: array, items: { $ref: "#/components/schemas/Booking" } }
+
+  /api/bookings/{id}:
+    get:
+      tags: [Public]
+      summary: Get booking by ID
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Booking detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Booking" }
+
+  /api/bookings/{id}/cancel:
+    post:
+      tags: [Public]
+      summary: Cancel booking
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Booking cancelled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Booking" }
+
+  /api/bookings/{id}/invoice:
+    get:
+      tags: [Public]
+      summary: Get booking invoice
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Invoice data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  booking: { $ref: "#/components/schemas/Booking" }
+                  paymentInstructions: { $ref: "#/components/schemas/PaymentInstruction" }
+
+  /api/bookings/{id}/notify:
+    post:
+      tags: [Public]
+      summary: Send booking notification
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Notification sent
+
+  # ── Payments ────────────────────────────────────────────────────────────
+
+  /api/payments/methods:
+    get:
+      tags: [Public]
+      summary: List active payment methods
+      security: []
+      responses:
+        "200":
+          description: Payment methods
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        label: { type: string }
+                        type: { type: string }
+                        accountName: { type: string }
+                        accountNumber: { type: string }
+                        instructions: { type: string }
+                        isActive: { type: boolean }
+
+  /api/payments/proof:
+    post:
+      tags: [Public]
+      summary: Submit payment proof
+      security:
+        - customerToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [bookingId]
+              properties:
+                bookingId: { type: string }
+                proofImage: { type: string, format: binary }
+      responses:
+        "200":
+          description: Proof uploaded, booking moved to waiting_verification
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Booking" }
+
+  /api/uploads/proof:
+    post:
+      tags: [Public]
+      summary: Upload payment proof image
+      security: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: File uploaded, returns URL
+
+  # ── Customer ────────────────────────────────────────────────────────────
+
+  /api/customer/profile:
+    get:
+      tags: [Customer]
+      summary: Get customer profile
+      security:
+        - customerToken: []
+      responses:
+        "200":
+          description: Profile data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomerProfile" }
+        "401":
+          description: Unauthorized
+    put:
+      tags: [Customer]
+      summary: Update customer profile
+      security:
+        - customerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                phone: { type: string }
+                avatar: { type: string }
+      responses:
+        "200":
+          description: Profile updated
+
+  /api/customer/change-password:
+    post:
+      tags: [Customer]
+      summary: Change customer password
+      security:
+        - customerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string }
+                newPassword: { type: string }
+      responses:
+        "200":
+          description: Password changed
+        "400":
+          description: Current password incorrect
+
+  /api/customer/bookings:
+    get:
+      tags: [Customer]
+      summary: List customer's bookings
+      security:
+        - customerToken: []
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: offset
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Customer's bookings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Booking" }
+
+  /api/customer/favorites:
+    get:
+      tags: [Customer]
+      summary: List favorite venues
+      security:
+        - customerToken: []
+      responses:
+        "200":
+          description: Favorite venues
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Venue" }
+    post:
+      tags: [Customer]
+      summary: Add venue to favorites
+      security:
+        - customerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [venueId]
+              properties:
+                venueId: { type: string }
+      responses:
+        "200":
+          description: Added to favorites
+    delete:
+      tags: [Customer]
+      summary: Remove venue from favorites
+      security:
+        - customerToken: []
+      parameters:
+        - in: query
+          name: venueId
+          schema: { type: string }
+      responses:
+        "200":
+          description: Removed from favorites
+
+  /api/customer/loyalty:
+    get:
+      tags: [Customer]
+      summary: Get loyalty points & transactions
+      security:
+        - customerToken: []
+      responses:
+        "200":
+          description: Loyalty info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  points: { type: integer }
+                  tier: { type: string }
+                  transactions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        type: { type: string }
+                        points: { type: integer }
+                        description: { type: string }
+                        createdAt: { type: string }
+    post:
+      tags: [Customer]
+      summary: Redeem loyalty reward
+      security:
+        - customerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rewardId]
+              properties:
+                rewardId: { type: string }
+      responses:
+        "200":
+          description: Reward redeemed
+
+  /api/customer/reviews:
+    get:
+      tags: [Customer]
+      summary: List customer's reviews
+      security:
+        - customerToken: []
+      responses:
+        "200":
+          description: Customer's reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        rating: { type: integer }
+                        comment: { type: string }
+                        venueId: { type: string }
+                        createdAt: { type: string }
+
+  /api/customer/support:
+    get:
+      tags: [Customer]
+      summary: List customer's support tickets
+      security:
+        - customerToken: []
+      responses:
+        "200":
+          description: Support tickets
+    post:
+      tags: [Customer]
+      summary: Submit support ticket
+      security:
+        - customerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject, message]
+              properties:
+                subject: { type: string }
+                message: { type: string }
+                bookingId: { type: string }
+                priority: { type: string }
+      responses:
+        "201":
+          description: Ticket submitted
+
+  # ── Referrals ───────────────────────────────────────────────────────────
+
+  /api/referrals:
+    get:
+      tags: [Customer]
+      summary: List referrals
+      security:
+        - customerToken: []
+      responses:
+        "200":
+          description: Referral data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code: { type: string }
+                  totalReferred: { type: integer }
+                  totalBonusEarned: { type: number }
+                  referrals:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        refereeName: { type: string }
+                        bonusAwarded: { type: boolean }
+                        createdAt: { type: string }
+    post:
+      tags: [Customer]
+      summary: Generate referral code
+      security:
+        - customerToken: []
+      responses:
+        "200":
+          description: Referral code generated
+    patch:
+      tags: [Customer]
+      summary: Apply referral code (on registration)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string }
+                customerId: { type: string }
+      responses:
+        "200":
+          description: Referral applied
+
+  # ── Gamification ────────────────────────────────────────────────────────
+
+  /api/gamification/achievements:
+    get:
+      tags: [Customer]
+      summary: List achievements & progress
+      security:
+        - customerToken: []
+      responses:
+        "200":
+          description: Achievements
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        description: { type: string }
+                        icon: { type: string }
+                        unlocked: { type: boolean }
+                        unlockedAt: { type: string }
+
+  # ── Owner ───────────────────────────────────────────────────────────────
+
+  /api/owner/venues:
+    get:
+      tags: [Owner]
+      summary: List owner's venues
+      security:
+        - ownerToken: []
+      responses:
+        "200":
+          description: Owner's venues
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Venue" }
+    post:
+      tags: [Owner]
+      summary: Register a venue
+      security:
+        - ownerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, address, areaId]
+              properties:
+                name: { type: string }
+                address: { type: string }
+                areaId: { type: string }
+                phone: { type: string }
+                mapsUrl: { type: string }
+                openTime: { type: string }
+                closeTime: { type: string }
+      responses:
+        "201":
+          description: Venue created
+    put:
+      tags: [Owner]
+      summary: Update venue
+      security:
+        - ownerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                venueId: { type: string }
+                name: { type: string }
+                address: { type: string }
+                phone: { type: string }
+                mapsUrl: { type: string }
+                openTime: { type: string }
+                closeTime: { type: string }
+      responses:
+        "200":
+          description: Venue updated
+    delete:
+      tags: [Owner]
+      summary: Delete venue
+      security:
+        - ownerToken: []
+      parameters:
+        - in: query
+          name: venueId
+          schema: { type: string }
+      responses:
+        "200":
+          description: Venue deleted
+
+  /api/owner/venues/rain-config:
+    get:
+      tags: [Owner]
+      summary: Get rain discount config
+      security:
+        - ownerToken: []
+      parameters:
+        - in: query
+          name: venueId
+          schema: { type: string }
+      responses:
+        "200":
+          description: Rain config
+    put:
+      tags: [Owner]
+      summary: Update rain discount config
+      security:
+        - ownerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                venueId: { type: string }
+                enabled: { type: boolean }
+                levels:
+                  type: object
+                  properties:
+                    light: { type: object, properties: { discountPercent: { type: number } } }
+                    moderate: { type: object, properties: { discountPercent: { type: number } } }
+                    heavy: { type: object, properties: { discountPercent: { type: number } } }
+      responses:
+        "200":
+          description: Rain config updated
+
+  /api/owner/pricing:
+    get:
+      tags: [Owner]
+      summary: List pricing rules for owner's courts
+      security:
+        - ownerToken: []
+      responses:
+        "200":
+          description: Pricing rules
+    post:
+      tags: [Owner]
+      summary: Create pricing rule
+      security:
+        - ownerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [courtId, dayType, startTime, endTime, pricePerHour]
+              properties:
+                courtId: { type: string }
+                dayType: { type: string }
+                startTime: { type: string }
+                endTime: { type: string }
+                pricePerHour: { type: number }
+                priority: { type: integer }
+      responses:
+        "201":
+          description: Pricing rule created
+    put:
+      tags: [Owner]
+      summary: Update pricing rule
+      security:
+        - ownerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ruleId: { type: string }
+                pricePerHour: { type: number }
+                dayType: { type: string }
+                startTime: { type: string }
+                endTime: { type: string }
+      responses:
+        "200":
+          description: Pricing rule updated
+    delete:
+      tags: [Owner]
+      summary: Delete pricing rule
+      security:
+        - ownerToken: []
+      parameters:
+        - in: query
+          name: ruleId
+          schema: { type: string }
+      responses:
+        "200":
+          description: Pricing rule deleted
+
+  /api/owner/stats:
+    get:
+      tags: [Owner]
+      summary: Get owner dashboard stats
+      security:
+        - ownerToken: []
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalBookings: { type: integer }
+                  totalRevenue: { type: number }
+                  pendingPayments: { type: integer }
+                  occupancyRate: { type: number }
+                  monthlyRevenue: { type: array }
+
+  /api/owner/analytics:
+    get:
+      tags: [Owner]
+      summary: Get owner analytics
+      security:
+        - ownerToken: []
+      parameters:
+        - in: query
+          name: startDate
+          schema: { type: string }
+        - in: query
+          name: endDate
+          schema: { type: string }
+        - in: query
+          name: venueId
+          schema: { type: string }
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revenueByDay: { type: array }
+                  bookingsBySport: { type: array }
+                  topCourts: { type: array }
+                  customerRetention: { type: number }
+
+  # ── Admin ───────────────────────────────────────────────────────────────
+
+  /api/admin/bookings:
+    get:
+      tags: [Admin]
+      summary: List all bookings
+      security:
+        - adminToken: []
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: venueId
+          schema: { type: string }
+        - in: query
+          name: date
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: offset
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Bookings list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Booking" }
+
+  /api/admin/bookings/{id}/status:
+    patch:
+      tags: [Admin]
+      summary: Update booking status
+      security:
+        - adminToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, waiting_payment, waiting_verification, paid, confirmed, rejected, cancelled, expired, completed, no_show]
+      responses:
+        "200":
+          description: Booking status updated
+
+  /api/admin/courts:
+    get:
+      tags: [Admin]
+      summary: List all courts
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: Courts list
+    patch:
+      tags: [Admin]
+      summary: Update court
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [courtId]
+              properties:
+                courtId: { type: string }
+                name: { type: string }
+                basePrice: { type: number }
+                isActive: { type: boolean }
+      responses:
+        "200":
+          description: Court updated
+
+  /api/admin/venues:
+    get:
+      tags: [Admin]
+      summary: List all venues
+      security:
+        - adminToken: []
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        "200":
+          description: Venues list
+    patch:
+      tags: [Admin]
+      summary: Update venue
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [venueId]
+              properties:
+                venueId: { type: string }
+                name: { type: string }
+                approvalStatus: { type: string }
+                commissionRate: { type: number }
+      responses:
+        "200":
+          description: Venue updated
+
+  /api/admin/venues/{id}:
+    patch:
+      tags: [Admin]
+      summary: Update venue by ID
+      security:
+        - adminToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                approvalStatus: { type: string }
+                isActive: { type: boolean }
+      responses:
+        "200":
+          description: Venue updated
+
+  /api/admin/customers:
+    get:
+      tags: [Admin]
+      summary: List customers
+      security:
+        - adminToken: []
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: offset
+          schema: { type: integer }
+        - in: query
+          name: search
+          schema: { type: string }
+      responses:
+        "200":
+          description: Customers list
+
+  /api/admin/owners:
+    get:
+      tags: [Admin]
+      summary: List venue owners
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: Owners list
+
+  /api/admin/owners/{id}:
+    patch:
+      tags: [Admin]
+      summary: Update owner status
+      security:
+        - adminToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string }
+      responses:
+        "200":
+          description: Owner updated
+
+  /api/admin/payments:
+    get:
+      tags: [Admin]
+      summary: List pending payments
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: Pending payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Booking" }
+
+  /api/admin/payments/{id}:
+    post:
+      tags: [Admin]
+      summary: Take payment action (confirm/reject)
+      security:
+        - adminToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [confirm, reject]
+                rejectionReason: { type: string }
+      responses:
+        "200":
+          description: Payment processed
+    patch:
+      tags: [Admin]
+      summary: Update payment status
+      security:
+        - adminToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [confirm, reject] }
+      responses:
+        "200":
+          description: Payment updated
+
+  /api/admin/pricing:
+    get:
+      tags: [Admin]
+      summary: List all pricing rules
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: Pricing rules
+    post:
+      tags: [Admin]
+      summary: Create pricing rule
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [courtId, dayType, startTime, endTime, pricePerHour]
+              properties:
+                courtId: { type: string }
+                dayType: { type: string }
+                startTime: { type: string }
+                endTime: { type: string }
+                pricePerHour: { type: number }
+      responses:
+        "201":
+          description: Rule created
+    patch:
+      tags: [Admin]
+      summary: Update pricing rule
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ruleId: { type: string }
+                pricePerHour: { type: number }
+      responses:
+        "200":
+          description: Rule updated
+    delete:
+      tags: [Admin]
+      summary: Delete pricing rule
+      security:
+        - adminToken: []
+      parameters:
+        - in: query
+          name: ruleId
+          schema: { type: string }
+      responses:
+        "200":
+          description: Rule deleted
+
+  /api/admin/reviews:
+    get:
+      tags: [Admin]
+      summary: List all reviews
+      security:
+        - adminToken: []
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        "200":
+          description: Reviews (including hidden)
+
+  /api/admin/reviews/{id}/moderate:
+    patch:
+      tags: [Admin]
+      summary: Moderate review visibility
+      security:
+        - adminToken: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [isVisible]
+              properties:
+                isVisible: { type: boolean }
+      responses:
+        "200":
+          description: Review moderated
+
+  /api/admin/commission:
+    get:
+      tags: [Admin]
+      summary: Get commission report
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: Commission data
+    patch:
+      tags: [Admin]
+      summary: Update commission rate
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                venueId: { type: string }
+                commissionRate: { type: number }
+      responses:
+        "200":
+          description: Commission updated
+
+  /api/admin/analytics/revenue:
+    get:
+      tags: [Admin]
+      summary: Get revenue analytics
+      security:
+        - adminToken: []
+      parameters:
+        - in: query
+          name: startDate
+          schema: { type: string }
+        - in: query
+          name: endDate
+          schema: { type: string }
+        - in: query
+          name: venueId
+          schema: { type: string }
+      responses:
+        "200":
+          description: Revenue analytics
+
+  /api/admin/cms:
+    get:
+      tags: [Admin]
+      summary: Get CMS content
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: CMS data
+    put:
+      tags: [Admin]
+      summary: Update CMS content
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: CMS updated
+
+  /api/admin/seo:
+    get:
+      tags: [Admin]
+      summary: Get SEO settings
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: SEO data
+    put:
+      tags: [Admin]
+      summary: Update SEO settings
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                metaTitle: { type: string }
+                metaDescription: { type: string }
+                ogImage: { type: string }
+      responses:
+        "200":
+          description: SEO settings updated
+
+  /api/admin/support:
+    get:
+      tags: [Admin]
+      summary: List support tickets
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: Support tickets
+    post:
+      tags: [Admin]
+      summary: Reply to support ticket
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticketId, message]
+              properties:
+                ticketId: { type: string }
+                message: { type: string }
+      responses:
+        "200":
+          description: Reply sent
+
+  /api/admin/notifications:
+    get:
+      tags: [Admin]
+      summary: List notifications
+      security:
+        - adminToken: []
+      parameters:
+        - in: query
+          name: bookingId
+          schema: { type: string }
+      responses:
+        "200":
+          description: Notifications list
+    patch:
+      tags: [Admin]
+      summary: Mark notification as read
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notificationId]
+              properties:
+                notificationId: { type: string }
+      responses:
+        "200":
+          description: Notification marked as read
+
+  /api/admin/notifications/whatsapp:
+    get:
+      tags: [Admin]
+      summary: Get WhatsApp notification log
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: WhatsApp logs
+    post:
+      tags: [Admin]
+      summary: Send WhatsApp notification
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, message]
+              properties:
+                phone: { type: string }
+                message: { type: string }
+                bookingId: { type: string }
+      responses:
+        "200":
+          description: WhatsApp sent

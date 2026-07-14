@@ -229,6 +229,7 @@ export default function ProfilePage() {
               { href: "/profile/reviews", icon: "⭐", label: "Ulasan" },
               { href: "/profile/favorites", icon: "❤️", label: "Favorit" },
               { href: "/support", icon: "💬", label: "Bantuan" },
+              { href: "/profile/notifications", icon: "🔔", label: "Notifikasi" },
               { href: "/profile/edit", icon: "✏️", label: "Edit" },
               { href: "/profile/referral", icon: "🎁", label: "Referral" },
             ].map((link) => (

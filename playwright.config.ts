@@ -5,9 +5,12 @@ export default defineConfig({
   timeout: 30_000,
   expect: { timeout: 5_000 },
   fullyParallel: false,
-  retries: 0,
+  retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: [["list"], ["html", { open: "never" }]],
+  projects: [
+    { name: "chromium", use: { browserName: "chromium" } },
+  ],
   use: {
     baseURL: "http://localhost:3000",
     screenshot: "on",

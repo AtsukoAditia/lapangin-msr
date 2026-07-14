@@ -192,7 +192,7 @@ export default function OwnerPricingPage() {
               ))}
             </div>
             <p className="text-xs text-gray-500 mt-3">
-              * Harga "Holiday" akan otomatis diterapkan pada tanggal-tanggal di atas
+              * Harga &ldquo;Holiday&rdquo; akan otomatis diterapkan pada tanggal-tanggal di atas
             </p>
           </div>
         )}
@@ -254,7 +254,7 @@ export default function OwnerPricingPage() {
 
                   {courtRules.length === 0 && !isEditing && (
                     <div className="text-sm text-gray-500 mb-4">
-                      Belum ada aturan harga. Klik "Tambah Aturan" untuk mulai mengatur.
+                      Belum ada aturan harga. Klik &ldquo;Tambah Aturan&rdquo; untuk mulai mengatur.
                     </div>
                   )}
 
