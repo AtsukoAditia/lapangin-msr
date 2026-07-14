@@ -220,6 +220,29 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Quick Links */}
+      <div className="max-w-lg mx-auto px-4 -mt-4 relative z-10">
+        <div className="bg-white rounded-2xl shadow-lg p-3">
+          <div className="grid grid-cols-4 gap-2 text-center">
+            {[
+              { href: "/profile/bookings", icon: "📋", label: "Booking" },
+              { href: "/profile/reviews", icon: "⭐", label: "Ulasan" },
+              { href: "/profile/edit", icon: "✏️", label: "Edit" },
+              { href: "/profile/referral", icon: "🎁", label: "Referral" },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-gray-50 transition"
+              >
+                <span className="text-xl">{link.icon}</span>
+                <span className="text-xs font-medium text-gray-700">{link.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Tab Navigation */}
       <div className="max-w-lg mx-auto px-4 -mt-4 relative z-10">
         <div className="bg-white rounded-2xl shadow-lg flex overflow-hidden">

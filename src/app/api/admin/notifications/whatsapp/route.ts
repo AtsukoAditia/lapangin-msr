@@ -141,3 +141,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Gagal mengirim notifikasi WhatsApp" }, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM notification_logs WHERE channel = 'whatsapp' ORDER BY created_at DESC LIMIT 100`
+    );
+    return NextResponse.json({ logs: rows });
+  } catch (error) {
+    console.error("WhatsApp logs error:", error);
+    return NextResponse.json({ error: "Gagal mengambil log notifikasi" }, { status: 500 });
+  }
+}

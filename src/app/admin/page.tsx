@@ -10,6 +10,10 @@ interface DashboardStats {
   totalRevenue: number;
   totalCourts: number;
   activeCourts: number;
+  todayBookings: number;
+  todayPendingPayments: number;
+  todayRevenue: number;
+  todayActiveCourts: number;
 }
 
 export default function AdminDashboard() {
@@ -29,6 +33,10 @@ export default function AdminDashboard() {
         const bookings = bookingsData.bookings ?? [];
         const courts = courtsData.courts ?? [];
         if (!cancelled) {
+          const today = new Date().toISOString().split("T")[0];
+          const todayBookings = bookings.filter(
+            (b: { bookingDate: string }) => b.bookingDate === today
+          );
           setStats({
             totalBookings: bookings.length,
             pendingBookings: bookings.filter(
@@ -49,6 +57,22 @@ export default function AdminDashboard() {
               ),
             totalCourts: courts.length,
             activeCourts: courts.filter(
+              (c: { isActive: boolean }) => c.isActive
+            ).length,
+            todayBookings: todayBookings.length,
+            todayPendingPayments: todayBookings.filter(
+              (b: { bookingStatus: string }) => b.bookingStatus === "waiting_payment"
+            ).length,
+            todayRevenue: todayBookings
+              .filter(
+                (b: { bookingStatus: string }) =>
+                  b.bookingStatus === "confirmed" || b.bookingStatus === "paid"
+              )
+              .reduce(
+                (sum: number, b: { totalPrice: number }) => sum + b.totalPrice,
+                0
+              ),
+            todayActiveCourts: courts.filter(
               (c: { isActive: boolean }) => c.isActive
             ).length,
           });
@@ -94,7 +118,45 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <div className="page-enter page-enter-slide-up">
+          {/* Today Stats */}
+          <h2 className="mb-3 text-lg font-bold text-slate-800">📅 Hari Ini</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              icon="📋"
+              label="Booking Hari Ini"
+              value={stats.todayBookings.toString()}
+              gradient="from-cyan-500 to-blue-500"
+              light="bg-cyan-50 text-cyan-700"
+              link="/admin/bookings"
+            />
+            <StatCard
+              icon="⏳"
+              label="Pending Pembayaran"
+              value={stats.todayPendingPayments.toString()}
+              gradient="from-orange-500 to-red-500"
+              light="bg-orange-50 text-orange-700"
+              link="/admin/bookings"
+              highlight={stats.todayPendingPayments > 0}
+            />
+            <StatCard
+              icon="💰"
+              label="Pendapatan Hari Ini"
+              value={`Rp ${stats.todayRevenue.toLocaleString("id-ID")}`}
+              gradient="from-emerald-500 to-green-500"
+              light="bg-emerald-50 text-emerald-700"
+            />
+            <StatCard
+              icon="🟢"
+              label="Lapangan Aktif"
+              value={stats.todayActiveCourts.toString()}
+              gradient="from-teal-500 to-cyan-500"
+              light="bg-teal-50 text-teal-700"
+              link="/admin/courts"
+            />
+          </div>
+
           {/* Main Stats */}
+          <h2 className="mb-3 mt-8 text-lg font-bold text-slate-800">📊 Keseluruhan</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard
               icon="📋"
