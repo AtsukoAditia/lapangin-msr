@@ -122,6 +122,9 @@ export interface Booking {
     | "refunded";
   paymentProofUrl?: string;
   paymentRejectionReason?: string;
+  paymentMethod?: "manual" | "midtrans";
+  midtransOrderId?: string;
+  midtransTransactionId?: string;
   notes?: string;
   userId?: string;
   expiresAt?: string;
@@ -381,6 +384,15 @@ export interface ReviewPhoto {
   id: string;
   reviewId: string;
   photoUrl: string;
+  createdAt: string;
+}
+
+export interface CourtPhoto {
+  id: string;
+  courtId: string;
+  url: string;
+  caption: string;
+  sortOrder: number;
   createdAt: string;
 }
 

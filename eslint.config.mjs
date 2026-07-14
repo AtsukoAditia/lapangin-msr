@@ -12,6 +12,9 @@ export default defineConfig([
         varsIgnorePattern: "^_",
         caughtErrorsIgnorePattern: "^_",
       }],
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/immutability": "warn",
+      "react-hooks/preserve-manual-memoization": "warn",
     },
   },
   globalIgnores([

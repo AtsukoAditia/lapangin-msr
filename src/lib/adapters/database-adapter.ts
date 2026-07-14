@@ -21,6 +21,7 @@ import type {
   VenueOwnerStatus,
   Review,
   ReviewWithDetails,
+  CourtPhoto,
   Holiday,
 } from "@/lib/types/domain";
 
@@ -113,6 +114,9 @@ export interface DatabaseAdapter {
   expireBookings(): Promise<number>;
   createBooking(input: CreateBookingInput): Promise<Booking>;
   updateBookingStatus(id: string, status: Booking["bookingStatus"], paymentStatus?: Booking["paymentStatus"]): Promise<Booking>;
+  updateBookingMidtransOrderId(bookingId: string, orderId: string): Promise<void>;
+  updateBookingMidtransTransactionId(bookingId: string, transactionId: string): Promise<void>;
+  updateBookingPaymentMethod(bookingId: string, method: "manual" | "midtrans"): Promise<void>;
 
   // Pricing
   getPricingRules(courtId: string): Promise<PricingRule[]>;
@@ -193,4 +197,9 @@ export interface DatabaseAdapter {
   addFavorite(customerId: string, venueId: string): Promise<void>;
   removeFavorite(customerId: string, venueId: string): Promise<void>;
   getFavoriteVenueIds(customerId: string): Promise<string[]>;
+
+  // Court Photos
+  getCourtPhotos(courtId: string): Promise<CourtPhoto[]>;
+  createCourtPhoto(photo: CourtPhoto): Promise<CourtPhoto>;
+  deleteCourtPhoto(id: string): Promise<void>;
 }

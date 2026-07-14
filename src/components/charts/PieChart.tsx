@@ -27,9 +27,10 @@ export default function PieChart({
   const outerR = size / 2 - 4;
   const innerR = outerR * 0.55;
 
+  const slices: (PieChartDatum & { path: string; pct: string })[] = [];
   let cumAngle = -Math.PI / 2;
 
-  const slices = data.map((d) => {
+  for (const d of data) {
     const angle = (d.value / total) * 2 * Math.PI;
     const startAngle = cumAngle;
     const endAngle = cumAngle + angle;
@@ -54,8 +55,8 @@ export default function PieChart({
       "Z",
     ].join(" ");
 
-    return { ...d, path, pct: ((d.value / total) * 100).toFixed(1) };
-  });
+    slices.push({ ...d, path, pct: ((d.value / total) * 100).toFixed(1) });
+  }
 
   return (
     <div className="flex items-center gap-6 flex-wrap">

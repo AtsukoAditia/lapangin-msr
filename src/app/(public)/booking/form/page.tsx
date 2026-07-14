@@ -5,6 +5,8 @@ import { Suspense, useState, useEffect } from "react";
 import { formatPrice } from "@/lib/mock-data";
 import BookingSteps from "@/components/booking/BookingSteps";
 import type { Court } from "@/lib/types/domain";
+import { PAYMENT_CONFIG } from "@/config/payment";
+import MidtransSnap from "@/components/payment/MidtransSnap";
 
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
@@ -81,8 +83,11 @@ function BookingFormContent() {
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submittingOnline, setSubmittingOnline] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isConflict, setIsConflict] = useState(false);
+  const [snapToken, setSnapToken] = useState<string | null>(null);
+  const [pendingBookingCode, setPendingBookingCode] = useState<string | null>(null);
 
   const durationMinutes =
     startTime && endTime ? getDurationMinutes(startTime, endTime) : 60;
@@ -149,6 +154,78 @@ function BookingFormContent() {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handlePayOnline(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setIsConflict(false);
+
+    if (!court) {
+      setError("Data lapangan tidak valid.");
+      return;
+    }
+    if (!name.trim()) {
+      setError("Nama wajib diisi.");
+      return;
+    }
+    if (!phone.trim()) {
+      setError("Nomor HP wajib diisi.");
+      return;
+    }
+    if (durationMinutes <= 0) {
+      setError("Durasi booking tidak valid.");
+      return;
+    }
+
+    setSubmittingOnline(true);
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: name.trim(),
+          customerPhone: phone.trim(),
+          customerEmail: email.trim() || undefined,
+          courtId,
+          venueId: court.venueId,
+          sportId: court.sportId,
+          bookingDate: date,
+          startTime,
+          endTime,
+          durationMinutes,
+          notes: notes.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 409) setIsConflict(true);
+        throw new Error(data.error ?? "Gagal membuat booking.");
+      }
+
+      const data = await res.json();
+      setPendingBookingCode(data.bookingCode);
+
+      // Create Midtrans Snap token
+      const payRes = await fetch("/api/payments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: data.id }),
+      });
+
+      if (!payRes.ok) {
+        const payData = await payRes.json().catch(() => ({}));
+        throw new Error(payData.error ?? "Gagal membuat transaksi pembayaran.");
+      }
+
+      const { snapToken: token } = await payRes.json();
+      setSnapToken(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
+    } finally {
+      setSubmittingOnline(false);
     }
   }
 
@@ -340,10 +417,10 @@ function BookingFormContent() {
           </div>
 
           {/* Submit */}
-          <div className="mt-6">
+          <div className="mt-6 space-y-3">
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || submittingOnline}
               className="w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 py-4 text-base font-bold text-white shadow-lg shadow-emerald-200 transition hover:from-emerald-700 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? (
@@ -355,7 +432,25 @@ function BookingFormContent() {
                   Memproses...
                 </span>
               ) : (
-                "✅ Konfirmasi Booking"
+                "✅ Bayar Manual (Transfer)"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handlePayOnline}
+              disabled={submittingOnline || submitting}
+              className="w-full rounded-2xl border-2 border-blue-500 bg-white py-4 text-base font-bold text-blue-600 shadow-lg shadow-blue-100 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submittingOnline ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Memproses...
+                </span>
+              ) : (
+                "💳 Bayar Online"
               )}
             </button>
             <p className="mt-3 text-center text-xs text-slate-400">
@@ -363,6 +458,16 @@ function BookingFormContent() {
             </p>
           </div>
         </form>
+
+        {snapToken && (
+          <MidtransSnap
+            snapToken={snapToken}
+            onSuccess={() => router.push(`/booking/success?code=${pendingBookingCode}`)}
+            onPending={() => router.push(`/booking/success?code=${pendingBookingCode}`)}
+            onError={() => router.push(`/booking/success?code=${pendingBookingCode}`)}
+            onClose={() => setSnapToken(null)}
+          />
+        )}
       </div>
     </div>
   );

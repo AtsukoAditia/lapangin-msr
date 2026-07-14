@@ -39,5 +39,5 @@ export function getDatabaseAdapter(): DatabaseAdapter {
       break;
   }
 
-  return globalForAdapter.__lapanginAdapter;
+  return globalForAdapter.__lapanginAdapter!;
 }

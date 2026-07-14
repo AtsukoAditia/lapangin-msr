@@ -29,6 +29,7 @@ import type {
   LoyaltyTransactionType,
   Reward,
   RewardRedemption,
+  CourtPhoto,
 } from "@/lib/types/domain";
 
 function getJwtClient(): JWT {
@@ -380,6 +381,15 @@ export class GoogleSheetsAdapter implements DatabaseAdapter {
 
     return rowToBooking(targetRow.toObject());
   }
+
+  async updateBookingMidtransOrderId(_bookingId: string, _orderId: string): Promise<void> {}
+  async updateBookingMidtransTransactionId(_bookingId: string, _transactionId: string): Promise<void> {}
+  async updateBookingPaymentMethod(_bookingId: string, _method: "manual" | "midtrans"): Promise<void> {}
+
+  // ── Court Photos ──
+  async getCourtPhotos(_courtId: string): Promise<CourtPhoto[]> { return []; }
+  async createCourtPhoto(photo: CourtPhoto): Promise<CourtPhoto> { return photo; }
+  async deleteCourtPhoto(_id: string): Promise<void> {}
 
   async getAllCourts(): Promise<Court[]> {
     const doc = await getSpreadsheet();

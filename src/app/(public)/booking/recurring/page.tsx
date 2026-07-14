@@ -24,7 +24,7 @@ function getDayName(d: string) {
 
 function generateDates(startDate: string, type: string, count: number): PreviewDate[] {
   const dates: PreviewDate[] = [];
-  let current = new Date(startDate + "T00:00:00");
+  const current = new Date(startDate + "T00:00:00");
   const step = type === "weekly" ? 7 : type === "biweekly" ? 14 : 0; // monthly handled separately
   for (let i = 0; i < count; i++) {
     if (type === "monthly") {

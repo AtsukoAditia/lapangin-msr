@@ -2,12 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useRealtimeAvailability, type TimeSlot } from "@/hooks/useRealtimeAvailability";
 
-type Slot = {
-  startTime: string;
-  endTime: string;
-  isAvailable: boolean;
-};
+type Slot = TimeSlot;
 
 type Props = {
   courtId: string;
@@ -90,18 +87,36 @@ export default function SlotSelector({
   );
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotError, setSlotError] = useState<string | null>(null);
+  const { slots: realtimeSlots, isConnected } = useRealtimeAvailability({
+    courtId,
+    date: selectedDate,
+    openTime,
+    closeTime,
+    slotDurationMinutes: 60,
+  });
 
-  // Track selected date to clear slots on change
-   
+  // Clear selected slots when date changes
+  const [prevDate, setPrevDate] = useState(selectedDate);
+  if (prevDate !== selectedDate) {
+    setPrevDate(selectedDate);
+    setSelectedSlots([]);
+    setSlotError(null);
+  }
+
+  // Sync real-time slots into local state
+  useEffect(() => {
+    if (realtimeSlots.length > 0) {
+      setSlots(realtimeSlots);
+      setLoadingSlots(false);
+    }
+  }, [realtimeSlots]);
+
+  // Fallback: if SSE never delivers within 3s, fall back to REST
   useEffect(() => {
     let active = true;
-
-    async function loadSlots() {
-      // Clear selected slots when date changes
-      setSelectedSlots([]);
+    const timer = setTimeout(async () => {
+      if (realtimeSlots.length > 0 || !active) return;
       setLoadingSlots(true);
-      setSlotError(null);
-
       try {
         const params = new URLSearchParams({
           courtId,
@@ -110,35 +125,22 @@ export default function SlotSelector({
           closeTime,
           slotDurationMinutes: "60",
         });
-
         const res = await fetch(`/api/availability?${params.toString()}`);
         const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          throw new Error(data.error ?? "Gagal memuat slot tersedia.");
-        }
-
+        if (!res.ok) throw new Error(data.error ?? "Gagal memuat slot tersedia.");
         if (!active) return;
-
         const nextSlots = Array.isArray(data.data) ? data.data : [];
         setSlots(nextSlots);
       } catch (error) {
         if (!active) return;
         setSlots([]);
-        setSlotError(
-          error instanceof Error ? error.message : "Gagal memuat slot tersedia."
-        );
+        setSlotError(error instanceof Error ? error.message : "Gagal memuat slot tersedia.");
       } finally {
         if (active) setLoadingSlots(false);
       }
-    }
-
-    loadSlots();
-
-    return () => {
-      active = false;
-    };
-  }, [courtId, selectedDate, openTime, closeTime]);
+    }, 3_000);
+    return () => { active = false; clearTimeout(timer); };
+  }, [courtId, selectedDate, openTime, closeTime, realtimeSlots.length]);
 
 
   function handleSlotClick(slot: Slot) {
@@ -260,6 +262,14 @@ export default function SlotSelector({
           {slotError}
         </div>
       )}
+
+      {/* Live indicator */}
+      <div className="mb-3 flex items-center gap-2">
+        <span className={`inline-block h-2 w-2 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+        <span className="text-xs text-slate-500">
+          {isConnected ? "Live — slot diperbarui otomatis" : "Menghubungkan..."}
+        </span>
+      </div>
 
       {/* Selection info */}
       {selectedSlots.length > 0 && (
