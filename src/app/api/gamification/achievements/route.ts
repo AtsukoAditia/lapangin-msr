@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { verifyToken, CUSTOMER_TOKEN_NAME } from "@/lib/auth/jwt";
 import { Pool } from "pg";
 
 const globalForPg = globalThis as unknown as { __pgPool?: Pool };
@@ -80,10 +82,17 @@ async function getAchievements(customerId: string): Promise<Achievement[]> {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const customerId = searchParams.get("customerId");
+    let customerId = searchParams.get("customerId");
 
     if (!customerId) {
-      return NextResponse.json({ error: "customerId wajib diisi" }, { status: 400 });
+      const cookieStore = await cookies();
+      const token = cookieStore.get(CUSTOMER_TOKEN_NAME)?.value;
+      const session = token ? await verifyToken(token) : null;
+      if (session?.role === "customer" && session?.userId) customerId = session.userId;
+    }
+
+    if (!customerId) {
+      return NextResponse.json({ error: "customerId wajib diisi (atau login sebagai customer)" }, { status: 401 });
     }
 
     const achievements = await getAchievements(customerId);

@@ -27,6 +27,9 @@ export default function AdminBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchCode, setSearchCode] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -125,10 +128,13 @@ export default function AdminBookingsPage() {
     }
   }
 
-  const filtered =
-    filterStatus === "all"
-      ? bookings
-      : bookings.filter((b) => b.bookingStatus === filterStatus);
+  const filtered = bookings.filter((b) => {
+    if (filterStatus !== "all" && b.bookingStatus !== filterStatus) return false;
+    if (searchCode && !b.bookingCode.toLowerCase().includes(searchCode.toLowerCase())) return false;
+    if (dateFrom && b.bookingDate < dateFrom) return false;
+    if (dateTo && b.bookingDate > dateTo) return false;
+    return true;
+  });
 
   // Count by status for filter badges
   const statusCounts = bookings.reduce<Record<string, number>>((acc, b) => {
@@ -161,6 +167,50 @@ export default function AdminBookingsPage() {
               Refresh
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Search & Date Filter */}
+      <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Cari kode booking..."
+              value={searchCode}
+              onChange={(e) => setSearchCode(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-9 pr-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+            />
+            <span className="absolute left-3 top-3 text-slate-400">🔍</span>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500">Dari Tanggal</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500">Sampai Tanggal</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+            />
+          </div>
+          {(searchCode || dateFrom || dateTo) && (
+            <div className="flex items-end">
+              <button
+                onClick={() => { setSearchCode(""); setDateFrom(""); setDateTo(""); }}
+                className="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                🗑️ Reset
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
